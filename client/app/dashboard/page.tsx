@@ -1,0 +1,505 @@
+"use client"
+
+import { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+    Users, TrendingUp, Target, Trophy, Calendar, ArrowUpRight,
+    ArrowDownRight, Loader2, BarChart3, Activity, Zap
+} from "lucide-react";
+import {
+    AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+    BarChart, Bar, PieChart, Pie, Cell, Legend
+} from 'recharts';
+import Link from 'next/link';
+
+const API_URL = "http://localhost:4000";
+
+const STATUS_LABELS: Record<string, string> = {
+    NEW: 'Novo',
+    ATTEMPTED: 'Tentando Contato',
+    CONTACTED: 'Contatado',
+    MEETING: 'Reunião',
+    WON: 'Ganho',
+    LOST: 'Perdido'
+};
+
+const FUNNEL_COLORS = ['#22d3ee', '#fbbf24', '#DECCA8', '#a78bfa', '#4ade80', '#f87171'];
+
+export default function DashboardPage() {
+    const [loading, setLoading] = useState(true);
+    const [period, setPeriod] = useState('30');
+    const [overview, setOverview] = useState<any>(null);
+    const [funnel, setFunnel] = useState<any[]>([]);
+    const [timeline, setTimeline] = useState<any[]>([]);
+    const [performance, setPerformance] = useState<any>(null);
+    const [geoData, setGeoData] = useState<{ byRegion: Record<string, number>, total: number }>({ byRegion: {}, total: 0 });
+    const [salesForce, setSalesForce] = useState<any>(null);
+
+    useEffect(() => {
+        fetchAllStats();
+    }, [period]);
+
+    const fetchAllStats = async () => {
+        setLoading(true);
+        try {
+            const [overviewRes, funnelRes, timelineRes, performanceRes, geoRes, salesForceRes] = await Promise.all([
+                fetch(`${API_URL}/leads/stats/overview`),
+                fetch(`${API_URL}/leads/stats/funnel`),
+                fetch(`${API_URL}/leads/stats/timeline?days=${period}`),
+                fetch(`${API_URL}/leads/stats/performance`),
+                fetch(`${API_URL}/leads/stats/geo`),
+                fetch(`${API_URL}/leads/stats/salesforce`)
+            ]);
+
+            setOverview(await overviewRes.json());
+            setFunnel(await funnelRes.json());
+            setTimeline(await timelineRes.json());
+            setPerformance(await performanceRes.json());
+            setGeoData(await geoRes.json());
+            setSalesForce(await salesForceRes.json());
+        } catch (err) {
+            console.error('Failed to fetch stats:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-[#0F0F0F] flex items-center justify-center">
+                <div className="flex flex-col items-center gap-4">
+                    <Loader2 className="w-8 h-8 animate-spin text-[#DECCA8]" />
+                    <span className="text-muted-foreground text-sm">Carregando estatísticas...</span>
+                </div>
+            </div>
+        );
+    }
+
+    const kpiCards = [
+        {
+            title: 'Total de Leads',
+            value: overview?.total || 0,
+            change: overview?.addedThisMonth || 0,
+            changeLabel: 'este mês',
+            icon: Users,
+            color: 'text-cyan-400'
+        },
+        {
+            title: 'Leads Ganhos',
+            value: overview?.byStatus?.WON || 0,
+            change: Math.round(((overview?.byStatus?.WON || 0) / (overview?.total || 1)) * 100),
+            changeLabel: '% conversão',
+            icon: Trophy,
+            color: 'text-emerald-400'
+        },
+        {
+            title: 'Em Reunião',
+            value: overview?.byStatus?.MEETING || 0,
+            change: overview?.byStatus?.CONTACTED || 0,
+            changeLabel: 'contatados',
+            icon: Calendar,
+            color: 'text-purple-400'
+        },
+        {
+            title: 'Novos Hoje',
+            value: overview?.addedToday || 0,
+            change: overview?.addedThisWeek || 0,
+            changeLabel: 'esta semana',
+            icon: Zap,
+            color: 'text-[#DECCA8]'
+        }
+    ];
+
+    return (
+        <div className="min-h-screen bg-[#0F0F0F] text-white p-8">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-8">
+                <div>
+                    <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+                    <p className="text-muted-foreground mt-1">Estatísticas de prospecção em tempo real</p>
+                </div>
+                <div className="flex items-center gap-4">
+                    <Select value={period} onValueChange={setPeriod}>
+                        <SelectTrigger className="w-[180px] bg-[#1C1C1C] border-white/10">
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="7">Últimos 7 dias</SelectItem>
+                            <SelectItem value="30">Últimos 30 dias</SelectItem>
+                            <SelectItem value="90">Últimos 90 dias</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <Link href="/">
+                        <Button variant="outline" className="border-white/10 hover:bg-white/5">
+                            Ver Leads
+                        </Button>
+                    </Link>
+                </div>
+            </div>
+
+            {/* KPI Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                {kpiCards.map((kpi, idx) => (
+                    <Card key={idx} className="bg-[#1C1C1C] border-white/5 hover:border-white/10 transition-all">
+                        <CardContent className="pt-6">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-sm text-muted-foreground">{kpi.title}</p>
+                                    <p className="text-3xl font-bold mt-1">{kpi.value.toLocaleString()}</p>
+                                    <div className="flex items-center gap-1 mt-2">
+                                        <ArrowUpRight className="w-3 h-3 text-emerald-400" />
+                                        <span className="text-xs text-emerald-400">{kpi.change}</span>
+                                        <span className="text-xs text-muted-foreground ml-1">{kpi.changeLabel}</span>
+                                    </div>
+                                </div>
+                                <div className={`w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center ${kpi.color}`}>
+                                    <kpi.icon className="w-6 h-6" />
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                ))}
+            </div>
+
+            {/* Charts Row */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                {/* Timeline Chart */}
+                <Card className="bg-[#1C1C1C] border-white/5 lg:col-span-2">
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2 text-lg">
+                            <Activity className="w-5 h-5 text-cyan-400" />
+                            Leads por Dia
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="h-[300px]">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <AreaChart data={timeline}>
+                                    <defs>
+                                        <linearGradient id="colorAdded" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#22d3ee" stopOpacity={0.3} />
+                                            <stop offset="95%" stopColor="#22d3ee" stopOpacity={0} />
+                                        </linearGradient>
+                                    </defs>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                                    <XAxis
+                                        dataKey="date"
+                                        stroke="#666"
+                                        tickFormatter={(date) => new Date(date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
+                                        tick={{ fontSize: 11 }}
+                                    />
+                                    <YAxis stroke="#666" tick={{ fontSize: 11 }} />
+                                    <Tooltip
+                                        contentStyle={{ backgroundColor: '#1C1C1C', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }}
+                                        labelFormatter={(date) => new Date(date).toLocaleDateString('pt-BR')}
+                                    />
+                                    <Area
+                                        type="monotone"
+                                        dataKey="added"
+                                        stroke="#22d3ee"
+                                        fill="url(#colorAdded)"
+                                        strokeWidth={2}
+                                        name="Leads Adicionados"
+                                    />
+                                </AreaChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {/* Funnel Chart */}
+                <Card className="bg-[#1C1C1C] border-white/5">
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2 text-lg">
+                            <BarChart3 className="w-5 h-5 text-[#DECCA8]" />
+                            Funil de Vendas
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="space-y-4">
+                            {funnel.map((stage, idx) => (
+                                <div key={stage.status} className="space-y-2">
+                                    <div className="flex items-center justify-between text-sm">
+                                        <span className="text-muted-foreground">{STATUS_LABELS[stage.status] || stage.status}</span>
+                                        <span className="font-medium">{stage.count}</span>
+                                    </div>
+                                    <div className="h-2 bg-white/5 rounded-full overflow-hidden">
+                                        <div
+                                            className="h-full rounded-full transition-all duration-500"
+                                            style={{
+                                                width: `${stage.percentage}%`,
+                                                backgroundColor: FUNNEL_COLORS[idx % FUNNEL_COLORS.length]
+                                            }}
+                                        />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
+
+            {/* Sales Force Section - This is the key competitive metric */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                {/* Sales Force Scoreboard */}
+                <Card className="bg-[#1C1C1C] border-white/5 lg:col-span-2">
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2 text-lg">
+                            <Zap className="w-5 h-5 text-amber-400" />
+                            Força de Vendas - Placar do Dia
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        {salesForce && (
+                            <div className="grid grid-cols-2 gap-8">
+                                {Object.entries(salesForce).map(([owner, data]: [string, any]) => (
+                                    <div key={owner} className="space-y-4">
+                                        {/* Owner Header with Score */}
+                                        <div className="flex items-center justify-between p-4 rounded-xl bg-gradient-to-r from-white/5 to-transparent">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-cyan-500 to-[#DECCA8] flex items-center justify-center text-black text-xl font-bold">
+                                                    {owner.charAt(0).toUpperCase()}
+                                                </div>
+                                                <div>
+                                                    <p className="text-xl font-bold capitalize">{owner}</p>
+                                                    <p className="text-xs text-muted-foreground">{data.totalActive} leads ativos</p>
+                                                </div>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="text-3xl font-bold text-[#DECCA8]">{data.score.today}</p>
+                                                <p className="text-xs text-muted-foreground">pontos hoje</p>
+                                            </div>
+                                        </div>
+
+                                        {/* Period Stats */}
+                                        <div className="grid grid-cols-3 gap-3">
+                                            {/* Today */}
+                                            <div className="p-3 rounded-lg bg-white/5 text-center">
+                                                <p className="text-xs text-muted-foreground mb-2 uppercase">Hoje</p>
+                                                <div className="space-y-1">
+                                                    <div className="flex justify-between text-xs">
+                                                        <span className="text-muted-foreground">Contatos</span>
+                                                        <span className="font-medium text-cyan-400">{data.today.contacted}</span>
+                                                    </div>
+                                                    <div className="flex justify-between text-xs">
+                                                        <span className="text-muted-foreground">Reuniões</span>
+                                                        <span className="font-medium text-purple-400">{data.today.meetings}</span>
+                                                    </div>
+                                                    <div className="flex justify-between text-xs">
+                                                        <span className="text-muted-foreground">Ganhos</span>
+                                                        <span className="font-medium text-emerald-400">{data.today.won}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Week */}
+                                            <div className="p-3 rounded-lg bg-white/5 text-center">
+                                                <p className="text-xs text-muted-foreground mb-2 uppercase">Semana</p>
+                                                <div className="space-y-1">
+                                                    <div className="flex justify-between text-xs">
+                                                        <span className="text-muted-foreground">Contatos</span>
+                                                        <span className="font-medium text-cyan-400">{data.week.contacted}</span>
+                                                    </div>
+                                                    <div className="flex justify-between text-xs">
+                                                        <span className="text-muted-foreground">Reuniões</span>
+                                                        <span className="font-medium text-purple-400">{data.week.meetings}</span>
+                                                    </div>
+                                                    <div className="flex justify-between text-xs">
+                                                        <span className="text-muted-foreground">Ganhos</span>
+                                                        <span className="font-medium text-emerald-400">{data.week.won}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Month */}
+                                            <div className="p-3 rounded-lg bg-white/5 text-center">
+                                                <p className="text-xs text-muted-foreground mb-2 uppercase">Mês</p>
+                                                <div className="space-y-1">
+                                                    <div className="flex justify-between text-xs">
+                                                        <span className="text-muted-foreground">Contatos</span>
+                                                        <span className="font-medium text-cyan-400">{data.month.contacted}</span>
+                                                    </div>
+                                                    <div className="flex justify-between text-xs">
+                                                        <span className="text-muted-foreground">Reuniões</span>
+                                                        <span className="font-medium text-purple-400">{data.month.meetings}</span>
+                                                    </div>
+                                                    <div className="flex justify-between text-xs">
+                                                        <span className="text-muted-foreground">Ganhos</span>
+                                                        <span className="font-medium text-emerald-400">{data.month.won}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Score Bar */}
+                                        <div className="space-y-1">
+                                            <div className="flex justify-between text-xs">
+                                                <span className="text-muted-foreground">Pontuação Mensal</span>
+                                                <span className="font-medium">{data.score.month} pts</span>
+                                            </div>
+                                            <div className="h-2 bg-white/5 rounded-full overflow-hidden">
+                                                <div
+                                                    className="h-full rounded-full bg-gradient-to-r from-cyan-500 to-[#DECCA8] transition-all duration-500"
+                                                    style={{ width: `${Math.min((data.score.month / 100) * 100, 100)}%` }}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {/* Score Legend */}
+                        <div className="mt-6 pt-4 border-t border-white/5">
+                            <p className="text-xs text-muted-foreground">
+                                📌 Pontuação: <span className="text-cyan-400">Contato = 1pt</span> •
+                                <span className="text-purple-400 ml-2">Reunião = 3pts</span> •
+                                <span className="text-emerald-400 ml-2">Ganho = 10pts</span>
+                            </p>
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
+
+            {/* Geographic Distribution Row - Simplified */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                {/* Region Distribution */}
+                <Card className="bg-[#1C1C1C] border-white/5">
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2 text-lg">
+                            <svg className="w-5 h-5 text-emerald-400" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
+                            </svg>
+                            Distribuição por Região
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="space-y-4">
+                            {Object.entries(geoData.byRegion || {})
+                                .sort((a, b) => b[1] - a[1])
+                                .map(([region, count]) => (
+                                    <div key={region} className="space-y-2">
+                                        <div className="flex items-center justify-between text-sm">
+                                            <span className={region === 'Sem UF' ? 'text-amber-400' : 'text-muted-foreground'}>
+                                                {region}
+                                            </span>
+                                            <span className="font-medium">{count}</span>
+                                        </div>
+                                        <div className="h-2 bg-white/5 rounded-full overflow-hidden">
+                                            <div
+                                                className={`h-full rounded-full transition-all duration-500 ${region === 'Sem UF'
+                                                    ? 'bg-amber-500/50'
+                                                    : 'bg-gradient-to-r from-cyan-500 to-[#DECCA8]'
+                                                    }`}
+                                                style={{ width: `${(count / (geoData.total || 1)) * 100}%` }}
+                                            />
+                                        </div>
+                                    </div>
+                                ))
+                            }
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {/* Distribution Pie */}
+                <Card className="bg-[#1C1C1C] border-white/5">
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2 text-lg">
+                            <TrendingUp className="w-5 h-5 text-purple-400" />
+                            Distribuição por Status
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="h-[280px]">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <PieChart>
+                                    <Pie
+                                        data={funnel.filter(f => f.count > 0)}
+                                        cx="50%"
+                                        cy="50%"
+                                        innerRadius={60}
+                                        outerRadius={100}
+                                        paddingAngle={4}
+                                        dataKey="count"
+                                        nameKey="status"
+                                        label={({ name, value }) => `${STATUS_LABELS[name as string] || name}: ${value}`}
+                                        labelLine={{ stroke: '#666', strokeWidth: 1 }}
+                                    >
+                                        {funnel.map((entry, index) => (
+                                            <Cell
+                                                key={`cell-${index}`}
+                                                fill={FUNNEL_COLORS[index % FUNNEL_COLORS.length]}
+                                                stroke="transparent"
+                                            />
+                                        ))}
+                                    </Pie>
+                                    <Tooltip
+                                        contentStyle={{ backgroundColor: '#1C1C1C', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }}
+                                        formatter={(value, name) => [value, STATUS_LABELS[name as string] || name]}
+                                    />
+                                </PieChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
+
+            {/* Performance Row */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Performance by Owner */}
+                <Card className="bg-[#1C1C1C] border-white/5">
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2 text-lg">
+                            <Target className="w-5 h-5 text-emerald-400" />
+                            Performance por Responsável
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="space-y-6">
+                            {performance && Object.entries(performance).map(([owner, data]: [string, any]) => (
+                                <div key={owner} className="space-y-3">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-cyan-500 to-[#DECCA8] flex items-center justify-center text-black font-bold">
+                                                {owner.charAt(0).toUpperCase()}
+                                            </div>
+                                            <div>
+                                                <p className="font-medium capitalize">{owner}</p>
+                                                <p className="text-xs text-muted-foreground">{data.total} leads atribuídos</p>
+                                            </div>
+                                        </div>
+                                        <Badge variant="outline" className="border-emerald-500/30 text-emerald-400">
+                                            {data.conversionRate}% conversão
+                                        </Badge>
+                                    </div>
+                                    <div className="grid grid-cols-4 gap-2 text-center">
+                                        <div className="p-2 rounded-lg bg-white/5">
+                                            <p className="text-lg font-semibold">{data.total}</p>
+                                            <p className="text-[10px] text-muted-foreground uppercase">Total</p>
+                                        </div>
+                                        <div className="p-2 rounded-lg bg-white/5">
+                                            <p className="text-lg font-semibold text-[#DECCA8]">{data.contacted}</p>
+                                            <p className="text-[10px] text-muted-foreground uppercase">Contatados</p>
+                                        </div>
+                                        <div className="p-2 rounded-lg bg-white/5">
+                                            <p className="text-lg font-semibold text-purple-400">{data.meeting}</p>
+                                            <p className="text-[10px] text-muted-foreground uppercase">Reuniões</p>
+                                        </div>
+                                        <div className="p-2 rounded-lg bg-white/5">
+                                            <p className="text-lg font-semibold text-emerald-400">{data.won}</p>
+                                            <p className="text-[10px] text-muted-foreground uppercase">Ganhos</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
+        </div>
+    );
+}
+

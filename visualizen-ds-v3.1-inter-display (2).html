@@ -1,0 +1,1942 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visualizen Design System v3.1 — Inter Display Edition</title>
+    <!-- Inter com Display (opsz) para headings grandes -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        /* ============================================
+           VISUALIZEN DESIGN SYSTEM v3.1
+           
+           Baseado em:
+           - Cartesia Sonic (Dark Theme)
+           - V7 Labs Agents (Light Theme)
+           
+           Fontes:
+           - Inter Display (headings)
+           - Inter (UI/corpo)
+           - JetBrains Mono (código/labels técnicos)
+        ============================================ */
+
+        :root {
+            /* ============================================
+               TYPOGRAPHY - INTER DISPLAY
+               
+               Inter com optical sizing (opsz) ativado
+               automaticamente otimiza para display em
+               tamanhos grandes
+            ============================================ */
+            --font-display: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            --font-mono: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
+
+            /* Font Sizes - Cartesia Style */
+            --text-xs: 11px;
+            --text-sm: 13px;      /* Body size from Cartesia */
+            --text-base: 14px;
+            --text-md: 15px;
+            --text-lg: 16px;
+            --text-xl: 18px;
+            --text-2xl: 24px;
+            --text-3xl: 32px;
+            --text-4xl: 48px;     /* H2 from Cartesia */
+            --text-5xl: 56px;
+            --text-6xl: 68px;     /* H1 from Cartesia */
+            --text-7xl: 80px;
+
+            /* Font Weights */
+            --weight-light: 300;
+            --weight-regular: 400;
+            --weight-medium: 500;
+            --weight-semibold: 600;
+            --weight-bold: 700;
+
+            /* Letter Spacing */
+            --tracking-tighter: -0.03em;
+            --tracking-tight: -0.02em;
+            --tracking-normal: 0;
+            --tracking-wide: 0.02em;
+            --tracking-wider: 0.05em;
+            --tracking-widest: 0.1em;
+
+            /* ============================================
+               DARK THEME (Default)
+               Baseado em Cartesia Sonic
+            ============================================ */
+            
+            /* Neutral Scale */
+            --neutral-0: #000000;
+            --neutral-1: #0D0D0D;
+            --neutral-2: #181818;    /* Cartesia background */
+            --neutral-3: #1C1C1C;
+            --neutral-4: #262626;
+            --neutral-5: #303030;
+            --neutral-6: #444444;
+            --neutral-7: #525252;
+            --neutral-8: #6B6B6B;
+            --neutral-9: #8A8A8A;
+            --neutral-10: #A8A8A8;
+            --neutral-11: #D4D4D4;
+            --neutral-12: #FFFFFF;
+
+            /* Semantic Backgrounds */
+            --bg-base: #181818;
+            --bg-subtle: #1C1C1C;
+            --bg-muted: #181818;
+            --bg-elevated: #222222;
+            --bg-hover: #2A2A2A;
+            --bg-active: #333333;
+
+            /* Semantic Foregrounds */
+            --fg-primary: #FFFFFF;
+            --fg-secondary: #D4D4D4;
+            --fg-muted: #8A8A8A;
+            --fg-subtle: #6B6B6B;
+            --fg-disabled: #444444;
+
+            /* Borders */
+            --border-subtle: rgba(255, 255, 255, 0.06);
+            --border-default: rgba(255, 255, 255, 0.10);
+            --border-strong: rgba(255, 255, 255, 0.16);
+            --border-focus: rgba(255, 255, 255, 0.24);
+
+            /* ============================================
+               ACCENT COLORS
+            ============================================ */
+            
+            /* Champagne (Brand) */
+            --champagne-7: #B09878;
+            --champagne-8: #C8AC8C;
+            --champagne-9: #DECCA8;
+            --champagne-10: #E8D8B8;
+            --champagne-11: #F2E8D4;
+
+            --accent: var(--champagne-9);
+            --accent-hover: var(--champagne-10);
+            --accent-muted: var(--champagne-7);
+            --accent-subtle: rgba(222, 204, 168, 0.12);
+            --gradient-accent: linear-gradient(135deg, #E8D8B8 0%, #C8AC8C 100%);
+
+            /* Green (Cartesia Style) */
+            --green-light: rgb(115, 186, 127);
+            --green-dark: rgb(9, 133, 69);
+            --green-vibrant: #22C55E;
+            --gradient-green: linear-gradient(90deg, rgb(9, 133, 69) 0%, rgb(115, 186, 127) 100%);
+
+            /* Blue (Cartesia link color) */
+            --blue-link: #44CCFF;
+            --blue-primary: #0099FF;
+
+            /* ============================================
+               SEMANTIC COLORS
+            ============================================ */
+            --success: #4ADE80;
+            --success-subtle: rgba(74, 222, 128, 0.12);
+            --warning: #FBBF24;
+            --warning-subtle: rgba(251, 191, 36, 0.12);
+            --error: #F43F5E;
+            --error-subtle: rgba(244, 63, 94, 0.12);
+            --info: var(--blue-link);
+            --info-subtle: rgba(68, 204, 255, 0.12);
+
+            /* ============================================
+               SPACING (base: 12px from Cartesia)
+            ============================================ */
+            --space-1: 4px;
+            --space-2: 8px;
+            --space-3: 12px;     /* Base from Cartesia */
+            --space-4: 16px;
+            --space-5: 20px;
+            --space-6: 24px;
+            --space-8: 32px;
+            --space-10: 40px;
+            --space-12: 48px;
+            --space-16: 64px;
+            --space-20: 80px;
+            --space-24: 96px;
+
+            /* ============================================
+               BORDER RADIUS
+            ============================================ */
+            --radius-none: 0px;
+            --radius-sm: 6px;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --radius-xl: 16px;
+            --radius-2xl: 24px;
+            --radius-full: 9999px;
+
+            /* ============================================
+               SHADOWS
+            ============================================ */
+            --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.3);
+            --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.3);
+            --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+            --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
+            --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.6);
+
+            /* ============================================
+               TRANSITIONS
+            ============================================ */
+            --duration-fast: 100ms;
+            --duration-normal: 150ms;
+            --duration-slow: 250ms;
+            --ease-default: cubic-bezier(0.4, 0, 0.2, 1);
+            --ease-out: cubic-bezier(0, 0, 0.2, 1);
+        }
+
+        /* ============================================
+           LIGHT THEME
+           Baseado em V7 Labs Agents
+        ============================================ */
+        [data-theme="light"] {
+            --neutral-0: #FFFFFF;
+            --neutral-1: #FAFAFA;
+            --neutral-2: #F7F6F5;
+            --neutral-3: #F2F0ED;
+            --neutral-4: #E8E6E3;
+            --neutral-5: #D9D7D4;
+            --neutral-6: #C4C2BF;
+            --neutral-7: #A8A6A3;
+            --neutral-8: #8A8886;
+            --neutral-9: #6B6968;
+            --neutral-10: #525150;
+            --neutral-11: #333332;
+            --neutral-12: #292929;
+
+            --bg-base: #F7F6F5;
+            --bg-subtle: #FAFAFA;
+            --bg-muted: #F2F0ED;
+            --bg-elevated: #FFFFFF;
+            --bg-hover: #E8E6E3;
+            --bg-active: #D9D7D4;
+
+            --fg-primary: #292929;
+            --fg-secondary: #525150;
+            --fg-muted: #6B6968;
+            --fg-subtle: #8A8886;
+            --fg-disabled: #C4C2BF;
+
+            --border-subtle: rgba(0, 0, 0, 0.04);
+            --border-default: rgba(0, 0, 0, 0.08);
+            --border-strong: rgba(0, 0, 0, 0.14);
+            --border-focus: rgba(0, 0, 0, 0.24);
+
+            --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
+            --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.06);
+            --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+            --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.10);
+            --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.12);
+
+            --accent-subtle: rgba(200, 172, 140, 0.15);
+        }
+
+        /* ============================================
+           V7 LABS MULTI-COLOR SYSTEM
+        ============================================ */
+        :root {
+            --color-orange: #FF683D;
+            --color-orange-burnt: #EC580A;
+            --color-green-v7: #16A34A;
+            --color-blue-v7: #2663EB;
+            --color-purple: #7C3AED;
+            --color-gold: #CE8C04;
+            --color-pink: #DB2777;
+            --color-teal: #0D9488;
+        }
+
+        /* ============================================
+           RESET & BASE
+        ============================================ */
+        *, *::before, *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            font-size: var(--text-sm);
+            line-height: 1.5;
+            color: var(--fg-primary);
+            background: var(--bg-base);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            transition: background-color var(--duration-slow) var(--ease-default),
+                        color var(--duration-slow) var(--ease-default);
+        }
+
+        /* ============================================
+           THEME TOGGLE
+        ============================================ */
+        .theme-toggle {
+            position: fixed;
+            top: var(--space-6);
+            right: var(--space-6);
+            z-index: 1000;
+            display: flex;
+            gap: 2px;
+            padding: 4px;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            border-radius: var(--radius-full);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .theme-btn {
+            padding: 10px 16px;
+            border-radius: var(--radius-full);
+            font-family: var(--font-sans);
+            font-size: var(--text-sm);
+            font-weight: var(--weight-medium);
+            border: none;
+            cursor: pointer;
+            transition: all var(--duration-normal) var(--ease-default);
+            background: transparent;
+            color: var(--fg-muted);
+        }
+
+        .theme-btn:hover {
+            color: var(--fg-primary);
+        }
+
+        .theme-btn.active {
+            background: var(--fg-primary);
+            color: var(--bg-base);
+        }
+
+        /* ============================================
+           LAYOUT
+        ============================================ */
+        .container {
+            max-width: 1168px;  /* Cartesia max-width */
+            margin: 0 auto;
+            padding: var(--space-8);
+        }
+
+        /* ============================================
+           HEADER
+        ============================================ */
+        .header {
+            text-align: center;
+            padding: var(--space-24) var(--space-8);
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: var(--space-16);
+        }
+
+        .header-overline {
+            font-family: var(--font-sans);
+            font-size: var(--text-sm);
+            font-weight: var(--weight-medium);
+            letter-spacing: var(--tracking-widest);
+            text-transform: uppercase;
+            color: var(--green-light);
+            margin-bottom: var(--space-6);
+        }
+
+        .header-title {
+            font-family: var(--font-display);
+            font-size: var(--text-6xl);
+            font-weight: var(--weight-regular);
+            letter-spacing: var(--tracking-tighter);
+            line-height: 1.05;
+            margin-bottom: var(--space-6);
+        }
+
+        .header-title span {
+            background: var(--gradient-accent);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header-subtitle {
+            font-family: var(--font-sans);
+            font-size: var(--text-xl);
+            font-weight: var(--weight-regular);
+            color: var(--fg-muted);
+            max-width: 600px;
+            margin: 0 auto var(--space-8);
+            line-height: 1.6;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: var(--space-3);
+            justify-content: center;
+        }
+
+        /* ============================================
+           SECTIONS
+        ============================================ */
+        .section {
+            margin-bottom: var(--space-24);
+            scroll-margin-top: 100px;
+        }
+
+        .section-header {
+            margin-bottom: var(--space-8);
+            padding-bottom: var(--space-6);
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .section-overline {
+            font-family: var(--font-sans);
+            font-size: 12px;
+            font-weight: var(--weight-light);
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--green-light);
+            margin-bottom: var(--space-3);
+        }
+
+        .section-title {
+            font-family: var(--font-display);
+            font-size: var(--text-4xl);
+            font-weight: var(--weight-regular);
+            letter-spacing: var(--tracking-tight);
+            margin-bottom: var(--space-3);
+        }
+
+        .section-desc {
+            font-size: var(--text-md);
+            color: var(--fg-muted);
+            max-width: 600px;
+            line-height: 1.6;
+        }
+
+        .subsection {
+            margin-bottom: var(--space-10);
+        }
+
+        .subsection-title {
+            font-family: var(--font-sans);
+            font-size: 12px;
+            font-weight: var(--weight-light);
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--fg-muted);
+            margin-bottom: var(--space-4);
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+        }
+
+        .subsection-title::before {
+            content: '[';
+            color: var(--fg-subtle);
+        }
+
+        .subsection-title::after {
+            content: ']';
+            color: var(--fg-subtle);
+        }
+
+        /* ============================================
+           TYPOGRAPHY DEMO
+        ============================================ */
+        .type-scale {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-6);
+        }
+
+        .type-row {
+            display: grid;
+            grid-template-columns: 120px 100px 1fr;
+            align-items: baseline;
+            gap: var(--space-4);
+            padding: var(--space-4) 0;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .type-label {
+            font-family: var(--font-sans);
+            font-size: 11px;
+            font-weight: var(--weight-light);
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--fg-subtle);
+        }
+
+        .type-size {
+            font-family: var(--font-sans);
+            font-size: 11px;
+            font-weight: var(--weight-light);
+            letter-spacing: 0.05em;
+            color: var(--fg-muted);
+        }
+
+        /* Display styles - Inter Display */
+        .type-display-1 {
+            font-family: var(--font-display);
+            font-size: var(--text-6xl);
+            font-weight: var(--weight-regular);
+            letter-spacing: var(--tracking-tighter);
+            line-height: 1.05;
+        }
+
+        .type-display-2 {
+            font-family: var(--font-display);
+            font-size: var(--text-4xl);
+            font-weight: var(--weight-regular);
+            letter-spacing: var(--tracking-tight);
+            line-height: 1.1;
+        }
+
+        .type-display-3 {
+            font-family: var(--font-display);
+            font-size: var(--text-3xl);
+            font-weight: var(--weight-regular);
+            letter-spacing: var(--tracking-tight);
+            line-height: 1.15;
+        }
+
+        .type-heading {
+            font-family: var(--font-sans);
+            font-size: var(--text-2xl);
+            font-weight: var(--weight-semibold);
+            letter-spacing: var(--tracking-tight);
+        }
+
+        .type-subheading {
+            font-family: var(--font-sans);
+            font-size: var(--text-lg);
+            font-weight: var(--weight-medium);
+        }
+
+        .type-body {
+            font-family: var(--font-sans);
+            font-size: var(--text-sm);
+            font-weight: var(--weight-regular);
+            color: var(--fg-secondary);
+        }
+
+        .type-caption {
+            font-family: var(--font-sans);
+            font-size: var(--text-xs);
+            color: var(--fg-muted);
+        }
+
+        .type-overline {
+            font-family: var(--font-sans);
+            font-size: var(--text-sm);
+            font-weight: var(--weight-medium);
+            letter-spacing: var(--tracking-widest);
+            text-transform: uppercase;
+            color: var(--green-light);
+        }
+
+        /* Label técnico - Inter Light (não mono) */
+        .type-label-tech {
+            font-family: var(--font-sans);
+            font-size: 12px;
+            font-weight: var(--weight-light);
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--fg-subtle);
+        }
+
+        /* ============================================
+           COLOR PALETTE
+        ============================================ */
+        .palette-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 3px;
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            margin-bottom: var(--space-4);
+        }
+
+        .palette-swatch {
+            aspect-ratio: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+            padding: var(--space-1);
+            font-family: var(--font-sans);
+            font-size: 9px;
+            font-weight: var(--weight-light);
+            letter-spacing: 0.05em;
+            cursor: pointer;
+            transition: transform var(--duration-normal) var(--ease-out);
+            position: relative;
+        }
+
+        .palette-swatch:hover {
+            transform: scale(1.15);
+            z-index: 10;
+            border-radius: var(--radius-sm);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .color-chips {
+            display: flex;
+            gap: var(--space-3);
+            flex-wrap: wrap;
+        }
+
+        .color-chip {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            padding: var(--space-3) var(--space-4);
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+        }
+
+        .color-chip-swatch {
+            width: 32px;
+            height: 32px;
+            border-radius: var(--radius-md);
+        }
+
+        .color-chip-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .color-chip-name {
+            font-size: var(--text-sm);
+            font-weight: var(--weight-medium);
+        }
+
+        .color-chip-hex {
+            font-family: var(--font-sans);
+            font-size: 11px;
+            font-weight: var(--weight-light);
+            letter-spacing: 0.05em;
+            color: var(--fg-muted);
+        }
+
+        /* ============================================
+           BUTTONS - CARTESIA STYLE
+           Pill shape, white/black contrast
+        ============================================ */
+        .buttons-row {
+            display: flex;
+            gap: var(--space-3);
+            flex-wrap: wrap;
+            align-items: center;
+            margin-bottom: var(--space-6);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--space-2);
+            padding: 14px 28px;
+            min-height: 52px;
+            border-radius: var(--radius-full);
+            font-family: var(--font-sans);
+            font-size: var(--text-sm);
+            font-weight: var(--weight-medium);
+            cursor: pointer;
+            transition: all var(--duration-normal) var(--ease-default);
+            border: none;
+            text-decoration: none;
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        /* PRIMARY: White pill (Cartesia "Try for free") */
+        .btn-primary {
+            background: var(--fg-primary);
+            color: var(--bg-base);
+        }
+
+        .btn-primary:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        /* SECONDARY: Dark outline (Cartesia "Contact Sales") */
+        .btn-secondary {
+            background: transparent;
+            border: 1px solid var(--border-strong);
+            color: var(--fg-primary);
+        }
+
+        .btn-secondary:hover {
+            background: var(--border-subtle);
+            border-color: var(--fg-muted);
+        }
+
+        /* GHOST */
+        .btn-ghost {
+            background: transparent;
+            color: var(--fg-muted);
+        }
+
+        .btn-ghost:hover {
+            background: var(--border-subtle);
+            color: var(--fg-primary);
+        }
+
+        /* ACCENT: Champagne gradient */
+        .btn-accent {
+            background: var(--gradient-accent);
+            color: #1A1814;
+        }
+
+        .btn-accent:hover {
+            filter: brightness(1.08);
+            transform: translateY(-1px);
+        }
+
+        /* GREEN: Cartesia banner style */
+        .btn-green {
+            background: var(--gradient-green);
+            color: white;
+        }
+
+        .btn-green:hover {
+            filter: brightness(1.1);
+        }
+
+        /* DANGER */
+        .btn-danger {
+            background: transparent;
+            border: 1px solid rgba(244, 63, 94, 0.3);
+            color: var(--error);
+        }
+
+        .btn-danger:hover {
+            background: var(--error-subtle);
+        }
+
+        /* Sizes */
+        .btn-sm {
+            padding: 10px 20px;
+            min-height: 40px;
+            font-size: var(--text-xs);
+        }
+
+        .btn-lg {
+            padding: 18px 36px;
+            min-height: 60px;
+            font-size: var(--text-md);
+        }
+
+        /* Icon button (circular) */
+        .btn-icon {
+            width: 52px;
+            height: 52px;
+            padding: 0;
+            border-radius: var(--radius-full);
+        }
+
+        .btn-icon.btn-sm {
+            width: 40px;
+            height: 40px;
+        }
+
+        .btn-icon svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        /* ============================================
+           INPUTS
+        ============================================ */
+        .inputs-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: var(--space-6);
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-2);
+        }
+
+        .input-label {
+            font-size: var(--text-sm);
+            font-weight: var(--weight-medium);
+            color: var(--fg-secondary);
+        }
+
+        .input {
+            width: 100%;
+            padding: 14px 18px;
+            min-height: 52px;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            border-radius: var(--radius-full);
+            font-family: var(--font-sans);
+            font-size: var(--text-sm);
+            color: var(--fg-primary);
+            transition: all var(--duration-normal) var(--ease-default);
+        }
+
+        .input::placeholder {
+            color: var(--fg-subtle);
+        }
+
+        .input:hover {
+            border-color: var(--border-strong);
+        }
+
+        .input:focus {
+            outline: none;
+            background: var(--bg-muted);
+            border-color: var(--border-focus);
+        }
+
+        .input-hint {
+            font-size: var(--text-xs);
+            color: var(--fg-subtle);
+            padding-left: var(--space-4);
+        }
+
+        /* ============================================
+           BADGES
+        ============================================ */
+        .badges-row {
+            display: flex;
+            gap: var(--space-3);
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-1);
+            padding: 6px 14px;
+            border-radius: var(--radius-full);
+            font-family: var(--font-sans);
+            font-size: 11px;
+            font-weight: var(--weight-light);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .badge-default {
+            background: var(--border-default);
+            color: var(--fg-muted);
+        }
+
+        .badge-accent {
+            background: var(--accent-subtle);
+            color: var(--accent);
+        }
+
+        .badge-green {
+            background: rgba(115, 186, 127, 0.15);
+            color: var(--green-light);
+        }
+
+        .badge-success {
+            background: var(--success-subtle);
+            color: var(--success);
+        }
+
+        .badge-warning {
+            background: var(--warning-subtle);
+            color: var(--warning);
+        }
+
+        .badge-error {
+            background: var(--error-subtle);
+            color: var(--error);
+        }
+
+        /* V7 Style colored badges */
+        .badge-orange { background: rgba(255, 104, 61, 0.12); color: var(--color-orange); }
+        .badge-blue { background: rgba(38, 99, 235, 0.12); color: var(--color-blue-v7); }
+        .badge-purple { background: rgba(124, 58, 237, 0.12); color: var(--color-purple); }
+        .badge-pink { background: rgba(219, 39, 119, 0.12); color: var(--color-pink); }
+
+        /* ============================================
+           CARDS
+        ============================================ */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: var(--space-5);
+        }
+
+        .card {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-xl);
+            overflow: hidden;
+            transition: all var(--duration-slow) var(--ease-default);
+        }
+
+        .card-interactive {
+            cursor: pointer;
+        }
+
+        .card-interactive:hover {
+            border-color: var(--border-default);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .card-thumb {
+            height: 160px;
+            background: var(--bg-muted);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .card-thumb svg {
+            width: 40px;
+            height: 40px;
+            color: var(--fg-subtle);
+            opacity: 0.4;
+        }
+
+        .card-badge {
+            position: absolute;
+            top: var(--space-4);
+            right: var(--space-4);
+        }
+
+        .card-content {
+            padding: var(--space-5);
+        }
+
+        .card-title {
+            font-family: var(--font-sans);
+            font-size: var(--text-md);
+            font-weight: var(--weight-semibold);
+            margin-bottom: var(--space-1);
+        }
+
+        .card-meta {
+            font-family: var(--font-sans);
+            font-size: 11px;
+            font-weight: var(--weight-light);
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--fg-muted);
+        }
+
+        .card-create {
+            background: transparent;
+            border: 1.5px dashed var(--border-default);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 240px;
+            cursor: pointer;
+        }
+
+        .card-create:hover {
+            border-color: var(--border-strong);
+            background: var(--border-subtle);
+        }
+
+        .card-create-icon {
+            width: 56px;
+            height: 56px;
+            background: var(--border-default);
+            border-radius: var(--radius-xl);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: var(--space-4);
+        }
+
+        .card-create-icon svg {
+            width: 24px;
+            height: 24px;
+            color: var(--fg-muted);
+        }
+
+        .card-create-text {
+            font-size: var(--text-sm);
+            font-weight: var(--weight-medium);
+            color: var(--fg-muted);
+        }
+
+        /* ============================================
+           NAVIGATION
+        ============================================ */
+        .nav-sidebar {
+            width: 260px;
+            background: var(--bg-muted);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-xl);
+            padding: var(--space-6) var(--space-5);
+        }
+
+        .nav-logo {
+            font-family: var(--font-sans);
+            font-size: var(--text-sm);
+            font-weight: var(--weight-medium);
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: var(--fg-muted);
+            margin-bottom: var(--space-8);
+            padding-left: var(--space-3);
+        }
+
+        .nav-logo span {
+            font-weight: var(--weight-bold);
+            background: var(--gradient-accent);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-items {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-1);
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            padding: 14px 16px;
+            border-radius: var(--radius-lg);
+            font-size: var(--text-sm);
+            font-weight: var(--weight-medium);
+            color: var(--fg-muted);
+            cursor: pointer;
+            transition: all var(--duration-normal) var(--ease-default);
+        }
+
+        .nav-item:hover {
+            background: var(--border-subtle);
+            color: var(--fg-secondary);
+        }
+
+        .nav-item.active {
+            background: var(--bg-elevated);
+            color: var(--fg-primary);
+        }
+
+        .nav-icon {
+            width: 20px;
+            height: 20px;
+            opacity: 0.5;
+        }
+
+        .nav-item:hover .nav-icon {
+            opacity: 0.7;
+        }
+
+        .nav-item.active .nav-icon {
+            color: var(--accent);
+            opacity: 1;
+        }
+
+        /* ============================================
+           TABS
+        ============================================ */
+        .tabs {
+            display: flex;
+            gap: 2px;
+            padding: 4px;
+            background: var(--border-subtle);
+            border-radius: var(--radius-full);
+            width: fit-content;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            border-radius: var(--radius-full);
+            font-size: var(--text-sm);
+            font-weight: var(--weight-medium);
+            color: var(--fg-muted);
+            cursor: pointer;
+            transition: all var(--duration-normal) var(--ease-default);
+            border: none;
+            background: transparent;
+        }
+
+        .tab:hover {
+            color: var(--fg-secondary);
+        }
+
+        .tab.active {
+            background: var(--bg-elevated);
+            color: var(--fg-primary);
+            box-shadow: var(--shadow-sm);
+        }
+
+        /* ============================================
+           DASHBOARD PREVIEW
+        ============================================ */
+        .dashboard-preview {
+            background: var(--bg-subtle);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-2xl);
+            overflow: hidden;
+            display: flex;
+            min-height: 550px;
+        }
+
+        .dash-sidebar {
+            width: 260px;
+            background: var(--bg-muted);
+            border-right: 1px solid var(--border-subtle);
+            padding: var(--space-6) var(--space-5);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .dash-main {
+            flex: 1;
+            padding: var(--space-8);
+            overflow-y: auto;
+        }
+
+        .dash-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: var(--space-8);
+        }
+
+        .dash-title {
+            font-family: var(--font-display);
+            font-size: var(--text-3xl);
+            font-weight: var(--weight-regular);
+            letter-spacing: var(--tracking-tight);
+        }
+
+        .dash-tabs {
+            margin-bottom: var(--space-6);
+        }
+
+        .dash-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: var(--space-5);
+        }
+
+        /* ============================================
+           LANDING PREVIEW - CARTESIA STYLE
+        ============================================ */
+        .landing-preview {
+            background: var(--bg-base);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-2xl);
+            overflow: hidden;
+        }
+
+        .lp-banner {
+            padding: var(--space-3) var(--space-4);
+            background: var(--gradient-green);
+            text-align: center;
+            font-size: var(--text-sm);
+            font-weight: var(--weight-medium);
+            color: white;
+        }
+
+        .lp-nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: var(--space-4) var(--space-8);
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .lp-nav-links {
+            display: flex;
+            gap: var(--space-8);
+        }
+
+        .lp-nav-link {
+            font-size: var(--text-sm);
+            font-weight: var(--weight-medium);
+            color: var(--fg-muted);
+            text-decoration: none;
+            transition: color var(--duration-normal) var(--ease-default);
+        }
+
+        .lp-nav-link:hover {
+            color: var(--fg-primary);
+        }
+
+        .lp-nav-actions {
+            display: flex;
+            gap: var(--space-3);
+        }
+
+        .lp-hero {
+            text-align: center;
+            padding: var(--space-24) var(--space-8);
+        }
+
+        .lp-hero-overline {
+            font-family: var(--font-sans);
+            font-size: var(--text-sm);
+            font-weight: var(--weight-medium);
+            letter-spacing: var(--tracking-widest);
+            text-transform: uppercase;
+            color: var(--green-light);
+            margin-bottom: var(--space-6);
+        }
+
+        .lp-hero-title {
+            font-family: var(--font-display);
+            font-size: var(--text-6xl);
+            font-weight: var(--weight-regular);
+            letter-spacing: var(--tracking-tighter);
+            line-height: 1.05;
+            margin-bottom: var(--space-6);
+        }
+
+        .lp-hero-title span {
+            background: var(--gradient-accent);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .lp-hero-subtitle {
+            font-size: var(--text-xl);
+            color: var(--fg-muted);
+            max-width: 540px;
+            margin: 0 auto var(--space-10);
+            line-height: 1.6;
+        }
+
+        .lp-hero-actions {
+            display: flex;
+            gap: var(--space-4);
+            justify-content: center;
+        }
+
+        /* ============================================
+           DEMO SECTION
+        ============================================ */
+        .demo-box {
+            background: var(--bg-muted);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-xl);
+            padding: var(--space-8);
+            margin-top: var(--space-6);
+        }
+
+        .demo-label {
+            font-family: var(--font-sans);
+            font-size: 12px;
+            font-weight: var(--weight-light);
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--fg-subtle);
+            margin-bottom: var(--space-4);
+        }
+
+        .demo-text {
+            font-family: var(--font-display);
+            font-size: var(--text-4xl);
+            font-weight: var(--weight-regular);
+            letter-spacing: var(--tracking-tight);
+            line-height: 1.2;
+        }
+
+        .demo-text .highlight {
+            color: var(--green-light);
+        }
+
+        .demo-text .muted {
+            color: var(--fg-subtle);
+        }
+
+        /* ============================================
+           COMPARISON TABLE
+        ============================================ */
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: var(--space-6);
+        }
+
+        .comparison-table th,
+        .comparison-table td {
+            padding: var(--space-4);
+            text-align: left;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .comparison-table th {
+            font-family: var(--font-sans);
+            font-size: 11px;
+            font-weight: var(--weight-light);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--fg-muted);
+        }
+
+        .comparison-table td {
+            font-size: var(--text-sm);
+        }
+
+        .comparison-table code {
+            font-family: var(--font-sans);
+            font-size: 11px;
+            font-weight: var(--weight-light);
+            letter-spacing: 0.02em;
+            background: var(--border-subtle);
+            padding: 2px 8px;
+            border-radius: var(--radius-sm);
+        }
+
+        /* ============================================
+           RESPONSIVE
+        ============================================ */
+        @media (max-width: 900px) {
+            .palette-grid {
+                grid-template-columns: repeat(6, 1fr);
+            }
+            .dash-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+            .dashboard-preview {
+                flex-direction: column;
+            }
+            .dash-sidebar {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid var(--border-subtle);
+            }
+            .header-title,
+            .lp-hero-title {
+                font-size: var(--text-4xl);
+            }
+            .type-row {
+                grid-template-columns: 1fr;
+                gap: var(--space-2);
+            }
+        }
+
+        /* ============================================
+           ANIMATIONS
+        ============================================ */
+        @keyframes fade-in-up {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .section {
+            animation: fade-in-up 0.4s ease-out;
+        }
+    </style>
+</head>
+<body data-theme="dark">
+    <!-- Theme Toggle -->
+    <div class="theme-toggle">
+        <button class="theme-btn active" data-theme="dark">Dark</button>
+        <button class="theme-btn" data-theme="light">Light</button>
+    </div>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="header-overline">VISUALIZEN DESIGN SYSTEM</div>
+        <h1 class="header-title">
+            Tours virtuais como você<br>
+            nunca <span>experimentou</span>
+        </h1>
+        <p class="header-subtitle">
+            Sistema de design completo com Inter Display, paleta Champagne e dual theme baseado em Cartesia e V7 Labs.
+        </p>
+        <div class="header-actions">
+            <button class="btn btn-primary">Começar Grátis</button>
+            <button class="btn btn-secondary">Ver Demo</button>
+        </div>
+    </header>
+
+    <div class="container">
+
+        <!-- TYPOGRAPHY -->
+        <section class="section">
+            <div class="section-header">
+                <div class="section-overline">[01] TIPOGRAFIA</div>
+                <h2 class="section-title">Inter Display + Inter</h2>
+                <p class="section-desc">
+                    Inter com optical sizing (opsz) para otimização automática em tamanhos grandes. 
+                    JetBrains Mono para código e labels técnicos.
+                </p>
+            </div>
+
+            <div class="type-scale">
+                <div class="type-row">
+                    <span class="type-label">display-1</span>
+                    <span class="type-size">68px / Regular</span>
+                    <span class="type-display-1">Arquitetura</span>
+                </div>
+                <div class="type-row">
+                    <span class="type-label">display-2</span>
+                    <span class="type-size">48px / Regular</span>
+                    <span class="type-display-2">Elegância Digital</span>
+                </div>
+                <div class="type-row">
+                    <span class="type-label">display-3</span>
+                    <span class="type-size">32px / Regular</span>
+                    <span class="type-display-3">Seus Projetos</span>
+                </div>
+                <div class="type-row">
+                    <span class="type-label">heading</span>
+                    <span class="type-size">24px / Semibold</span>
+                    <span class="type-heading">Título de Seção</span>
+                </div>
+                <div class="type-row">
+                    <span class="type-label">subheading</span>
+                    <span class="type-size">16px / Medium</span>
+                    <span class="type-subheading">Subtítulo importante</span>
+                </div>
+                <div class="type-row">
+                    <span class="type-label">body</span>
+                    <span class="type-size">13px / Regular</span>
+                    <span class="type-body">Texto principal do corpo da aplicação</span>
+                </div>
+                <div class="type-row">
+                    <span class="type-label">caption</span>
+                    <span class="type-size">11px / Regular</span>
+                    <span class="type-caption">Labels pequenos e metadados</span>
+                </div>
+                <div class="type-row">
+                    <span class="type-label">overline</span>
+                    <span class="type-size">13px / Medium</span>
+                    <span class="type-overline">MEET SONIC-3 STYLE</span>
+                </div>
+                <div class="type-row">
+                    <span class="type-label">label-tech</span>
+                    <span class="type-size">12px / Light</span>
+                    <span class="type-label-tech">ACCURATELY PRONOUNCED</span>
+                </div>
+            </div>
+
+            <!-- Demo Box -->
+            <div class="demo-box">
+                <div class="demo-label">[02] ACCURATELY PROUNOUNCED</div>
+                <div class="demo-text">
+                    <span class="highlight">Should I read again what</span> <span class="muted">I read yesterday?</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- COLORS -->
+        <section class="section">
+            <div class="section-header">
+                <div class="section-overline">[02] CORES</div>
+                <h2 class="section-title">Sistema de Cores</h2>
+                <p class="section-desc">
+                    Background #181818 (Cartesia). Accent Champagne + Verde para CTAs.
+                </p>
+            </div>
+
+            <div class="subsection">
+                <div class="subsection-title">Neutral Scale</div>
+                <div class="palette-grid">
+                    <div class="palette-swatch" style="background: var(--neutral-0); color: var(--neutral-8)">0</div>
+                    <div class="palette-swatch" style="background: var(--neutral-1); color: var(--neutral-8)">1</div>
+                    <div class="palette-swatch" style="background: var(--neutral-2); color: var(--neutral-8)">2</div>
+                    <div class="palette-swatch" style="background: var(--neutral-3); color: var(--neutral-9)">3</div>
+                    <div class="palette-swatch" style="background: var(--neutral-4); color: var(--neutral-9)">4</div>
+                    <div class="palette-swatch" style="background: var(--neutral-5); color: var(--neutral-10)">5</div>
+                    <div class="palette-swatch" style="background: var(--neutral-6); color: var(--neutral-10)">6</div>
+                    <div class="palette-swatch" style="background: var(--neutral-7); color: var(--neutral-11)">7</div>
+                    <div class="palette-swatch" style="background: var(--neutral-8); color: var(--neutral-12)">8</div>
+                    <div class="palette-swatch" style="background: var(--neutral-9); color: var(--neutral-12)">9</div>
+                    <div class="palette-swatch" style="background: var(--neutral-10); color: var(--neutral-1)">10</div>
+                    <div class="palette-swatch" style="background: var(--neutral-11); color: var(--neutral-1)">11</div>
+                </div>
+            </div>
+
+            <div class="subsection">
+                <div class="subsection-title">Accent Colors</div>
+                <div class="color-chips">
+                    <div class="color-chip">
+                        <div class="color-chip-swatch" style="background: var(--accent)"></div>
+                        <div class="color-chip-info">
+                            <span class="color-chip-name">Champagne</span>
+                            <span class="color-chip-hex">#DECCA8</span>
+                        </div>
+                    </div>
+                    <div class="color-chip">
+                        <div class="color-chip-swatch" style="background: var(--gradient-green)"></div>
+                        <div class="color-chip-info">
+                            <span class="color-chip-name">Green CTA</span>
+                            <span class="color-chip-hex">#098545 → #73BA7F</span>
+                        </div>
+                    </div>
+                    <div class="color-chip">
+                        <div class="color-chip-swatch" style="background: var(--blue-link)"></div>
+                        <div class="color-chip-info">
+                            <span class="color-chip-name">Link Blue</span>
+                            <span class="color-chip-hex">#44CCFF</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- BUTTONS -->
+        <section class="section">
+            <div class="section-header">
+                <div class="section-overline">[03] BOTÕES</div>
+                <h2 class="section-title">Buttons</h2>
+                <p class="section-desc">
+                    Pill shape (full radius). Primary branco, Secondary outline. Estilo Cartesia.
+                </p>
+            </div>
+
+            <div class="subsection">
+                <div class="subsection-title">Variantes</div>
+                <div class="buttons-row">
+                    <button class="btn btn-primary">Try for free</button>
+                    <button class="btn btn-secondary">Contact Sales</button>
+                    <button class="btn btn-ghost">Ghost</button>
+                </div>
+            </div>
+
+            <div class="subsection">
+                <div class="subsection-title">Accent CTAs</div>
+                <div class="buttons-row">
+                    <button class="btn btn-accent">Champagne CTA</button>
+                    <button class="btn btn-green">Green CTA</button>
+                </div>
+            </div>
+
+            <div class="subsection">
+                <div class="subsection-title">Tamanhos</div>
+                <div class="buttons-row">
+                    <button class="btn btn-primary btn-sm">Small</button>
+                    <button class="btn btn-primary">Medium</button>
+                    <button class="btn btn-primary btn-lg">Large</button>
+                </div>
+            </div>
+
+            <div class="subsection">
+                <div class="subsection-title">Icon Buttons</div>
+                <div class="buttons-row">
+                    <button class="btn btn-icon btn-primary">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="15 18 9 12 15 6"/>
+                        </svg>
+                    </button>
+                    <button class="btn btn-icon btn-primary">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="9 18 15 12 9 6"/>
+                        </svg>
+                    </button>
+                    <button class="btn btn-icon btn-secondary">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="5" x2="12" y2="19"/>
+                            <line x1="5" y1="12" x2="19" y2="12"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- INPUTS -->
+        <section class="section">
+            <div class="section-header">
+                <div class="section-overline">[04] INPUTS</div>
+                <h2 class="section-title">Form Fields</h2>
+                <p class="section-desc">
+                    Inputs pill com padding generoso.
+                </p>
+            </div>
+
+            <div class="inputs-grid">
+                <div class="input-group">
+                    <label class="input-label">Nome do projeto</label>
+                    <input type="text" class="input" placeholder="Digite aqui...">
+                    <span class="input-hint">Use um nome descritivo</span>
+                </div>
+                <div class="input-group">
+                    <label class="input-label">Email</label>
+                    <input type="email" class="input" placeholder="seu@email.com">
+                </div>
+            </div>
+        </section>
+
+        <!-- BADGES -->
+        <section class="section">
+            <div class="section-header">
+                <div class="section-overline">[05] BADGES</div>
+                <h2 class="section-title">Status & Tags</h2>
+                <p class="section-desc">
+                    Badges pill com font mono. Estilo técnico.
+                </p>
+            </div>
+
+            <div class="subsection">
+                <div class="subsection-title">Status</div>
+                <div class="badges-row">
+                    <span class="badge badge-default">RASCUNHO</span>
+                    <span class="badge badge-accent">PUBLICADO</span>
+                    <span class="badge badge-green">NOVO</span>
+                    <span class="badge badge-success">ATIVO</span>
+                    <span class="badge badge-error">ERRO</span>
+                </div>
+            </div>
+
+            <div class="subsection">
+                <div class="subsection-title">V7 Style Categories</div>
+                <div class="badges-row">
+                    <span class="badge badge-orange">FINANCE</span>
+                    <span class="badge badge-blue">REAL ESTATE</span>
+                    <span class="badge badge-purple">LEGAL</span>
+                    <span class="badge badge-pink">ANALYTICS</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- CARDS -->
+        <section class="section">
+            <div class="section-header">
+                <div class="section-overline">[06] CARDS</div>
+                <h2 class="section-title">Project Cards</h2>
+                <p class="section-desc">
+                    Cards com thumbnail, badge e metadata.
+                </p>
+            </div>
+
+            <div class="cards-grid">
+                <div class="card card-interactive">
+                    <div class="card-thumb">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <rect x="3" y="3" width="18" height="18" rx="2"/>
+                            <circle cx="8.5" cy="8.5" r="1.5"/>
+                            <path d="M21 15l-5-5L5 21"/>
+                        </svg>
+                        <span class="badge badge-default card-badge">RASCUNHO</span>
+                    </div>
+                    <div class="card-content">
+                        <div class="card-title">Sem título</div>
+                        <div class="card-meta">ATUALIZADO HÁ 2 DIAS</div>
+                    </div>
+                </div>
+
+                <div class="card card-interactive">
+                    <div class="card-thumb" style="background: linear-gradient(135deg, var(--neutral-4) 0%, var(--neutral-3) 100%)">
+                        <span class="badge badge-accent card-badge">PUBLICADO</span>
+                    </div>
+                    <div class="card-content">
+                        <div class="card-title">Aurun Residence</div>
+                        <div class="card-meta">ATUALIZADO ONTEM</div>
+                    </div>
+                </div>
+
+                <div class="card card-create">
+                    <div class="card-create-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="5" x2="12" y2="19"/>
+                            <line x1="5" y1="12" x2="19" y2="12"/>
+                        </svg>
+                    </div>
+                    <span class="card-create-text">Criar Projeto</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- NAVIGATION -->
+        <section class="section">
+            <div class="section-header">
+                <div class="section-overline">[07] NAVEGAÇÃO</div>
+                <h2 class="section-title">Sidebar & Tabs</h2>
+                <p class="section-desc">
+                    Sidebar com logo e navegação. Tabs pill style.
+                </p>
+            </div>
+
+            <div style="display: flex; gap: var(--space-8); flex-wrap: wrap; align-items: flex-start;">
+                <div class="nav-sidebar">
+                    <div class="nav-logo">VISUALI<span>ZEN</span></div>
+                    <div class="nav-items">
+                        <div class="nav-item active">
+                            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="3" width="7" height="7"/>
+                                <rect x="14" y="3" width="7" height="7"/>
+                                <rect x="3" y="14" width="7" height="7"/>
+                                <rect x="14" y="14" width="7" height="7"/>
+                            </svg>
+                            Meus Projetos
+                        </div>
+                        <div class="nav-item">
+                            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="3"/>
+                                <path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2"/>
+                            </svg>
+                            Configurações
+                        </div>
+                        <div class="nav-item">
+                            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"/>
+                                <path d="M12 16v-4m0-4h.01"/>
+                            </svg>
+                            Ajuda
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="subsection-title" style="margin-bottom: var(--space-4);">Tabs</div>
+                    <div class="tabs">
+                        <button class="tab active">Todos</button>
+                        <button class="tab">Publicados</button>
+                        <button class="tab">Rascunhos</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- DASHBOARD PREVIEW -->
+        <section class="section">
+            <div class="section-header">
+                <div class="section-overline">[08] DASHBOARD</div>
+                <h2 class="section-title">Dashboard Preview</h2>
+                <p class="section-desc">
+                    Layout completo com sidebar e área de conteúdo.
+                </p>
+            </div>
+
+            <div class="dashboard-preview">
+                <div class="dash-sidebar">
+                    <div class="nav-logo">VISUALI<span>ZEN</span></div>
+                    <div class="nav-items">
+                        <div class="nav-item active">
+                            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="3" width="7" height="7"/>
+                                <rect x="14" y="3" width="7" height="7"/>
+                                <rect x="3" y="14" width="7" height="7"/>
+                                <rect x="14" y="14" width="7" height="7"/>
+                            </svg>
+                            Projetos
+                        </div>
+                        <div class="nav-item">
+                            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="3"/>
+                                <path d="M12 1v2m0 18v2"/>
+                            </svg>
+                            Configurações
+                        </div>
+                    </div>
+                </div>
+                <div class="dash-main">
+                    <div class="dash-header">
+                        <h2 class="dash-title">Seus Projetos</h2>
+                        <button class="btn btn-primary">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                <line x1="12" y1="5" x2="12" y2="19"/>
+                                <line x1="5" y1="12" x2="19" y2="12"/>
+                            </svg>
+                            Novo Projeto
+                        </button>
+                    </div>
+                    <div class="tabs dash-tabs">
+                        <button class="tab active">Todos</button>
+                        <button class="tab">Lixeira</button>
+                    </div>
+                    <div class="dash-grid">
+                        <div class="card card-interactive">
+                            <div class="card-thumb">
+                                <span class="badge badge-default card-badge">RASCUNHO</span>
+                            </div>
+                            <div class="card-content">
+                                <div class="card-title">Sem título</div>
+                                <div class="card-meta">23/12/2025</div>
+                            </div>
+                        </div>
+                        <div class="card card-interactive">
+                            <div class="card-thumb" style="background: linear-gradient(135deg, var(--neutral-4) 0%, var(--neutral-3) 100%)">
+                                <span class="badge badge-accent card-badge">PUBLICADO</span>
+                            </div>
+                            <div class="card-content">
+                                <div class="card-title">Aurun Residence</div>
+                                <div class="card-meta">30/11/2025</div>
+                            </div>
+                        </div>
+                        <div class="card card-create">
+                            <div class="card-create-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="12" y1="5" x2="12" y2="19"/>
+                                    <line x1="5" y1="12" x2="19" y2="12"/>
+                                </svg>
+                            </div>
+                            <span class="card-create-text">Criar Projeto</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- LANDING PREVIEW -->
+        <section class="section">
+            <div class="section-header">
+                <div class="section-overline">[09] LANDING PAGE</div>
+                <h2 class="section-title">Landing Preview</h2>
+                <p class="section-desc">
+                    Estilo Cartesia com banner verde, botões pill e hero Inter Display.
+                </p>
+            </div>
+
+            <div class="landing-preview">
+                <div class="lp-banner">
+                    ✨ Novo: Tour 360° com IA — Conheça agora
+                </div>
+                <nav class="lp-nav">
+                    <div class="nav-logo">VISUALI<span>ZEN</span></div>
+                    <div class="lp-nav-links">
+                        <a href="#" class="lp-nav-link">Benefícios</a>
+                        <a href="#" class="lp-nav-link">Demo</a>
+                        <a href="#" class="lp-nav-link">Preços</a>
+                    </div>
+                    <div class="lp-nav-actions">
+                        <button class="btn btn-ghost btn-sm">Entrar</button>
+                        <button class="btn btn-primary btn-sm">Começar Grátis</button>
+                    </div>
+                </nav>
+
+                <div class="lp-hero">
+                    <div class="lp-hero-overline">PLATAFORMA PARA CONSTRUTORAS</div>
+                    <h1 class="lp-hero-title">
+                        Tours virtuais como<br>
+                        você nunca <span>experimentou</span>
+                    </h1>
+                    <p class="lp-hero-subtitle">
+                        Apresente seus empreendimentos com experiências interativas que encantam e convertem.
+                    </p>
+                    <div class="lp-hero-actions">
+                        <button class="btn btn-primary btn-lg">Começar Agora</button>
+                        <button class="btn btn-secondary btn-lg">Ver Demo</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- COMPARISON -->
+        <section class="section">
+            <div class="section-header">
+                <div class="section-overline">[10] REFERÊNCIA</div>
+                <h2 class="section-title">Tokens Principais</h2>
+                <p class="section-desc">
+                    Referência rápida dos valores do Design System.
+                </p>
+            </div>
+
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Token</th>
+                        <th>Dark Theme</th>
+                        <th>Light Theme</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Background</td>
+                        <td><code>#181818</code></td>
+                        <td><code>#F7F6F5</code></td>
+                    </tr>
+                    <tr>
+                        <td>Foreground</td>
+                        <td><code>#FFFFFF</code></td>
+                        <td><code>#292929</code></td>
+                    </tr>
+                    <tr>
+                        <td>Font Display</td>
+                        <td colspan="2"><code>Inter Display (opsz)</code></td>
+                    </tr>
+                    <tr>
+                        <td>Font Body</td>
+                        <td colspan="2"><code>Inter 13px</code></td>
+                    </tr>
+                    <tr>
+                        <td>Font Mono</td>
+                        <td colspan="2"><code>JetBrains Mono</code></td>
+                    </tr>
+                    <tr>
+                        <td>H1 Size</td>
+                        <td colspan="2"><code>68px</code></td>
+                    </tr>
+                    <tr>
+                        <td>H2 Size</td>
+                        <td colspan="2"><code>48px</code></td>
+                    </tr>
+                    <tr>
+                        <td>Body Size</td>
+                        <td colspan="2"><code>13px</code></td>
+                    </tr>
+                    <tr>
+                        <td>Spacing Base</td>
+                        <td colspan="2"><code>12px</code></td>
+                    </tr>
+                    <tr>
+                        <td>Border Radius</td>
+                        <td colspan="2"><code>full (pills)</code></td>
+                    </tr>
+                    <tr>
+                        <td>Accent</td>
+                        <td colspan="2"><code>#DECCA8 (Champagne)</code></td>
+                    </tr>
+                    <tr>
+                        <td>CTA Green</td>
+                        <td colspan="2"><code>#098545 → #73BA7F</code></td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+    </div>
+
+    <script>
+        // Theme toggle
+        const themeButtons = document.querySelectorAll('.theme-btn');
+        const body = document.body;
+
+        themeButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const theme = btn.dataset.theme;
+                body.setAttribute('data-theme', theme);
+                
+                themeButtons.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            });
+        });
+
+        // Tab interaction
+        document.querySelectorAll('.tabs').forEach(tabs => {
+            tabs.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    tabs.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                });
+            });
+        });
+
+        // Nav interaction
+        document.querySelectorAll('.nav-items').forEach(nav => {
+            nav.querySelectorAll('.nav-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    nav.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+                    this.classList.add('active');
+                });
+            });
+        });
+    </script>
+</body>
+</html>

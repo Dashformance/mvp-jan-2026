@@ -1,0 +1,207 @@
+@import "tailwindcss";
+
+@theme {
+  /* ============================================
+     VISUALIZEN DESIGN SYSTEM v3.1
+     Inter Display Edition — Dark Theme
+     ============================================ */
+
+  /* Typography */
+  --font-display: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
+
+  /* === DARK THEME COLORS === */
+
+  /* Backgrounds */
+  --color-background: #181818;
+  /* bg-base */
+  --color-foreground: #FFFFFF;
+  /* fg-primary */
+
+  --color-card: #222222;
+  /* bg-elevated */
+  --color-card-foreground: #FFFFFF;
+
+  --color-popover: #222222;
+  --color-popover-foreground: #FFFFFF;
+
+  /* Primary Button: WHITE bg, BLACK text (per DS spec) */
+  --color-primary: #FFFFFF;
+  --color-primary-foreground: #181818;
+
+  /* Secondary: Transparent with border */
+  --color-secondary: transparent;
+  --color-secondary-foreground: #FFFFFF;
+
+  /* Muted */
+  --color-muted: #141414;
+  /* bg-muted */
+  --color-muted-foreground: #A3A3A3;
+  /* fg-muted */
+
+  /* Accent: Champagne (logo, landing CTAs only) */
+  --color-accent: #DECCA8;
+  --color-accent-foreground: #1A1814;
+
+  /* Destructive */
+  --color-destructive: #F43F5E;
+  --color-destructive-foreground: #FFFFFF;
+
+  /* Borders */
+  --color-border: rgba(255, 255, 255, 0.10);
+  /* border-default */
+  --color-input: #222222;
+  /* bg-elevated */
+  --color-ring: rgba(255, 255, 255, 0.24);
+  /* border-focus */
+
+  /* Radius */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 24px;
+  --radius: 16px;
+  /* Default for cards */
+
+  /* Shadows (Dark) */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
+  --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.6);
+
+  /* Transitions */
+  --duration-fast: 100ms;
+  --duration-normal: 150ms;
+  --duration-slow: 250ms;
+  --ease-default: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Semantic Colors */
+  --color-success: #4ADE80;
+  --color-warning: #FBBF24;
+  --color-error: #F43F5E;
+  --color-info: #44CCFF;
+
+  /* DS Semantic Tokens */
+  --bg-base: #181818;
+  --bg-subtle: #1C1C1C;
+  --bg-muted: #141414;
+  --bg-elevated: #222222;
+  --bg-hover: #2A2A2A;
+  --bg-active: #333333;
+
+  --fg-primary: #FFFFFF;
+  --fg-secondary: #E5E5E5;
+  --fg-muted: #A3A3A3;
+  --fg-subtle: #8A8A8A;
+  --fg-disabled: #525252;
+
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --border-default: rgba(255, 255, 255, 0.10);
+  --border-strong: rgba(255, 255, 255, 0.16);
+  --border-focus: rgba(255, 255, 255, 0.24);
+
+  /* Accent Champagne */
+  --accent: #DECCA8;
+  --accent-hover: #E8D8B8;
+  --accent-muted: #B09878;
+  --accent-subtle: rgba(222, 204, 168, 0.12);
+  --gradient-accent: linear-gradient(135deg, #E8D8B8 0%, #C8AC8C 100%);
+
+  /* Green */
+  --green-light: #73BA7F;
+  --green-dark: #098545;
+  --gradient-green: linear-gradient(90deg, #098545 0%, #73BA7F 100%);
+
+  /* Semantic Subtle Backgrounds */
+  --success-subtle: rgba(74, 222, 128, 0.12);
+  --warning-subtle: rgba(251, 191, 36, 0.12);
+  --error-subtle: rgba(244, 63, 94, 0.12);
+  --info-subtle: rgba(68, 204, 255, 0.12);
+}
+
+/* Base Layer */
+@layer base {
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: var(--font-sans);
+    font-feature-settings: "ss01", "ss02", "cv01", "cv02";
+  }
+
+  /* Custom Scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 9999px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
+}
+
+/* DS Utilities */
+@utility rounded-pill {
+  border-radius: 9999px;
+}
+
+@utility text-display-1 {
+  font-family: var(--font-display);
+  font-size: 68px;
+  font-weight: 400;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+}
+
+@utility text-display-2 {
+  font-family: var(--font-display);
+  font-size: 48px;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+@utility text-display-3 {
+  font-family: var(--font-display);
+  font-size: 32px;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+@utility overline {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 300;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--green-light);
+}
+
+@utility label {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 300;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+
+@utility caption {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 300;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fg-subtle);
+}

@@ -1,0 +1,67 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(uuid())
+  name          String
+  email         String    @unique
+  password_hash String
+  created_at    DateTime  @default(now())
+}
+
+model Segment {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  created_at  DateTime @default(now())
+  leads       Lead[]
+}
+
+model Lead {
+  id                 String     @id @default(uuid())
+  company_name       String
+  trade_name         String?
+  cnpj               String     @unique
+  
+  // Contact Info
+  phone              String?
+  email              String?
+  decision_maker     String?
+  
+  // CRM Data
+  extra_info         Json?
+  segment_id         String?
+  segment            Segment?   @relation(fields: [segment_id], references: [id])
+  status             LeadStatus @default(NEW)
+  priority           Int        @default(0) // 0-Low, 1-Med, 2-High
+  
+  // Dates
+  date_added         DateTime   @default(now())
+  first_contact_date DateTime?
+  last_contact_date  DateTime?
+  next_followup_date DateTime?
+  
+  notes              String?
+  owner              String?    // Colaboração: "joao" | "socio"
+  
+  deletedAt          DateTime?  // Soft Delete metadata
+
+  @@map("leads")
+}
+
+enum LeadStatus {
+  NEW                // Novo
+  ATTEMPTED          // Tentando Contato
+  CONTACTED          // Contatado
+  MEETING            // Reunião Agendada
+  WON                // Ganho
+  LOST               // Perdido
+  // Deprecated mappings kept for safety if needed, or remove if fresh start:
+  // RESPONDED, QUALIFIED, CLOSED, DISCARDED 
+}
