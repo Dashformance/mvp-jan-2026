@@ -105,9 +105,19 @@ export function LeadSheet({ lead, isOpen, onClose, onSave }: LeadSheetProps) {
                 </div>
 
                 <Tabs defaultValue="details" className="w-full">
-                    <TabsList className="grid w-full grid-cols-2 bg-[rgba(255,255,255,0.06)] p-1 rounded-full">
-                        <TabsTrigger value="details" className="rounded-full data-[state=active]:bg-[#222222] data-[state=active]:text-white text-[#8A8A8A]">Dados & Qualificação</TabsTrigger>
-                        <TabsTrigger value="notes" className="rounded-full data-[state=active]:bg-[#222222] data-[state=active]:text-white text-[#8A8A8A]">Notas & Histórico</TabsTrigger>
+                    <TabsList className="grid w-full grid-cols-2 bg-muted p-1 h-11 rounded-xl">
+                        <TabsTrigger
+                            value="details"
+                            className="rounded-lg data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm text-muted-foreground h-9"
+                        >
+                            Dados & Qualificação
+                        </TabsTrigger>
+                        <TabsTrigger
+                            value="notes"
+                            className="rounded-lg data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm text-muted-foreground h-9"
+                        >
+                            Notas & Histórico
+                        </TabsTrigger>
                     </TabsList>
 
                     <TabsContent value="details" className="space-y-4 py-4">
