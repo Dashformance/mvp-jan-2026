@@ -79,10 +79,10 @@ export function LeadSheet({ lead, isOpen, onClose, onSave }: LeadSheetProps) {
 
     return (
         <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
-            <SheetContent className="w-[500px] sm:max-w-[600px] overflow-y-auto bg-background border-l border-border">
-                <SheetHeader className="mb-6">
+            <SheetContent className="w-[500px] sm:max-w-[600px] overflow-y-auto bg-background border-l border-border p-8">
+                <SheetHeader className="mb-4">
                     <SheetTitle className="text-xl text-foreground">{formData.trade_name || formData.company_name || "Novo Lead"}</SheetTitle>
-                    <SheetDescription className="flex items-center gap-2 flex-wrap">
+                    <SheetDescription className="flex items-center gap-2 flex-wrap mt-2">
                         {formData.cnpj && <span className="font-mono bg-muted text-muted-foreground px-2 py-0.5 rounded-md text-xs">{formData.cnpj}</span>}
                         {formData.uf && <span className="bg-accent/10 text-accent px-2 py-0.5 rounded-md text-xs font-medium">{formData.uf}</span>}
                         {/* Owner Badge */}
@@ -110,7 +110,7 @@ export function LeadSheet({ lead, isOpen, onClose, onSave }: LeadSheetProps) {
                         <TabsTrigger value="notes" className="rounded-full data-[state=active]:bg-[#222222] data-[state=active]:text-white text-[#8A8A8A]">Notas & Histórico</TabsTrigger>
                     </TabsList>
 
-                    <TabsContent value="details" className="space-y-4 py-6">
+                    <TabsContent value="details" className="space-y-4 py-4">
 
                         {/* Cadastro Rápido - Social & Marketing (Top Priority) */}
                         <div className="space-y-4 p-4 bg-accent/5 rounded-xl border border-accent/20">
@@ -214,7 +214,7 @@ export function LeadSheet({ lead, isOpen, onClose, onSave }: LeadSheetProps) {
 
                     </TabsContent>
 
-                    <TabsContent value="notes" className="py-6">
+                    <TabsContent value="notes" className="py-4">
                         <Label className="text-muted-foreground">Notas & Histórico</Label>
                         <Textarea
                             className="h-[300px] mt-2 bg-muted text-foreground placeholder:text-muted-foreground rounded-xl border-border focus:border-ring"
