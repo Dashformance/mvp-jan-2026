@@ -1,74 +1,76 @@
 "use client";
 
 import { useState } from 'react';
-// import { useAuth } from '@/context/AuthContext'; // Removed context dependency for simple cookie auth
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Trophy, Lock, ArrowRight } from 'lucide-react';
+import { Trophy, Lock, ArrowRight, Loader2 } from 'lucide-react';
 import { toast } from "sonner";
-import { useRouter } from 'next/navigation';
+import { submitLoginV6 } from './action';
 
 export default function LoginPage() {
-    const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
-    const router = useRouter();
 
-    const handleLogin = async (e: React.FormEvent) => {
+    async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
         setLoading(true);
 
-        // Defined password
-        const ACCESS_KEY = "@@senhaVISUALIZEN123";
+        const formData = new FormData(e.currentTarget);
 
-        if (password === ACCESS_KEY || password === '1234') { // Keeping 1234 for dev ease if needed, or remove. User asked for specific password.
-            // Set cookie
-            document.cookie = "app-auth=true; path=/; max-age=86400; SameSite=Strict";
-
-            toast.success("Acesso autorizado! 🚀");
-            router.push('/dashboard');
-        } else {
-            toast.error("Senha de acesso incorreta.");
+        try {
+            const result = await submitLoginV6(formData);
+            if (result && result.error) {
+                toast.error(result.error);
+                setLoading(false);
+            } else if (result && result.success) {
+                toast.success("Acesso autorizado!");
+                // HARD REDIRECT
+                window.location.href = '/dashboard';
+            }
+        } catch (e: any) {
+            console.error("Login fail:", e);
+            toast.error("Erro interno. Tente novamente.");
             setLoading(false);
         }
-    };
+    }
 
     return (
-        <div className="min-h-screen bg-[#181818] flex items-center justify-center p-4 font-sans">
+        <div className="min-h-screen bg-[#121212] flex items-center justify-center p-4">
             <div className="max-w-md w-full">
-                <div className="text-center mb-12 space-y-4">
-                    <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-[#222222] border border-white/5 shadow-2xl relative mb-4">
-                        <div className="absolute inset-0 rounded-full bg-[#DECCA8] opacity-5 blur-xl"></div>
-                        <Trophy className="w-8 h-8 text-[#DECCA8]" strokeWidth={1.5} />
-                    </div>
-
-                    <h1 className="text-4xl font-light tracking-tighter text-white">
-                        DASH<span className="text-[#DECCA8] font-normal">FORMANCE</span>
+                <div className="text-center mb-10">
+                    <Trophy className="w-12 h-12 text-[#DECCA8] mx-auto mb-4" />
+                    <h1 className="text-3xl font-bold text-white uppercase italic tracking-tighter">
+                        Dash<span className="text-[#DECCA8]">formance</span>
                     </h1>
-                    <p className="text-[#8A8A8A] text-xs uppercase tracking-[0.25em] font-light">Acesso Restrito</p>
                 </div>
 
-                <form onSubmit={handleLogin} className="space-y-6">
-                    <div className="relative group">
-                        <Lock className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#6B6B6B] transition-colors group-focus-within:text-[#DECCA8]" />
-                        <Input
-                            type="password"
-                            placeholder="Chave de Acesso"
-                            className="pl-12 bg-[#222222] border-white/5 h-14 text-white placeholder:text-[#444] text-lg focus:border-[#DECCA8]/30 focus:bg-[#1C1C1C] rounded-xl transition-all shadow-lg"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            autoFocus
-                        />
-                    </div>
+                <div className="bg-[#1C1C1C] border border-white/5 p-8 rounded-3xl shadow-2xl">
+                    <form onSubmit={handleSubmit} className="space-y-6">
+                        <div className="space-y-2">
+                            <label className="text-[10px] uppercase tracking-widest text-[#666] font-bold">
+                                Chave de Acesso
+                            </label>
+                            <div className="relative">
+                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#333]" />
+                                <Input
+                                    name="password"
+                                    type="password"
+                                    placeholder="Senha"
+                                    className="pl-12 bg-black/50 border-white/5 h-14 text-white focus:border-[#DECCA8]/20 rounded-xl"
+                                    required
+                                    autoFocus
+                                />
+                            </div>
+                        </div>
 
-                    <Button
-                        type="submit"
-                        disabled={loading}
-                        className="w-full h-14 text-sm font-semibold tracking-wide rounded-xl text-[#1A1814] bg-gradient-to-r from-[#E8D8B8] to-[#C8AC8C] hover:opacity-90 transition-all shadow-[#DECCA8]/20 shadow-lg flex items-center justify-center gap-2"
-                    >
-                        {loading ? 'ACESSANDO...' : 'ENTRAR'}
-                        {!loading && <ArrowRight className="w-4 h-4" />}
-                    </Button>
-                </form>
+                        <Button
+                            type="submit"
+                            disabled={loading}
+                            className="w-full h-14 font-black uppercase tracking-widest rounded-xl text-black bg-[#DECCA8] hover:opacity-90 transition-all flex items-center justify-center gap-2"
+                        >
+                            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <>Entrar <ArrowRight className="w-4 h-4" /></>}
+                        </Button>
+                    </form>
+                </div>
             </div>
         </div>
     );

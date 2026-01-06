@@ -8,11 +8,11 @@ datasource db {
 }
 
 model User {
-  id            String    @id @default(uuid())
+  id            String   @id @default(uuid())
   name          String
-  email         String    @unique
+  email         String   @unique
   password_hash String
-  created_at    DateTime  @default(now())
+  created_at    DateTime @default(now())
 }
 
 model Segment {
@@ -25,49 +25,46 @@ model Segment {
 
 model Lead {
   id                 String     @id @default(uuid())
-  company_name       String
+  company_name       String?
   trade_name         String?
-  cnpj               String     @unique
-  
-  // Contact Info
+  cnpj               String?    @unique
   phone              String?
   email              String?
+  instagram_url      String?
+  website_url        String?
+  render_quality     String?    // Enum-like: GOOD, MEDIUM, BAD
   decision_maker     String?
-  
-  // CRM Data
   extra_info         Json?
   segment_id         String?
-  segment            Segment?   @relation(fields: [segment_id], references: [id])
   status             LeadStatus @default(NEW)
-  priority           Int        @default(0) // 0-Low, 1-Med, 2-High
-  
-  // Dates
+  priority           Int        @default(0)
   date_added         DateTime   @default(now())
   first_contact_date DateTime?
   last_contact_date  DateTime?
   next_followup_date DateTime?
-  
   notes              String?
-  owner              String?    // Colaboração: "joao" | "socio"
-
-  // Feature Updates
-  source             String     @default("Manual") // Manual, Extração, Instagram, etc.
-  score              Int        @default(0)
-  checklist          Json?      // { hasInstagram: boolean, hasRender: boolean }
-  
-  deletedAt          DateTime?  // Soft Delete metadata
+  owner              String?
+  uf                 String?
+  city               String?
+  deletedAt          DateTime?
+  source             String?    // Fonte: extracao, instagram, rede_joao, rede_vitor
+  score              Int        @default(0)  // Pontuação calculada
+  segment            Segment?   @relation(fields: [segment_id], references: [id])
 
   @@map("leads")
 }
 
 enum LeadStatus {
-  NEW                // Novo
-  ATTEMPTED          // Tentando Contato
-  CONTACTED          // Contatado
-  MEETING            // Reunião Agendada
-  WON                // Ganho
-  LOST               // Perdido
-  DISQUALIFIED       // Desqualificado
-  // Deprecated mappings kept for safety if needed, or remove if fresh start:
-  // RESPONDED, QUALIFIED, CLOSED, DISCARDED 
+  // Triagem
+  INBOX          // Lead cru (Casa dos Dados)
+  SCREENING      // Em análise pelo arquiteto
+  
+  // Pipeline de Vendas  
+  NEW            // Qualificado, pronto para contato
+  ATTEMPTED
+  CONTACTED
+  MEETING
+  WON
+  LOST
+  DISQUALIFIED
 }

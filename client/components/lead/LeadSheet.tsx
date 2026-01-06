@@ -7,7 +7,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ExternalLink, Save, Search, Linkedin, Globe, Mail, Phone } from "lucide-react";
+import { ExternalLink, Save, Search, Linkedin, Globe, Mail, Phone, Instagram, Layers, Disc, Trash2, Target, MessageCircleIcon, MapPin } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { toast } from "sonner"; // Added toast for validation feedback
 
 /**
  * Visualizen DS v3.1 LeadSheet
@@ -18,11 +21,14 @@ import { ExternalLink, Save, Search, Linkedin, Globe, Mail, Phone } from "lucide
 
 interface Lead {
     id: string;
-    company_name: string;
-    trade_name: string;
-    cnpj: string;
+    company_name?: string;
+    trade_name?: string;
+    cnpj?: string;
     phone?: string;
     email?: string;
+    instagram_url?: string;
+    website_url?: string;
+    render_quality?: 'GOOD' | 'MEDIUM' | 'BAD';
     status: string;
     uf?: string;
     city?: string;
@@ -32,6 +38,9 @@ interface Lead {
     website?: string;
     notes?: string;
     owner?: string;
+    source?: string;
+    score?: number;
+    checklist?: any;
 }
 
 interface LeadSheetProps {
@@ -68,15 +77,13 @@ export function LeadSheet({ lead, isOpen, onClose, onSave }: LeadSheetProps) {
 
     if (!lead) return null;
 
-    const displayEmail = typeof formData.email === 'object' ? (formData.email as any)?.email : formData.email;
-
     return (
         <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
             <SheetContent className="w-[500px] sm:max-w-[600px] overflow-y-auto bg-background border-l border-border">
                 <SheetHeader className="mb-6">
-                    <SheetTitle className="text-xl text-foreground">{formData.trade_name || formData.company_name}</SheetTitle>
+                    <SheetTitle className="text-xl text-foreground">{formData.trade_name || formData.company_name || "Novo Lead"}</SheetTitle>
                     <SheetDescription className="flex items-center gap-2 flex-wrap">
-                        <span className="font-mono bg-muted text-muted-foreground px-2 py-0.5 rounded-md text-xs">{formData.cnpj}</span>
+                        {formData.cnpj && <span className="font-mono bg-muted text-muted-foreground px-2 py-0.5 rounded-md text-xs">{formData.cnpj}</span>}
                         {formData.uf && <span className="bg-accent/10 text-accent px-2 py-0.5 rounded-md text-xs font-medium">{formData.uf}</span>}
                         {/* Owner Badge */}
                         <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium uppercase tracking-wide ${formData.owner === 'vitor' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-accent/10 text-accent'}`}>
@@ -99,81 +106,109 @@ export function LeadSheet({ lead, isOpen, onClose, onSave }: LeadSheetProps) {
 
                 <Tabs defaultValue="details" className="w-full">
                     <TabsList className="grid w-full grid-cols-2 bg-[rgba(255,255,255,0.06)] p-1 rounded-full">
-                        <TabsTrigger value="details" className="rounded-full data-[state=active]:bg-[#222222] data-[state=active]:text-white text-[#8A8A8A]">Dados & Enriquecimento</TabsTrigger>
-                        <TabsTrigger value="notes" className="rounded-full data-[state=active]:bg-[#222222] data-[state=active]:text-white text-[#8A8A8A]">Notas & Anotações</TabsTrigger>
+                        <TabsTrigger value="details" className="rounded-full data-[state=active]:bg-[#222222] data-[state=active]:text-white text-[#8A8A8A]">Dados & Qualificação</TabsTrigger>
+                        <TabsTrigger value="notes" className="rounded-full data-[state=active]:bg-[#222222] data-[state=active]:text-white text-[#8A8A8A]">Notas & Histórico</TabsTrigger>
                     </TabsList>
 
                     <TabsContent value="details" className="space-y-4 py-6">
 
-                        {/* Dados de Contato */}
-                        <div className="space-y-4 p-4 bg-muted/50 rounded-xl border border-border">
+                        {/* Cadastro Rápido - Social & Marketing (Top Priority) */}
+                        <div className="space-y-4 p-4 bg-accent/5 rounded-xl border border-accent/20">
                             <h4 className="font-medium text-sm flex items-center gap-2 text-foreground">
-                                <Phone className="w-4 h-4 text-muted-foreground" /> Contato
+                                <Search className="w-4 h-4 text-accent" /> Prospecção Rápida
                             </h4>
                             <div className="grid grid-cols-2 gap-3">
                                 <div className="space-y-1.5">
-                                    <Label className="text-xs text-muted-foreground">Telefone / WhatsApp</Label>
-                                    <div className="flex gap-2">
-                                        <Input value={formData.phone || ''} onChange={e => handleChange('phone', e.target.value)} className="h-10" />
-                                        <Button size="icon-sm" variant="outline" onClick={() => window.open(`https://wa.me/55${formData.phone?.replace(/\D/g, '')}`, '_blank')} disabled={!formData.phone}>
-                                            <MessageCircleIcon className="w-4 h-4 text-green-400" />
-                                        </Button>
-                                    </div>
+                                    <Label className="text-xs text-muted-foreground flex items-center gap-1">
+                                        <Instagram className="w-3 h-3" /> Instagram
+                                    </Label>
+                                    <Input
+                                        value={formData.instagram_url || ''}
+                                        onChange={e => handleChange('instagram_url', e.target.value)}
+                                        className="h-10"
+                                        placeholder="link do perfil"
+                                    />
                                 </div>
                                 <div className="space-y-1.5">
-                                    <Label className="text-xs text-muted-foreground">Email</Label>
-                                    <div className="flex gap-2">
-                                        <Input value={displayEmail || ''} onChange={e => handleChange('email', e.target.value)} className="h-10" />
-                                        <Button size="icon-sm" variant="outline" onClick={() => window.location.href = `mailto:${displayEmail}`} disabled={!displayEmail}>
-                                            <Mail className="w-4 h-4 text-muted-foreground" />
-                                        </Button>
-                                    </div>
+                                    <Label className="text-xs text-muted-foreground flex items-center gap-1">
+                                        <Globe className="w-3 h-3" /> Site
+                                    </Label>
+                                    <Input
+                                        value={formData.website_url || ''}
+                                        onChange={e => handleChange('website_url', e.target.value)}
+                                        className="h-10"
+                                        placeholder="www.exemplo.com"
+                                    />
                                 </div>
                             </div>
-                            <div className="grid grid-cols-2 gap-3">
-                                <div className="space-y-1.5">
-                                    <Label className="text-xs text-muted-foreground">Site</Label>
-                                    <div className="flex gap-2">
-                                        <Input placeholder="www.empresa.com.br" value={formData.website || ''} onChange={e => handleChange('website', e.target.value)} className="h-10" />
-                                        <Button size="icon-sm" variant="outline" onClick={() => window.open(`http://${formData.website}`, '_blank')} disabled={!formData.website}>
-                                            <Globe className="w-4 h-4 text-muted-foreground" />
+
+                            <div className="space-y-2 pt-2 border-t border-border">
+                                <Label className="text-xs text-muted-foreground">Qualidade do Render</Label>
+                                <div className="flex gap-2">
+                                    {[
+                                        { id: 'GOOD', label: 'Bom', color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/20' },
+                                        { id: 'MEDIUM', label: 'Médio', color: 'bg-amber-500/10 text-amber-400 border-amber-500/20 hover:bg-amber-500/20' },
+                                        { id: 'BAD', label: 'Ruim', color: 'bg-rose-500/10 text-rose-400 border-rose-500/20 hover:bg-rose-500/20' }
+                                    ].map((q) => (
+                                        <Button
+                                            key={q.id}
+                                            variant="outline"
+                                            size="sm"
+                                            className={`flex-1 h-9 text-xs transition-all ${formData.render_quality === q.id ? q.color + ' border-current' : 'bg-muted/50 border-transparent text-muted-foreground hover:bg-muted'}`}
+                                            onClick={() => handleChange('render_quality', q.id)}
+                                        >
+                                            {q.label}
                                         </Button>
-                                    </div>
-                                </div>
-                                <div className="space-y-1.5">
-                                    <Label className="text-xs text-muted-foreground">LinkedIn</Label>
-                                    <div className="flex gap-2">
-                                        <Input placeholder="linkedin.com/in/..." value={formData.linkedin_url || ''} onChange={e => handleChange('linkedin_url', e.target.value)} className="h-10" />
-                                        <Button size="icon-sm" variant="outline" onClick={() => window.open(formData.linkedin_url || '', '_blank')} disabled={!formData.linkedin_url}>
-                                            <Linkedin className="w-4 h-4 text-muted-foreground" />
-                                        </Button>
-                                    </div>
+                                    ))}
                                 </div>
                             </div>
                         </div>
 
-                        {/* Decisor */}
-                        <div className="space-y-4 p-4 bg-muted/50 rounded-xl border border-accent/20">
-                            <h4 className="font-medium text-sm flex items-center gap-2 text-accent">
-                                <Search className="w-4 h-4" /> Enriquecimento (Decisor)
-                            </h4>
-                            <div className="grid grid-cols-2 gap-3">
+                        {/* Dados da Empresa */}
+                        <div className="space-y-4 p-4 bg-muted/50 rounded-xl border border-border">
+                            <h4 className="font-medium text-sm text-foreground">Identificação</h4>
+                            <div className="space-y-3">
                                 <div className="space-y-1.5">
-                                    <Label className="text-xs text-muted-foreground">Nome do Decisor</Label>
-                                    <Input placeholder="Ex: João Silva" value={formData.decision_maker || ''} onChange={e => handleChange('decision_maker', e.target.value)} className="h-10" />
+                                    <Label className="text-xs text-muted-foreground">Nome da Empresa / Fantasia</Label>
+                                    <Input value={formData.trade_name || ''} onChange={e => handleChange('trade_name', e.target.value)} className="h-10" placeholder="Nome que aparece no Kanban" />
                                 </div>
                                 <div className="space-y-1.5">
-                                    <Label className="text-xs text-muted-foreground">Cargo</Label>
-                                    <Input placeholder="Ex: Sócio / Diretor" value={formData.decision_maker_title || ''} onChange={e => handleChange('decision_maker_title', e.target.value)} className="h-10" />
+                                    <Label className="text-xs text-muted-foreground">Razão Social</Label>
+                                    <Input value={formData.company_name || ''} onChange={e => handleChange('company_name', e.target.value)} className="h-10" placeholder="Opcional" />
                                 </div>
-                            </div>
-                            <div className="flex gap-2 mt-2">
-                                <Button variant="secondary" size="sm" className="text-xs w-full" onClick={() => googleSearch(`${formData.company_name} ${formData.uf || ''} sócio linkedin`)}>
-                                    <Search className="w-3 h-3 mr-2" /> Buscar Sócio no Google
-                                </Button>
-                                <Button variant="secondary" size="sm" className="text-xs w-full" onClick={() => googleSearch(`site:linkedin.com/in/ ${formData.company_name} ${formData.uf || ''}`)}>
-                                    <Linkedin className="w-3 h-3 mr-2" /> Buscar no LinkedIn
-                                </Button>
+                                <div className="grid grid-cols-2 gap-3 pt-2 border-t border-border mt-2">
+                                    <div className="space-y-1.5">
+                                        <Label className="text-xs text-muted-foreground flex items-center gap-1">
+                                            <MapPin className="w-3 h-3" /> Cidade
+                                        </Label>
+                                        <Input
+                                            value={formData.city || ''}
+                                            onChange={e => handleChange('city', e.target.value)}
+                                            className="h-10"
+                                            placeholder="Ex: Itapema"
+                                        />
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <Label className="text-xs text-muted-foreground flex items-center gap-1">
+                                            UF
+                                        </Label>
+                                        <Input
+                                            value={formData.uf || ''}
+                                            onChange={e => handleChange('uf', e.target.value)}
+                                            className="h-10"
+                                            placeholder="Ex: SC"
+                                        />
+                                    </div>
+                                </div>
+                                <div className="space-y-1.5 pt-2 border-t border-border mt-2">
+                                    <Label className="text-xs text-muted-foreground">CNPJ</Label>
+                                    <Input
+                                        value={formData.cnpj || ''}
+                                        onChange={e => handleChange('cnpj', e.target.value)}
+                                        className="h-10 font-mono text-xs"
+                                        placeholder="00.000.000/0000-00"
+                                    />
+                                </div>
                             </div>
                         </div>
 
@@ -190,19 +225,26 @@ export function LeadSheet({ lead, isOpen, onClose, onSave }: LeadSheetProps) {
                     </TabsContent>
                 </Tabs>
 
-                <SheetFooter className="mt-8 gap-3">
-                    <Button variant="secondary" onClick={onClose} disabled={saving}>Cancelar</Button>
-                    <Button onClick={handleSave} disabled={saving}>
-                        {saving ? "Salvando..." : "Salvar Alterações"}
+                <SheetFooter className="mt-8 flex justify-between items-center w-full">
+                    <Button
+                        variant="ghost"
+                        className="text-rose-500 hover:text-rose-400 hover:bg-rose-500/10"
+                        onClick={() => {
+                            handleChange('status', 'DISQUALIFIED');
+                            handleSave();
+                        }}
+                    >
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Desqualificar
                     </Button>
+                    <div className="flex gap-3">
+                        <Button variant="secondary" onClick={onClose} disabled={saving}>Cancelar</Button>
+                        <Button onClick={handleSave} disabled={saving}>
+                            {saving ? "Salvando..." : "Salvar Alterações"}
+                        </Button>
+                    </div>
                 </SheetFooter>
             </SheetContent>
         </Sheet>
     );
-}
-
-function MessageCircleIcon({ className }: { className?: string }) {
-    return (
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" /></svg>
-    )
 }

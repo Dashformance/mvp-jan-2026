@@ -16,12 +16,18 @@ interface KanbanColumnProps {
     color: string;
     leads: any[];
     onEdit: (lead: any) => void;
+    onUpdateTitle?: (id: string, newTitle: string) => void;
+    onDisqualify?: (id: string) => void;
+    onApprove?: (id: string) => void;  // NEW: For triagem approval
 }
 
-export function KanbanColumn({ id, title, color, leads, onEdit }: KanbanColumnProps) {
+export function KanbanColumn({ id, title, color, leads, onEdit, onUpdateTitle, onDisqualify, onApprove }: KanbanColumnProps) {
     const { setNodeRef, isOver } = useDroppable({
         id: id,
     });
+
+    // Determine if this is a triagem column (show approve button)
+    const isTriagemColumn = id === 'INBOX' || id === 'SCREENING';
 
     return (
         <div className="flex flex-col h-full min-w-[280px] w-[280px] bg-muted rounded-xl border border-white/5">
@@ -41,10 +47,17 @@ export function KanbanColumn({ id, title, color, leads, onEdit }: KanbanColumnPr
             {/* Droppable Area */}
             <div
                 ref={setNodeRef}
-                className={`flex-1 p-3 overflow-y-auto min-h-[150px] transition-colors duration-150 ${isOver ? 'bg-[rgba(255,255,255,0.03)] ring-2 ring-[rgba(255,255,255,0.10)] ring-inset' : ''}`}
+                className={`flex-1 p-3 overflow-y-auto min-h-[150px] transition-colors duration-150 ${isOver ? 'bg-[rgba(255,255,255,0.03)] ring-2 ring-border ring-inset' : ''}`}
             >
                 {leads.map((lead) => (
-                    <KanbanCard key={lead.id} lead={lead} onEdit={onEdit} />
+                    <KanbanCard
+                        key={lead.id}
+                        lead={lead}
+                        onEdit={onEdit}
+                        onUpdateTitle={onUpdateTitle}
+                        onDisqualify={onDisqualify}
+                        onApprove={isTriagemColumn ? onApprove : undefined}
+                    />
                 ))}
                 {leads.length === 0 && (
                     <div className="h-24 flex items-center justify-center text-[#6B6B6B] text-xs italic border-2 border-dashed border-[rgba(255,255,255,0.06)] rounded-xl m-2">

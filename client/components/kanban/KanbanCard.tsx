@@ -5,7 +5,9 @@ import { CSS } from "@dnd-kit/utilities";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Phone, Mail, MessageCircle, ExternalLink, User } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Phone, Mail, MessageCircle, ExternalLink, User, Check, X } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
 
 /**
  * Visualizen DS v3.1 Kanban Card
@@ -29,12 +31,29 @@ interface Lead {
 interface KanbanCardProps {
     lead: Lead;
     onEdit: (lead: Lead) => void;
+    onUpdateTitle?: (id: string, newTitle: string) => void;
+    onDisqualify?: (id: string) => void;
+    onApprove?: (id: string) => void;  // NEW: For triagem approval
 }
 
-export function KanbanCard({ lead, onEdit }: KanbanCardProps) {
+export function KanbanCard({ lead, onEdit, onUpdateTitle, onDisqualify, onApprove }: KanbanCardProps) {
     const { attributes, listeners, setNodeRef, transform } = useDraggable({
         id: lead.id,
     });
+
+    const [isEditingTitle, setIsEditingTitle] = useState(false);
+    const [titleValue, setTitleValue] = useState(lead.trade_name || lead.company_name);
+    const inputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        setTitleValue(lead.trade_name || lead.company_name);
+    }, [lead.trade_name, lead.company_name]);
+
+    useEffect(() => {
+        if (isEditingTitle && inputRef.current) {
+            inputRef.current.focus();
+        }
+    }, [isEditingTitle]);
 
     const style = {
         transform: CSS.Translate.toString(transform),
@@ -61,21 +80,80 @@ export function KanbanCard({ lead, onEdit }: KanbanCardProps) {
         window.open(`https://www.google.com/search?q=${query}`, "_blank");
     };
 
+    const handleTitleSubmit = (e?: React.FormEvent) => {
+        e?.stopPropagation();
+        setIsEditingTitle(false);
+        if (titleValue !== (lead.trade_name || lead.company_name) && onUpdateTitle) {
+            onUpdateTitle(lead.id, titleValue);
+        }
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter') handleTitleSubmit();
+        if (e.key === 'Escape') {
+            setIsEditingTitle(false);
+            setTitleValue(lead.trade_name || lead.company_name);
+        }
+    };
+
     return (
         <div ref={setNodeRef} style={style} {...listeners} {...attributes} className="mb-3 touch-none">
             <Card
                 className="cursor-grab active:cursor-grabbing hover:shadow-lg transition-all border-l-4 border-l-accent"
-                onClick={() => onEdit(lead)}
+                onClick={() => !isEditingTitle && onEdit(lead)}
             >
                 <CardHeader className="p-4 pb-2 space-y-1">
-                    <div className="flex justify-between items-start">
-                        <CardTitle className="text-sm font-semibold truncate max-w-[180px] text-white" title={lead.trade_name || lead.company_name}>
-                            {lead.trade_name || lead.company_name}
-                        </CardTitle>
+                    <div className="flex justify-between items-start h-[24px]">
+                        {isEditingTitle ? (
+                            <div className="flex items-center gap-1 w-full" onPointerDown={e => e.stopPropagation()} onClick={e => e.stopPropagation()}>
+                                <Input
+                                    ref={inputRef}
+                                    value={titleValue}
+                                    onChange={e => setTitleValue(e.target.value)}
+                                    onKeyDown={handleKeyDown}
+                                    onBlur={() => handleTitleSubmit()}
+                                    className="h-6 text-xs py-0 px-1 bg-black/50 border-accent/50 text-white w-full"
+                                />
+                            </div>
+                        ) : (
+                            <CardTitle
+                                className="text-sm font-semibold truncate max-w-[180px] text-white cursor-text hover:text-accent/80 transition-colors"
+                                title="Duplo clique para editar"
+                                onDoubleClick={(e) => {
+                                    e.stopPropagation();
+                                    setIsEditingTitle(true);
+                                }}
+                            >
+                                {lead.trade_name || lead.company_name}
+                            </CardTitle>
+                        )}
+
                         <div className="flex gap-1" onPointerDown={e => e.stopPropagation()}>
+                            {onApprove && (
+                                <Button
+                                    variant="ghost"
+                                    size="icon-sm"
+                                    className="h-6 w-6 text-muted-foreground hover:text-emerald-400 hover:bg-emerald-500/10"
+                                    onClick={(e) => { e.stopPropagation(); onApprove(lead.id); }}
+                                    title="Aprovar para Pipeline"
+                                >
+                                    <Check className="w-3 h-3" />
+                                </Button>
+                            )}
                             <Button variant="ghost" size="icon-sm" className="h-6 w-6 text-muted-foreground hover:text-accent" onClick={handleSearch} title="Pesquisar no Google">
                                 <ExternalLink className="w-3 h-3" />
                             </Button>
+                            {onDisqualify && (
+                                <Button
+                                    variant="ghost"
+                                    size="icon-sm"
+                                    className="h-6 w-6 text-muted-foreground hover:text-rose-400 hover:bg-rose-500/10"
+                                    onClick={(e) => { e.stopPropagation(); onDisqualify(lead.id); }}
+                                    title="Descartar Lead"
+                                >
+                                    <X className="w-3 h-3" />
+                                </Button>
+                            )}
                         </div>
                     </div>
                     <CardDescription className="text-xs truncate">

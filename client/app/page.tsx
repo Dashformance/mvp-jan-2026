@@ -12,9 +12,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Pencil, Trash2, Plus, RefreshCcw, Search, X, LayoutGrid, List as ListIcon, Check, Filter, Calendar, Users, Briefcase, MapPin, Target, Database, Download, Mail, Phone, ExternalLink, ArrowRight, Loader2, Globe, Sparkles, Split, ChevronDown, BarChart3 } from "lucide-react";
+import { Pencil, Trash2, Plus, RefreshCcw, Search, X, LayoutGrid, List as ListIcon, Check, Filter, Calendar, Users, Briefcase, MapPin, Target, Database, Download, Mail, Phone, ExternalLink, ArrowRight, Loader2, Globe, Sparkles, Split, ChevronDown, BarChart3, LogOut } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
-import { KanbanBoard } from "@/components/kanban/KanbanBoard";
+import { KanbanBoard, TRIAGEM_COLUMNS, PIPELINE_COLUMNS } from "@/components/kanban/KanbanBoard";
 import { LeadSheet } from "@/components/lead/LeadSheet";
 import { TrashSheet } from "@/components/TrashSheet";
 import { ImportReviewDialog } from "@/components/ImportReviewDialog";
@@ -33,6 +33,7 @@ const STATUS_MAP: Record<string, { label: string, color: string }> = {
   MEETING: { label: 'Reunião Agendada', color: 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/20' },
   WON: { label: 'Ganho / Fechado', color: 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/20' },
   LOST: { label: 'Perdido / Descartado', color: 'bg-rose-400/15 text-rose-300 border border-rose-400/15' },
+  DISQUALIFIED: { label: 'Desqualificado', color: 'bg-zinc-500/20 text-zinc-400 border border-zinc-500/20' },
 };
 
 const UF_OPTIONS = ['AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'];
@@ -116,11 +117,69 @@ export default function Home() {
   // Multi-select state
   const [selectedLeads, setSelectedLeads] = useState<Set<string>>(new Set());
 
+  // Lead Management State
+  const [selectedLeadForSheet, setSelectedLeadForSheet] = useState<any>(null);
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
+
+  const handleAddNewLead = () => {
+    setSelectedLeadForSheet({
+      id: "new",
+      company_name: "",
+      trade_name: "",
+      cnpj: "",
+      status: "NEW",
+      owner: currentUser,
+      source: "Manual",
+      checklist: { hasInstagram: false, hasRender: false }
+    });
+    setIsSheetOpen(true);
+  };
+
+  const handleSaveLead = async (updatedLead: any) => {
+    setLoading(true);
+    try {
+      if (updatedLead.id === 'new') {
+        const { id, ...saveData } = updatedLead;
+        const res = await fetch(`${API_URL}/leads`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(saveData),
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.details || err.error || 'Falha ao criar lead');
+        }
+        toast.success('Lead criado com sucesso!');
+      } else {
+        const res = await fetch(`${API_URL}/leads/${updatedLead.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updatedLead),
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.details || err.error || 'Falha ao atualizar lead');
+        }
+        toast.success('Lead atualizado!');
+      }
+      await fetchLeads(page);
+    } catch (error) {
+      console.error(error);
+      toast.error('Erro ao salvar lead');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Alias for compatibility if needed
+  const handleSheetSave = handleSaveLead;
+
   // Multi-user & View State
   const [currentUser, setCurrentUser] = useState<string>('joao');
   const [filterMyLeads, setFilterMyLeads] = useState(true);
   const [filterOwner, setFilterOwner] = useState<string>('all');
   const [viewMode, setViewMode] = useState<'list' | 'kanban'>('kanban');
+  const [pipelineTab, setPipelineTab] = useState<'triagem' | 'pipeline'>('pipeline');
   const [sortBy, setSortBy] = useState<'status' | 'alpha' | 'date_asc' | 'date_desc'>('date_desc');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -134,6 +193,13 @@ export default function Home() {
     setCurrentUser(u);
     localStorage.setItem('dashformance_user', u);
     toast.info(`Perfil alterado para: ${u === 'joao' ? 'João' : 'Vitor Nitz'}`);
+  };
+
+  const handleLogout = () => {
+    document.cookie = "dashformance_v5_access=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;";
+    localStorage.removeItem('lead_extractor_user');
+    localStorage.removeItem('dashformance_user');
+    window.location.href = "/login";
   };
 
   // Owner counts for smart filter (Total from database)
@@ -179,11 +245,6 @@ export default function Home() {
           return new Date(b.date_added).getTime() - new Date(a.date_added).getTime();
       }
     });
-
-  // Edit State
-  const [editingLead, setEditingLead] = useState<any>(null);
-  const [isEditOpen, setIsEditOpen] = useState(false);
-  const [isSheetOpen, setIsSheetOpen] = useState(false);
 
   // Review Dialog State
   const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
@@ -566,28 +627,10 @@ export default function Home() {
   // Alias for inline status change in list view
   const handleStatusChange = handleKanbanUpdate;
 
-  const handleSheetSave = async (updatedLead: any) => {
-    try {
-      const res = await fetch(`${API_URL}/leads/${updatedLead.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatedLead)
-      });
 
-      if (res.ok) {
-        setLeads(leads.map(l => l.id === updatedLead.id ? { ...l, ...updatedLead } : l));
-        toast.success("Lead atualizado com sucesso");
-      } else {
-        toast.error("Erro ao salvar alterações");
-      }
-    } catch (err) {
-      console.error(err);
-      toast.error("Erro ao salvar alterações");
-    }
-  };
 
   const openLeadSheet = (lead: any) => {
-    setEditingLead(lead);
+    setSelectedLeadForSheet(lead);
     setIsSheetOpen(true);
   };
 
@@ -675,14 +718,26 @@ export default function Home() {
             <p className="text-[#6B6B6B] text-sm">Gestão de Leads de Alta Performance</p>
           </div>
           <div className="flex items-center gap-4">
-            <Link href="/dashboard">
-              <Button variant="outline" className="border-[#DECCA8]/30 text-[#DECCA8] hover:bg-[#DECCA8]/10">
-                <BarChart3 className="w-4 h-4 mr-2" />
-                Dashboard
-              </Button>
-            </Link>
+
+
             <UserSelector currentUser={currentUser} onChange={handleUserChange} />
             <div className="flex gap-2">
+              <Button
+                variant="ghost"
+                className="text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 border border-rose-500/20"
+                onClick={handleLogout}
+              >
+                <LogOut className="w-4 h-4 mr-2" />
+                Sair
+              </Button>
+            </div>
+            <div className="flex gap-2">
+              <Link href="/dashboard">
+                <Button variant="outline" className="border-[#DECCA8]/30 text-[#DECCA8] hover:bg-[#DECCA8]/10">
+                  <BarChart3 className="w-4 h-4 mr-2" />
+                  Dashboard
+                </Button>
+              </Link>
               <Button
                 variant="outline"
                 onClick={handleCleanupDuplicates}
@@ -1562,6 +1617,14 @@ export default function Home() {
                     <SelectItem value="status">Por Status</SelectItem>
                   </SelectContent>
                 </Select>
+
+                <Button
+                  className="bg-white text-black hover:bg-white/90 h-8 text-xs font-bold"
+                  onClick={handleAddNewLead}
+                >
+                  <Plus className="w-3.5 h-3.5 mr-1.5" />
+                  Novo Lead
+                </Button>
               </div>
             </div>
 
@@ -1586,11 +1649,45 @@ export default function Home() {
           </CardHeader>
           <CardContent className="p-0 sm:p-0">
             {viewMode === 'kanban' ? (
-              <div className="p-4 bg-muted/20 min-h-[500px]">
+              <div className="rounded-xl border border-[rgba(255,255,255,0.06)] bg-[#181818]/50 p-6 overflow-hidden">
+                {/* Tabs */}
+                <div className="flex gap-2 mb-6">
+                  <button
+                    onClick={() => setPipelineTab('triagem')}
+                    className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${pipelineTab === 'triagem'
+                        ? 'bg-slate-500/20 text-white border border-slate-500/30'
+                        : 'text-muted-foreground hover:text-white hover:bg-white/5'
+                      }`}
+                  >
+                    📥 Triagem
+                    <span className="ml-2 text-xs opacity-70">
+                      ({leads.filter(l => l.status === 'INBOX' || l.status === 'SCREENING').length})
+                    </span>
+                  </button>
+                  <button
+                    onClick={() => setPipelineTab('pipeline')}
+                    className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${pipelineTab === 'pipeline'
+                        ? 'bg-accent/20 text-accent border border-accent/30'
+                        : 'text-muted-foreground hover:text-white hover:bg-white/5'
+                      }`}
+                  >
+                    💰 Pipeline
+                    <span className="ml-2 text-xs opacity-70">
+                      ({leads.filter(l => !['INBOX', 'SCREENING'].includes(l.status)).length})
+                    </span>
+                  </button>
+                </div>
                 <KanbanBoard
-                  leads={displayedLeads}
+                  leads={pipelineTab === 'triagem'
+                    ? displayedLeads.filter(l => l.status === 'INBOX' || l.status === 'SCREENING')
+                    : displayedLeads.filter(l => !['INBOX', 'SCREENING'].includes(l.status))
+                  }
+                  columns={pipelineTab === 'triagem' ? TRIAGEM_COLUMNS : PIPELINE_COLUMNS}
                   onLeadUpdate={handleKanbanUpdate}
                   onEditLead={openLeadSheet}
+                  onUpdateTitle={(id, title) => handleSaveLead({ id, trade_name: title })}
+                  onDisqualify={(id) => handleKanbanUpdate(id, 'DISQUALIFIED')}
+                  onApprove={(id) => handleKanbanUpdate(id, 'NEW')}
                 />
               </div>
             ) : (
@@ -1695,10 +1792,13 @@ export default function Home() {
 
         {/* Edit Dialog */}
         <LeadSheet
-          lead={editingLead}
+          lead={selectedLeadForSheet}
           isOpen={isSheetOpen}
-          onClose={() => setIsSheetOpen(false)}
-          onSave={handleSheetSave}
+          onClose={() => {
+            setIsSheetOpen(false);
+            setSelectedLeadForSheet(null);
+          }}
+          onSave={handleSaveLead}
         />
 
         <ImportReviewDialog
@@ -1711,6 +1811,13 @@ export default function Home() {
           onConfirm={handleConfirmImport}
         />
 
+      </div>
+
+      {/* Version Monitoring Tag */}
+      <div className="fixed bottom-4 right-4 z-50 pointer-events-none">
+        <span className="text-[10px] font-mono text-white/20 bg-black/20 backdrop-blur-sm px-2 py-1 rounded border border-white/5">
+          v3.2.5-stable
+        </span>
       </div>
     </div>
   );

@@ -1,16 +1,41 @@
 import prisma from '../prisma';
-// Removed LeadStatus import as it may not be exported in this Prisma version
+import { LeadSanitizer } from './lead-sanitizer';
 
-export class LeadsService {
-    static async create(data: any) {
-        // Calculate initial score
-        const score = this.calculateScore(data);
-        return prisma.lead.create({
-            data: { ...data, score },
-        });
+// Helper function for score calculation (kept internal or exported if needed)
+function calculateScore(lead: any): number {
+    let score = 0;
+    // Basic Info
+    if (lead.email && lead.email.trim().length > 5) score += 10;
+    if (lead.phone && lead.phone.replace(/[^0-9]/g, '').length >= 8) score += 10;
+    if (lead.decision_maker) score += 10;
+    if (lead.linkedin_url || lead.website) score += 5;
+
+    // Checklist Items
+    if (lead.checklist) {
+        const checklist = typeof lead.checklist === 'string' ? JSON.parse(lead.checklist) : lead.checklist;
+        if (checklist.hasInstagram) score += 20;
+        if (checklist.hasRender) score += 20;
     }
 
-    static async createMany(leads: any[]) {
+    return score;
+}
+
+export const LeadsService = {
+    async create(data: any) {
+        // Use strict sanitizer
+        const sanitized = LeadSanitizer.sanitizeForCreate(data);
+
+        // Handle missing CNPJ for manual leads
+        if (!sanitized.cnpj || sanitized.cnpj.trim() === '') {
+            sanitized.cnpj = `MANUAL-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+        }
+
+        return prisma.lead.create({
+            data: sanitized,
+        });
+    },
+
+    async createMany(leads: any[]) {
         const ops = leads.map((lead: any) => {
             const data = { ...lead, deletedAt: null };
             return prisma.lead.upsert({
@@ -22,9 +47,9 @@ export class LeadsService {
 
         const results = await prisma.$transaction(ops);
         return { count: results.length };
-    }
+    },
 
-    static async findAll(page = 1, limit = 50) {
+    async findAll(page = 1, limit = 50) {
         const skip = (page - 1) * limit;
         const [leads, total, joaoTotal, vitorTotal, unassignedTotal] = await Promise.all([
             prisma.lead.findMany({
@@ -50,111 +75,84 @@ export class LeadsService {
                 last_page: Math.ceil(total / limit),
             },
         };
-    }
+    },
 
-    static async findOne(id: string) {
+    async findOne(id: string) {
         return prisma.lead.findUnique({
             where: { id },
             include: { segment: true }
         });
-    }
+    },
 
-
-
-    static async remove(id: string) {
+    async remove(id: string) {
         return prisma.lead.update({
             where: { id },
             data: { deletedAt: new Date() }
         });
-    }
+    },
 
-    static async removeMany(ids: string[]) {
+    async removeMany(ids: string[]) {
         return prisma.lead.updateMany({
             where: { id: { in: ids } },
             data: { deletedAt: new Date() }
         });
-    }
+    },
 
-    static async restore(id: string) {
+    async restore(id: string) {
         return prisma.lead.update({
             where: { id },
             data: { deletedAt: null }
         });
-    }
+    },
 
-    static async restoreMany(ids: string[]) {
+    async restoreMany(ids: string[]) {
         return prisma.lead.updateMany({
             where: { id: { in: ids } },
             data: { deletedAt: null }
         });
-    }
+    },
 
-    static async hardDelete(id: string) {
+    async hardDelete(id: string) {
         return prisma.lead.delete({
             where: { id }
         });
-    }
+    },
 
-    static async findAllTrashed() {
+    async findAllTrashed() {
         return prisma.lead.findMany({
             where: { NOT: { deletedAt: null } },
             orderBy: { deletedAt: 'desc' }
         });
-    }
+    },
 
-    static async updateMany(ids: string[], updateData: any) {
+    async updateMany(ids: string[], updateData: any) {
         return prisma.lead.updateMany({
             where: { id: { in: ids } },
             data: updateData,
         });
-    }
+    },
 
-    static async disqualify(id: string) {
+    async disqualify(id: string) {
         return prisma.lead.update({
             where: { id },
             data: { status: 'DISQUALIFIED' }
         });
-    }
+    },
 
-    static calculateScore(lead: any): number {
-        let score = 0;
-        // Basic Info
-        if (lead.email && lead.email.trim().length > 5) score += 10;
-        if (lead.phone && lead.phone.replace(/[^0-9]/g, '').length >= 8) score += 10;
-        if (lead.decision_maker) score += 10;
-        if (lead.linkedin_url || lead.website) score += 5;
+    // Expose calculateScore if needed elsewhere, referencing the helper
+    calculateScore,
 
-        // Checklist Items
-        if (lead.checklist) {
-            const checklist = typeof lead.checklist === 'string' ? JSON.parse(lead.checklist) : lead.checklist;
-            if (checklist.hasInstagram) score += 20;
-            if (checklist.hasRender) score += 20;
-        }
-
-        return score;
-    }
-
-    static async update(id: string, data: any) {
-        // Auto-recalculate score if checklist or key fields change
-        if (data.checklist || data.email || data.phone) {
-            // Fetch current lead to merge dat if needed, but for simplicity we rely on passed data or existing
-            // Ideally we need the full object to recalculate properly, or we do a partial calc.
-            // For now, let's assume the frontend passes the FULL updated object or we fetch it.
-            // To accept partial updates and still score, we might need to fetch first.
-            const current = await this.findOne(id);
-            if (current) {
-                const merged = { ...current, ...data };
-                data.score = this.calculateScore(merged);
-            }
-        }
+    async update(id: string, data: any) {
+        // Use strict sanitizer for update
+        const sanitizedData = LeadSanitizer.sanitizeForUpdate(data);
 
         return prisma.lead.update({
             where: { id },
-            data,
+            data: sanitizedData,
         });
-    }
+    },
 
-    static async cleanupDuplicates() {
+    async cleanupDuplicates() {
         const allLeads = await prisma.lead.findMany({
             where: { deletedAt: null },
             orderBy: { date_added: 'asc' }
@@ -215,9 +213,9 @@ export class LeadsService {
             return { deletedCount: ids.length, ids };
         }
         return { deletedCount: 0, ids: [] };
-    }
+    },
 
-    static async divideLeads(joaoCount: number, sourceOwner: 'unassigned' | 'joao' | 'vitor' | 'all' = 'unassigned') {
+    async divideLeads(joaoCount: number, sourceOwner: 'unassigned' | 'joao' | 'vitor' | 'all' = 'unassigned') {
         const where: any = { deletedAt: null };
         if (sourceOwner === 'unassigned') {
             where.OR = [{ owner: null }, { owner: '' }];
@@ -264,9 +262,9 @@ export class LeadsService {
             vitorCount: vitorIds.length,
             total: ids.length
         };
-    }
+    },
 
-    static async getStatsOverview() {
+    async getStatsOverview() {
         const [total, byStatus, byOwner, addedToday, addedThisWeek, addedThisMonth] = await Promise.all([
             prisma.lead.count({ where: { deletedAt: null } }),
             prisma.lead.groupBy({
@@ -313,9 +311,9 @@ export class LeadsService {
             addedThisWeek,
             addedThisMonth
         };
-    }
+    },
 
-    static async getConversionFunnel() {
+    async getConversionFunnel() {
         const statuses = ['NEW', 'ATTEMPTED', 'CONTACTED', 'MEETING', 'WON', 'LOST'];
         const counts = await prisma.lead.groupBy({
             by: ['status'],
@@ -332,9 +330,9 @@ export class LeadsService {
             count: countMap[status] || 0,
             percentage: total > 0 ? Math.round(((countMap[status] || 0) / total) * 100) : 0
         }));
-    }
+    },
 
-    static async getTimelineStats(days = 30) {
+    async getTimelineStats(days = 30) {
         const startDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
         const leads = await prisma.lead.findMany({
             where: {
@@ -362,9 +360,9 @@ export class LeadsService {
         return Object.entries(byDate)
             .map(([date, data]) => ({ date, ...data }))
             .sort((a, b) => a.date.localeCompare(b.date));
-    }
+    },
 
-    static async getPerformanceByOwner() {
+    async getPerformanceByOwner() {
         const [byOwnerStatus, totalByOwner] = await Promise.all([
             prisma.lead.groupBy({
                 by: ['owner', 'status'],
@@ -397,9 +395,9 @@ export class LeadsService {
             };
         });
         return result;
-    }
+    },
 
-    static async getLeadsByState() {
+    async getLeadsByState() {
         const leads = await prisma.lead.findMany({
             where: { deletedAt: null },
             select: { extra_info: true }
@@ -443,9 +441,9 @@ export class LeadsService {
 
         const total = Object.values(regionData).reduce((a: number, b: number) => a + b, 0);
         return { byRegion: regionData, total };
-    }
+    },
 
-    static async getSalesForce() {
+    async getSalesForce() {
         const now = new Date();
         const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
         const startOfWeek = new Date(startOfDay);
@@ -488,4 +486,4 @@ export class LeadsService {
         }
         return result;
     }
-}
+};

@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
     Users, TrendingUp, Target, Trophy, Calendar, ArrowUpRight,
-    ArrowDownRight, Loader2, BarChart3, Activity, Zap
+    ArrowDownRight, Loader2, BarChart3, Activity, Zap, LogOut
 } from "lucide-react";
 import {
     AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -39,6 +39,7 @@ export default function DashboardPage() {
     const [salesForce, setSalesForce] = useState<any>(null);
 
     useEffect(() => {
+        console.log("Dashboard reloading stats with period:", period);
         fetchAllStats();
     }, [period]);
 
@@ -54,17 +55,30 @@ export default function DashboardPage() {
                 fetch(`${API_URL}/leads/stats/salesforce`)
             ]);
 
-            setOverview(await overviewRes.json());
-            setFunnel(await funnelRes.json());
-            setTimeline(await timelineRes.json());
-            setPerformance(await performanceRes.json());
-            setGeoData(await geoRes.json());
-            setSalesForce(await salesForceRes.json());
+            const data_overview = await overviewRes.json();
+            const data_funnel = await funnelRes.json();
+            const data_timeline = await timelineRes.json();
+            const data_performance = await performanceRes.json();
+            const data_geo = await geoRes.json();
+            const data_salesForce = await salesForceRes.json();
+
+            setOverview(data_overview?.error ? null : data_overview);
+            setFunnel(Array.isArray(data_funnel) ? data_funnel : []);
+            setTimeline(Array.isArray(data_timeline) ? data_timeline : []);
+            setPerformance(data_performance?.error ? null : data_performance);
+            setGeoData(data_geo?.error ? { byRegion: {}, total: 0 } : data_geo);
+            setSalesForce(data_salesForce?.error ? null : data_salesForce);
         } catch (err) {
             console.error('Failed to fetch stats:', err);
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleLogout = () => {
+        document.cookie = "dashformance_v5_access=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;";
+        localStorage.removeItem('lead_extractor_user');
+        window.location.href = "/login";
     };
 
     if (loading) {
@@ -137,6 +151,14 @@ export default function DashboardPage() {
                             Ver Leads
                         </Button>
                     </Link>
+                    <Button
+                        variant="ghost"
+                        className="text-rose-400 hover:text-rose-300 hover:bg-rose-400/10 border border-rose-400/20"
+                        onClick={handleLogout}
+                    >
+                        <LogOut className="w-4 h-4 mr-2" />
+                        Sair
+                    </Button>
                 </div>
             </div>
 
@@ -220,7 +242,7 @@ export default function DashboardPage() {
                     </CardHeader>
                     <CardContent>
                         <div className="space-y-4">
-                            {funnel.map((stage, idx) => (
+                            {Array.isArray(funnel) && funnel.map((stage, idx) => (
                                 <div key={stage.status} className="space-y-2">
                                     <div className="flex items-center justify-between text-sm">
                                         <span className="text-muted-foreground">{STATUS_LABELS[stage.status] || stage.status}</span>
