@@ -34,7 +34,11 @@ export async function updateSession(request: NextRequest) {
         data: { user },
     } = await supabase.auth.getUser()
 
+    // Check for custom app auth cookie
+    const appAuth = request.cookies.get('app-auth')
+
     if (
+        !appAuth &&
         !user &&
         !request.nextUrl.pathname.startsWith('/login') &&
         !request.nextUrl.pathname.startsWith('/auth')

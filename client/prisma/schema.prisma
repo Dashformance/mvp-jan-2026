@@ -49,6 +49,11 @@ model Lead {
   
   notes              String?
   owner              String?    // Colaboração: "joao" | "socio"
+
+  // Feature Updates
+  source             String     @default("Manual") // Manual, Extração, Instagram, etc.
+  score              Int        @default(0)
+  checklist          Json?      // { hasInstagram: boolean, hasRender: boolean }
   
   deletedAt          DateTime?  // Soft Delete metadata
 
@@ -62,6 +67,7 @@ enum LeadStatus {
   MEETING            // Reunião Agendada
   WON                // Ganho
   LOST               // Perdido
+  DISQUALIFIED       // Desqualificado
   // Deprecated mappings kept for safety if needed, or remove if fresh start:
   // RESPONDED, QUALIFIED, CLOSED, DISCARDED 
 }

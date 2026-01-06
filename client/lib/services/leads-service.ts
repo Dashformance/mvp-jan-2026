@@ -3,8 +3,10 @@ import prisma from '../prisma';
 
 export class LeadsService {
     static async create(data: any) {
+        // Calculate initial score
+        const score = this.calculateScore(data);
         return prisma.lead.create({
-            data,
+            data: { ...data, score },
         });
     }
 
@@ -57,12 +59,7 @@ export class LeadsService {
         });
     }
 
-    static async update(id: string, data: any) {
-        return prisma.lead.update({
-            where: { id },
-            data,
-        });
-    }
+
 
     static async remove(id: string) {
         return prisma.lead.update({
@@ -109,6 +106,51 @@ export class LeadsService {
         return prisma.lead.updateMany({
             where: { id: { in: ids } },
             data: updateData,
+        });
+    }
+
+    static async disqualify(id: string) {
+        return prisma.lead.update({
+            where: { id },
+            data: { status: 'DISQUALIFIED' }
+        });
+    }
+
+    static calculateScore(lead: any): number {
+        let score = 0;
+        // Basic Info
+        if (lead.email && lead.email.trim().length > 5) score += 10;
+        if (lead.phone && lead.phone.replace(/[^0-9]/g, '').length >= 8) score += 10;
+        if (lead.decision_maker) score += 10;
+        if (lead.linkedin_url || lead.website) score += 5;
+
+        // Checklist Items
+        if (lead.checklist) {
+            const checklist = typeof lead.checklist === 'string' ? JSON.parse(lead.checklist) : lead.checklist;
+            if (checklist.hasInstagram) score += 20;
+            if (checklist.hasRender) score += 20;
+        }
+
+        return score;
+    }
+
+    static async update(id: string, data: any) {
+        // Auto-recalculate score if checklist or key fields change
+        if (data.checklist || data.email || data.phone) {
+            // Fetch current lead to merge dat if needed, but for simplicity we rely on passed data or existing
+            // Ideally we need the full object to recalculate properly, or we do a partial calc.
+            // For now, let's assume the frontend passes the FULL updated object or we fetch it.
+            // To accept partial updates and still score, we might need to fetch first.
+            const current = await this.findOne(id);
+            if (current) {
+                const merged = { ...current, ...data };
+                data.score = this.calculateScore(merged);
+            }
+        }
+
+        return prisma.lead.update({
+            where: { id },
+            data,
         });
     }
 
