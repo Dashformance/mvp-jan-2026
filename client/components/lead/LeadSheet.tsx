@@ -127,28 +127,68 @@ export function LeadSheet({ lead, isOpen, onClose, onSave }: LeadSheetProps) {
                             <h4 className="font-medium text-sm flex items-center gap-2 text-foreground">
                                 <Search className="w-4 h-4 text-accent" /> Prospecção Rápida
                             </h4>
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-3">
+                                {/* Nome da Empresa */}
                                 <div className="space-y-1.5">
                                     <Label className="text-xs text-muted-foreground flex items-center gap-1">
-                                        <Instagram className="w-3 h-3" /> Instagram
+                                        Nome da Empresa
                                     </Label>
                                     <Input
-                                        value={formData.instagram_url || ''}
-                                        onChange={e => handleChange('instagram_url', e.target.value)}
+                                        value={formData.trade_name || ''}
+                                        onChange={e => handleChange('trade_name', e.target.value)}
                                         className="h-10"
-                                        placeholder="link do perfil"
+                                        placeholder="Nome Fantasia"
                                     />
                                 </div>
-                                <div className="space-y-1.5">
-                                    <Label className="text-xs text-muted-foreground flex items-center gap-1">
-                                        <Globe className="w-3 h-3" /> Site
-                                    </Label>
-                                    <Input
-                                        value={formData.website_url || ''}
-                                        onChange={e => handleChange('website_url', e.target.value)}
-                                        className="h-10"
-                                        placeholder="www.exemplo.com"
-                                    />
+
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="space-y-1.5">
+                                        <Label className="text-xs text-muted-foreground flex items-center gap-1">
+                                            <Phone className="w-3 h-3" /> Whatsapp
+                                        </Label>
+                                        <Input
+                                            value={formData.phone || ''}
+                                            onChange={e => handleChange('phone', e.target.value)}
+                                            className="h-10"
+                                            placeholder="(00) 00000-0000"
+                                        />
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <Label className="text-xs text-muted-foreground flex items-center gap-1">
+                                            <Mail className="w-3 h-3" /> Email
+                                        </Label>
+                                        <Input
+                                            value={formData.email || ''}
+                                            onChange={e => handleChange('email', e.target.value)}
+                                            className="h-10"
+                                            placeholder="contato@empresa.com"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="space-y-1.5">
+                                        <Label className="text-xs text-muted-foreground flex items-center gap-1">
+                                            <Instagram className="w-3 h-3" /> Instagram
+                                        </Label>
+                                        <Input
+                                            value={formData.instagram_url || ''}
+                                            onChange={e => handleChange('instagram_url', e.target.value)}
+                                            className="h-10"
+                                            placeholder="link do perfil"
+                                        />
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <Label className="text-xs text-muted-foreground flex items-center gap-1">
+                                            <Globe className="w-3 h-3" /> Site
+                                        </Label>
+                                        <Input
+                                            value={formData.website_url || ''}
+                                            onChange={e => handleChange('website_url', e.target.value)}
+                                            className="h-10"
+                                            placeholder="www.exemplo.com"
+                                        />
+                                    </div>
                                 </div>
                             </div>
 
@@ -178,10 +218,8 @@ export function LeadSheet({ lead, isOpen, onClose, onSave }: LeadSheetProps) {
                         <div className="space-y-4 p-4 bg-muted/50 rounded-xl border border-border">
                             <h4 className="font-medium text-sm text-foreground">Identificação</h4>
                             <div className="space-y-3">
-                                <div className="space-y-1.5">
-                                    <Label className="text-xs text-muted-foreground">Nome da Empresa / Fantasia</Label>
-                                    <Input value={formData.trade_name || ''} onChange={e => handleChange('trade_name', e.target.value)} className="h-10" placeholder="Nome que aparece no Kanban" />
-                                </div>
+                                {/* Removido Nome Fantasia daqui pois já está no card acima */}
+
                                 <div className="space-y-1.5">
                                     <Label className="text-xs text-muted-foreground">Razão Social</Label>
                                     <Input value={formData.company_name || ''} onChange={e => handleChange('company_name', e.target.value)} className="h-10" placeholder="Opcional" />
