@@ -15,7 +15,7 @@ import {
 } from 'recharts';
 import Link from 'next/link';
 
-const API_URL = "http://localhost:4000";
+const API_URL = "/api";
 
 const STATUS_LABELS: Record<string, string> = {
     NEW: 'Novo',

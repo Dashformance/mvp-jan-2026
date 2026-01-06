@@ -22,7 +22,7 @@ import { UserSelector } from "@/components/layout/UserSelector";
 import Link from 'next/link';
 import { toast } from "sonner";
 
-export const API_URL = "http://localhost:4000";
+export const API_URL = "/api";
 
 // DS v3.1 Semantic Status Colors
 // DS v3.1 Semantic Status Colors
