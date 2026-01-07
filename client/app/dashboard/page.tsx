@@ -14,19 +14,22 @@ import {
     BarChart, Bar, PieChart, Pie, Cell, Legend
 } from 'recharts';
 import Link from 'next/link';
+import { RegionDistribution } from "@/components/dashboard/RegionDistribution";
 
 const API_URL = "/api";
 
 const STATUS_LABELS: Record<string, string> = {
+    INBOX: 'Lista Fria',
     NEW: 'Novo',
     ATTEMPTED: 'Tentando Contato',
     CONTACTED: 'Contatado',
     MEETING: 'Reunião',
     WON: 'Ganho',
-    LOST: 'Perdido'
+    LOST: 'Perdido',
+    DISQUALIFIED: 'Desqualificado'
 };
 
-const FUNNEL_COLORS = ['#22d3ee', '#fbbf24', '#DECCA8', '#a78bfa', '#4ade80', '#f87171'];
+const FUNNEL_COLORS = ['#94a3b8', '#22d3ee', '#fbbf24', '#DECCA8', '#a78bfa', '#4ade80', '#f87171'];
 
 export default function DashboardPage() {
     const [loading, setLoading] = useState(true);
@@ -241,24 +244,70 @@ export default function DashboardPage() {
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="space-y-4">
-                            {Array.isArray(funnel) && funnel.map((stage, idx) => (
-                                <div key={stage.status} className="space-y-2">
-                                    <div className="flex items-center justify-between text-sm">
-                                        <span className="text-muted-foreground">{STATUS_LABELS[stage.status] || stage.status}</span>
-                                        <span className="font-medium">{stage.count}</span>
+                        <div className="relative pt-2 pb-6 px-4">
+                            {(() => {
+                                const FUNNEL_STAGES = [
+                                    { id: 'INBOX', label: '1. Lista Fria', color: '#94a3b8' },
+                                    { id: 'NEW', label: '2. Qualificados', color: '#22d3ee' },
+                                    { id: 'CONTACTED', label: '3. Contatados', color: '#818cf8' },
+                                    { id: 'MEETING', label: '4. Reuniões Marcadas', color: '#c084fc' },
+                                    { id: 'WON', label: '5. Fechamentos', color: '#4ade80' }
+                                ];
+
+                                // Create map for O(1) lookup
+                                const funnelMap = new Map(funnel.map(f => [f.status, f.count]));
+
+                                // Calculate max value for bar scaling
+                                const maxVal = Math.max(...FUNNEL_STAGES.map(s => funnelMap.get(s.id) || 0), 10); // Min 10 to avoid div by zero issues
+
+                                return (
+                                    <div className="flex flex-col items-center gap-3">
+                                        {FUNNEL_STAGES.map((stage, idx) => {
+                                            const count = funnelMap.get(stage.id) || 0;
+                                            const widthPercent = 100 - (idx * 12); // Decreasing width for funnel shape
+                                            const barPercent = Math.max((count / maxVal) * 100, 2); // Minimum visibility
+
+                                            return (
+                                                <div
+                                                    key={stage.id}
+                                                    className="w-full flex flex-col items-center group relative translate-x-0 transition-all hover:scale-[1.02]"
+                                                    style={{ width: `${widthPercent}%` }}
+                                                >
+                                                    {/* Row Data */}
+                                                    <div className="w-full flex justify-between text-xs text-muted-foreground mb-1 px-2">
+                                                        <span className="font-medium text-white/90">{stage.label}</span>
+                                                        <span className="font-mono text-white">{count}</span>
+                                                    </div>
+
+                                                    {/* Funnel Bar Container (Trapezoid-ish effect via width reduction) */}
+                                                    <div className="w-full h-8 bg-white/5 rounded-md relative overflow-hidden backdrop-blur-sm border border-white/5">
+                                                        {/* Filled Bar */}
+                                                        <div
+                                                            className="h-full absolute left-1/2 -translate-x-1/2 transition-all duration-700 ease-out flex items-center justify-center"
+                                                            style={{
+                                                                width: `${barPercent}%`,
+                                                                backgroundColor: stage.color,
+                                                                boxShadow: `0 0 20px ${stage.color}40`
+                                                            }}
+                                                        >
+                                                            {count > 0 && barPercent > 15 && (
+                                                                <span className="text-[10px] font-bold text-black/80">
+                                                                    {((count / (overview?.total || 1)) * 100).toFixed(1)}%
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Connector Line (except last) */}
+                                                    {idx < FUNNEL_STAGES.length - 1 && (
+                                                        <div className="h-3 w-[1px] bg-white/10 my-0.5" />
+                                                    )}
+                                                </div>
+                                            );
+                                        })}
                                     </div>
-                                    <div className="h-2 bg-white/5 rounded-full overflow-hidden">
-                                        <div
-                                            className="h-full rounded-full transition-all duration-500"
-                                            style={{
-                                                width: `${stage.percentage}%`,
-                                                backgroundColor: FUNNEL_COLORS[idx % FUNNEL_COLORS.length]
-                                            }}
-                                        />
-                                    </div>
-                                </div>
-                            ))}
+                                );
+                            })()}
                         </div>
                     </CardContent>
                 </Card>
@@ -388,43 +437,10 @@ export default function DashboardPage() {
 
             {/* Geographic Distribution Row - Simplified */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-                {/* Region Distribution */}
-                <Card className="bg-[#1C1C1C] border-white/5">
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2 text-lg">
-                            <svg className="w-5 h-5 text-emerald-400" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
-                            </svg>
-                            Distribuição por Região
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="space-y-4">
-                            {Object.entries(geoData.byRegion || {})
-                                .sort((a, b) => b[1] - a[1])
-                                .map(([region, count]) => (
-                                    <div key={region} className="space-y-2">
-                                        <div className="flex items-center justify-between text-sm">
-                                            <span className={region === 'Sem UF' ? 'text-amber-400' : 'text-muted-foreground'}>
-                                                {region}
-                                            </span>
-                                            <span className="font-medium">{count}</span>
-                                        </div>
-                                        <div className="h-2 bg-white/5 rounded-full overflow-hidden">
-                                            <div
-                                                className={`h-full rounded-full transition-all duration-500 ${region === 'Sem UF'
-                                                    ? 'bg-amber-500/50'
-                                                    : 'bg-gradient-to-r from-cyan-500 to-[#DECCA8]'
-                                                    }`}
-                                                style={{ width: `${(count / (geoData.total || 1)) * 100}%` }}
-                                            />
-                                        </div>
-                                    </div>
-                                ))
-                            }
-                        </div>
-                    </CardContent>
-                </Card>
+                {/* Region Distribution - 3D Globe */}
+                <div className="h-full min-h-[450px]">
+                    <RegionDistribution data={geoData.byRegion} />
+                </div>
 
                 {/* Distribution Pie */}
                 <Card className="bg-[#1C1C1C] border-white/5">

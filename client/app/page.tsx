@@ -14,7 +14,8 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Checkbox } from "@/components/ui/checkbox";
 import { Pencil, Trash2, Plus, RefreshCcw, Search, X, LayoutGrid, List as ListIcon, Check, Filter, Calendar, Users, Briefcase, MapPin, Target, Database, Download, Mail, Phone, ExternalLink, ArrowRight, Loader2, Globe, Sparkles, Split, ChevronDown, BarChart3, LogOut } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
-import { KanbanBoard, TRIAGEM_COLUMNS, PIPELINE_COLUMNS } from "@/components/kanban/KanbanBoard";
+import { KanbanBoard, PIPELINE_COLUMNS } from "@/components/kanban/KanbanBoard";
+
 import { LeadSheet } from "@/components/lead/LeadSheet";
 import { TrashSheet } from "@/components/TrashSheet";
 import { ImportReviewDialog } from "@/components/ImportReviewDialog";
@@ -200,7 +201,7 @@ export default function Home() {
   const [filterMyLeads, setFilterMyLeads] = useState(true);
   const [filterOwner, setFilterOwner] = useState<string>('all');
   const [viewMode, setViewMode] = useState<'list' | 'kanban'>('kanban');
-  const [pipelineTab, setPipelineTab] = useState<'triagem' | 'pipeline'>('pipeline');
+
   const [sortBy, setSortBy] = useState<'status' | 'alpha' | 'date_asc' | 'date_desc'>('date_desc');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -741,20 +742,14 @@ export default function Home() {
           <div className="flex items-center gap-4">
 
 
-            <UserSelector currentUser={currentUser} onChange={handleUserChange} />
-            <div className="flex gap-2">
-              <Button
-                variant="ghost"
-                className="text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 border border-rose-500/20"
-                onClick={handleLogout}
-              >
-                <LogOut className="w-4 h-4 mr-2" />
-                Sair
-              </Button>
-            </div>
+            <UserSelector
+              currentUser={currentUser}
+              onChange={handleUserChange}
+              onLogout={handleLogout}
+            />
             <div className="flex gap-2">
               <Link href="/dashboard">
-                <Button variant="outline" className="border-[#DECCA8]/30 text-[#DECCA8] hover:bg-[#DECCA8]/10">
+                <Button variant="outline" className="border-accent/30 text-accent hover:bg-accent/10">
                   <BarChart3 className="w-4 h-4 mr-2" />
                   Dashboard
                 </Button>
@@ -1560,11 +1555,12 @@ export default function Home() {
           </div>
         </div>
 
+
         {/* Leads Table */}
         <Card className="bg-[#1C1C1C] border border-white/5 shadow-none">
           <CardHeader className="flex flex-row items-center justify-between pb-4 border-b border-white/5">
             <div className="flex items-center gap-4">
-              <CardTitle>
+              <CardTitle className="text-accent">
                 {filterMyLeads ? 'Meus Leads' : (filterOwner === 'all' ? 'Todos os Leads' : `Leads de ${filterOwner === 'joao' ? 'João' : 'Vitor'}`)}
                 ({filterOwner === 'all' ? ownerCounts.all : (filterOwner === 'joao' ? ownerCounts.joao : ownerCounts.vitor)})
               </CardTitle>
@@ -1653,7 +1649,7 @@ export default function Home() {
               <div className="flex items-center gap-4 animate-in fade-in slide-in-from-right-5">
                 <span className="text-sm text-[#DECCA8] font-medium">{selectedLeads.size} selecionados</span>
                 <Select onValueChange={handleBulkStatusChange}>
-                  <SelectTrigger className="w-[150px] h-9 bg-transparent border-[rgba(255,255,255,0.10)] text-white focus:ring-0 hover:bg-white/5 data-[placeholder]:text-white">
+                  <SelectTrigger className="w-[150px] h-9 bg-transparent border-border text-white focus:ring-0 hover:bg-white/5 data-placeholder:text-white">
                     <SelectValue placeholder="Alterar Status" />
                   </SelectTrigger>
                   <SelectContent>
@@ -1671,39 +1667,9 @@ export default function Home() {
           <CardContent className="p-0 sm:p-0">
             {viewMode === 'kanban' ? (
               <div className="rounded-xl border border-[rgba(255,255,255,0.06)] bg-[#181818]/50 p-6 overflow-hidden">
-                {/* Tabs */}
-                <div className="flex gap-2 mb-6">
-                  <button
-                    onClick={() => setPipelineTab('triagem')}
-                    className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${pipelineTab === 'triagem'
-                      ? 'bg-slate-500/20 text-white border border-slate-500/30'
-                      : 'text-muted-foreground hover:text-white hover:bg-white/5'
-                      }`}
-                  >
-                    📥 Triagem
-                    <span className="ml-2 text-xs opacity-70">
-                      ({leads.filter(l => l.status === 'INBOX' || l.status === 'DISQUALIFIED').length})
-                    </span>
-                  </button>
-                  <button
-                    onClick={() => setPipelineTab('pipeline')}
-                    className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${pipelineTab === 'pipeline'
-                      ? 'bg-accent/20 text-accent border border-accent/30'
-                      : 'text-muted-foreground hover:text-white hover:bg-white/5'
-                      }`}
-                  >
-                    💰 Pipeline
-                    <span className="ml-2 text-xs opacity-70">
-                      ({leads.filter(l => !['INBOX', 'DISQUALIFIED'].includes(l.status)).length})
-                    </span>
-                  </button>
-                </div>
                 <KanbanBoard
-                  leads={pipelineTab === 'triagem'
-                    ? displayedLeads.filter(l => l.status === 'INBOX' || l.status === 'DISQUALIFIED')
-                    : displayedLeads.filter(l => !['INBOX', 'DISQUALIFIED'].includes(l.status))
-                  }
-                  columns={pipelineTab === 'triagem' ? TRIAGEM_COLUMNS : PIPELINE_COLUMNS}
+                  leads={displayedLeads}
+                  columns={PIPELINE_COLUMNS}
                   onLeadUpdate={handleKanbanUpdate}
                   onEditLead={openLeadSheet}
                   onUpdateTitle={(id, title) => handleSaveLead({ id, trade_name: title })}
@@ -1735,8 +1701,12 @@ export default function Home() {
                       <TableCell colSpan={8} className="text-center h-32 text-muted-foreground">Carregando leads...</TableCell>
                     </TableRow>
                   ) : (displayedLeads || []).map((lead: any) => (
-                    <TableRow key={lead.id} className={`border-b border-white/5 hover:bg-white/5 transition-colors ${selectedLeads.has(lead.id) ? 'bg-muted/50' : ''}`}>
-                      <TableCell>
+                    <TableRow
+                      key={lead.id}
+                      className={`border-b border-white/5 hover:bg-white/5 transition-colors cursor-pointer ${selectedLeads.has(lead.id) ? 'bg-muted/50' : ''}`}
+                      onClick={() => openLeadSheet(lead)}
+                    >
+                      <TableCell onClick={(e) => e.stopPropagation()}>
                         <Checkbox
                           checked={selectedLeads.has(lead.id)}
                           onCheckedChange={() => toggleSelectLead(lead.id)}
@@ -1762,7 +1732,7 @@ export default function Home() {
                           ) : <span className="text-xs text-[#6B6B6B] italic">Sem telefone</span>}
                         </div>
                       </TableCell>
-                      <TableCell>
+                      <TableCell onClick={(e) => e.stopPropagation()}>
                         {/* Inline Status Select */}
                         <Select
                           value={lead.status}

@@ -28,31 +28,101 @@ const ALLOWED_LEAD_FIELDS = new Set([
 /**
  * Calculate lead score based on data completeness and checklist items.
  */
+// Advanced P-Score Types
+// V-Score Types
+export interface QualificationData {
+    visualization: { usesRender: boolean, usesVideo360: boolean, usesSalesImg: boolean };
+    maturity: { hasWebsite: boolean, hasLPs: boolean, hasDigitalMats: boolean };
+    structure: { multipleProjects: boolean, teamVisible: boolean, institutionalComm: boolean };
+    scale: { multipleCities: boolean, portfolioHistory: boolean, continuousComm: boolean };
+    financial: { highStandardVisual: boolean, investBranding: boolean, activeAds: boolean };
+    techOpenness: { interactiveLinks: boolean, digitalTools: boolean, cxFocus: boolean };
+    absoluteStar?: boolean;
+}
+
+/**
+ * Calculate lead score based on V-Score Board rules (100 pts max)
+ */
+export function calculateAdvancedScore(data: any): number {
+    let score = 0;
+    const qual = (data.extra_info?.qualification || {}) as Partial<QualificationData>;
+
+    // 1️⃣ Uso comprovado de visualização (Max 25)
+    let s1 = 0;
+    const vis = qual.visualization || {} as any;
+    if (vis.usesRender) s1 += 10;
+    if (vis.usesVideo360) s1 += 8;
+    if (vis.usesSalesImg) s1 += 7;
+    score += Math.min(s1, 25);
+
+    // 2️⃣ Maturidade digital pública (Max 20)
+    let s2 = 0;
+    const mat = qual.maturity || {} as any;
+    if (mat.hasWebsite || data.website_url) s2 += 6; // Auto-fill if field exists
+    if (mat.hasLPs) s2 += 7;
+    if (mat.hasDigitalMats) s2 += 7;
+    score += Math.min(s2, 20);
+
+    // 3️⃣ Estrutura empresarial dedutível (Max 15)
+    let s3 = 0;
+    const str = qual.structure || {} as any;
+    if (str.multipleProjects) s3 += 6;
+    if (str.teamVisible) s3 += 5;
+    if (str.institutionalComm) s3 += 4;
+    score += Math.min(s3, 15);
+
+    // 4️⃣ Escala potencial do negócio (Max 15)
+    let s4 = 0;
+    const sca = qual.scale || {} as any;
+    if (sca.multipleCities) s4 += 6;
+    if (sca.portfolioHistory) s4 += 5;
+    if (sca.continuousComm) s4 += 4;
+    score += Math.min(s4, 15);
+
+    // 5️⃣ Capacidade financeira inferida (Max 15)
+    let s5 = 0;
+    const fin = qual.financial || {} as any;
+    if (fin.highStandardVisual) s5 += 6;
+    if (fin.investBranding) s5 += 5;
+    if (fin.activeAds) s5 += 4;
+    score += Math.min(s5, 15);
+
+    // 6️⃣ Abertura para tecnologia (Max 10)
+    let s6 = 0;
+    const tech = qual.techOpenness || {} as any;
+    if (tech.interactiveLinks) s6 += 4;
+    if (tech.digitalTools) s6 += 3;
+    if (tech.cxFocus) s6 += 3;
+    score += Math.min(s6, 10);
+
+    if (qual.absoluteStar) {
+        return 100;
+    }
+
+    return Math.min(score, 100);
+}
+
+/**
+ * Legacy wrapper for backward compatibility
+ */
 function calculateScore(data: any): number {
+    // If we have qualification data, use the advanced calculator
+    if (data.extra_info?.qualification) {
+        return calculateAdvancedScore(data);
+    }
+
+    // Otherwise, use a simplified version of the new logic based on available fields
     let score = 0;
 
-    // Basic info completeness
-    if (data.email && data.email.trim().length > 5) score += 10;
-    if (data.phone && String(data.phone).replace(/[^0-9]/g, '').length >= 8) score += 10;
-    if (data.instagram_url && data.instagram_url.trim().length > 5) score += 10;
-    if (data.website_url && data.website_url.trim().length > 5) score += 10;
-    if (data.decision_maker) score += 10;
+    // Presence (Implied)
+    if (data.instagram_url) score += 5;
+    if (data.website_url) score += 8;
 
-    // Render Quality (HIGH IMPACT)
-    if (data.render_quality === 'GOOD') score += 30;
-    if (data.render_quality === 'MEDIUM') score += 15;
-    if (data.render_quality === 'BAD') score -= 10;
+    // Experience (Legacy mapping)
+    if (data.render_quality === 'GOOD') score += 15; // Premium + Uses
+    else if (data.render_quality === 'MEDIUM') score += 7; // Uses
 
-    // Checklist items (from extra_info or direct)
-    const checklist = data.checklist || data.extra_info?.checklist || {};
-    if (checklist.hasInstagram) score += 20;
-    if (checklist.hasRender) score += 20;
-
-    // Source bonus - some sources are higher quality
-    if (data.source === 'instagram') score += 15;
-    if (data.source === 'rede_joao' || data.source === 'rede_vitor') score += 10;
-
-    return score;
+    return Math.min(score, 100);
 }
 
 export class LeadSanitizer {

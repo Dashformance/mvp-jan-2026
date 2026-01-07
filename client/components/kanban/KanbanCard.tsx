@@ -26,6 +26,8 @@ interface Lead {
     status: string;
     uf?: string;
     decision_maker?: string;
+    score?: number;
+    checklist?: any;
 }
 
 interface KanbanCardProps {
@@ -167,7 +169,16 @@ export function KanbanCard({ lead, onEdit, onUpdateTitle, onDisqualify, onApprov
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="p-4 pt-0 pb-4">
-                    <div className="flex gap-2 text-xs text-muted-foreground mb-3">
+                    <div className="flex gap-2 text-xs text-muted-foreground mb-3 items-center">
+                        {lead.score !== undefined && lead.score > 0 && (
+                            <Badge variant="outline" className={`text-[10px] h-5 px-2 border-white/10 ${lead.score >= 85 ? 'text-emerald-400 border-emerald-500/30 bg-emerald-500/5' :
+                                lead.score >= 70 ? 'text-cyan-400 border-cyan-500/30 bg-cyan-500/5' :
+                                    lead.score >= 55 ? 'text-amber-400 border-amber-500/30 bg-amber-500/5' :
+                                        'text-gray-400 border-gray-500/30 bg-gray-500/5'
+                                }`}>
+                                {lead.score} pts
+                            </Badge>
+                        )}
                         {lead.uf && <Badge variant="outline" className="text-[10px] h-5 px-2 border-white/10 text-muted-foreground">{lead.uf}</Badge>}
                         <span className="truncate max-w-[120px]">{lead.phone || "Sem tel"}</span>
                     </div>

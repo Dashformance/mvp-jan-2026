@@ -317,7 +317,7 @@ export const LeadsService = {
     },
 
     async getConversionFunnel() {
-        const statuses = ['NEW', 'ATTEMPTED', 'CONTACTED', 'MEETING', 'WON', 'LOST'];
+        const statuses = ['INBOX', 'NEW', 'ATTEMPTED', 'CONTACTED', 'MEETING', 'WON', 'LOST', 'DISQUALIFIED'];
         const counts = await prisma.lead.groupBy({
             by: ['status'],
             where: { deletedAt: null },
@@ -403,7 +403,7 @@ export const LeadsService = {
     async getLeadsByState() {
         const leads = await prisma.lead.findMany({
             where: { deletedAt: null },
-            select: { extra_info: true }
+            select: { extra_info: true, uf: true }
         });
 
         const regionStates: Record<string, string[]> = {
@@ -425,7 +425,7 @@ export const LeadsService = {
 
         leads.forEach((lead: any) => {
             const info = lead.extra_info as any;
-            const uf = info?.uf || info?.estado?.sigla || info?.endereco?.uf;
+            const uf = lead.uf || info?.uf || info?.estado?.sigla || info?.endereco?.uf;
             if (uf && typeof uf === 'string') {
                 const upperUf = uf.toUpperCase();
                 let found = false;

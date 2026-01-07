@@ -3,8 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model User {
@@ -30,9 +31,6 @@ model Lead {
   cnpj               String?    @unique
   phone              String?
   email              String?
-  instagram_url      String?
-  website_url        String?
-  render_quality     String?    // Enum-like: GOOD, MEDIUM, BAD
   decision_maker     String?
   extra_info         Json?
   segment_id         String?
@@ -44,27 +42,27 @@ model Lead {
   next_followup_date DateTime?
   notes              String?
   owner              String?
-  uf                 String?
-  city               String?
   deletedAt          DateTime?
-  source             String?    // Fonte: extracao, instagram, rede_joao, rede_vitor
-  score              Int        @default(0)  // Pontuação calculada
+  score              Int        @default(0)
+  source             String?
+  city               String?
+  uf                 String?
+  instagram_url      String?
+  render_quality     String?
+  website_url        String?
   segment            Segment?   @relation(fields: [segment_id], references: [id])
 
   @@map("leads")
 }
 
 enum LeadStatus {
-  // Triagem
-  INBOX          // Lead cru (Casa dos Dados)
-  SCREENING      // Em análise pelo arquiteto
-  
-  // Pipeline de Vendas  
-  NEW            // Qualificado, pronto para contato
+  NEW
   ATTEMPTED
   CONTACTED
   MEETING
   WON
   LOST
   DISQUALIFIED
+  INBOX
+  SCREENING
 }

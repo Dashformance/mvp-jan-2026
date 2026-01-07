@@ -10,7 +10,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ExternalLink, Save, Search, Linkedin, Globe, Mail, Phone, Instagram, Layers, Disc, Trash2, Target, MessageCircleIcon, MapPin } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { toast } from "sonner"; // Added toast for validation feedback
+import { QualificationForm } from "./QualificationForm";
+import { toast } from "sonner";
 
 /**
  * Visualizen DS v3.1 LeadSheet
@@ -41,6 +42,7 @@ interface Lead {
     source?: string;
     score?: number;
     checklist?: any;
+    extra_info?: any;
 }
 
 interface LeadSheetProps {
@@ -139,18 +141,24 @@ export function LeadSheet({ lead, isOpen, onClose, onSave }: LeadSheetProps) {
                 </div>
 
                 <Tabs defaultValue="details" className="w-full">
-                    <TabsList className="grid w-full grid-cols-2 bg-muted p-1 h-11 rounded-xl">
+                    <TabsList className="grid w-full grid-cols-3 bg-muted p-1 h-11 rounded-xl">
                         <TabsTrigger
                             value="details"
-                            className="rounded-lg data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm text-muted-foreground h-9"
+                            className="rounded-lg data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm text-muted-foreground h-9 text-xs"
                         >
-                            Dados & Qualificação
+                            Dados
+                        </TabsTrigger>
+                        <TabsTrigger
+                            value="qualification"
+                            className="rounded-lg data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm text-muted-foreground h-9 text-xs"
+                        >
+                            Qualificação
                         </TabsTrigger>
                         <TabsTrigger
                             value="notes"
-                            className="rounded-lg data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm text-muted-foreground h-9"
+                            className="rounded-lg data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm text-muted-foreground h-9 text-xs"
                         >
-                            Notas & Histórico
+                            Notas
                         </TabsTrigger>
                     </TabsList>
 
@@ -180,12 +188,26 @@ export function LeadSheet({ lead, isOpen, onClose, onSave }: LeadSheetProps) {
                                         <Label className="text-xs text-muted-foreground flex items-center gap-1">
                                             <Phone className="w-3 h-3" /> Whatsapp
                                         </Label>
-                                        <Input
-                                            value={formData.phone || ''}
-                                            onChange={e => handleChange('phone', e.target.value)}
-                                            className="h-10"
-                                            placeholder="(00) 00000-0000"
-                                        />
+                                        <div className="flex gap-2">
+                                            <Input
+                                                value={formData.phone || ''}
+                                                onChange={e => handleChange('phone', e.target.value)}
+                                                className="h-10"
+                                                placeholder="(00) 00000-0000"
+                                            />
+                                            <Button
+                                                size="icon"
+                                                variant="outline"
+                                                className="h-10 w-10 shrink-0 border-emerald-500/30 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20"
+                                                disabled={!formData.phone}
+                                                onClick={() => {
+                                                    const num = formData.phone?.replace(/\D/g, '') || '';
+                                                    if (num) window.open(`https://wa.me/55${num}`, '_blank');
+                                                }}
+                                            >
+                                                <MessageCircleIcon className="w-4 h-4" />
+                                            </Button>
+                                        </div>
                                     </div>
                                     <div className="space-y-1.5">
                                         <Label className="text-xs text-muted-foreground flex items-center gap-1">
@@ -205,23 +227,49 @@ export function LeadSheet({ lead, isOpen, onClose, onSave }: LeadSheetProps) {
                                         <Label className="text-xs text-muted-foreground flex items-center gap-1">
                                             <Instagram className="w-3 h-3" /> Instagram
                                         </Label>
-                                        <Input
-                                            value={formData.instagram_url || ''}
-                                            onChange={e => handleChange('instagram_url', e.target.value)}
-                                            className="h-10"
-                                            placeholder="link do perfil"
-                                        />
+                                        <div className="flex gap-2">
+                                            <Input
+                                                value={formData.instagram_url || ''}
+                                                onChange={e => handleChange('instagram_url', e.target.value)}
+                                                className="h-10"
+                                                placeholder="link do perfil"
+                                            />
+                                            <Button
+                                                size="icon"
+                                                variant="outline"
+                                                className="h-10 w-10 shrink-0 hover:text-pink-400 hover:border-pink-500/30"
+                                                disabled={!formData.instagram_url}
+                                                onClick={() => formData.instagram_url && window.open(formData.instagram_url, '_blank')}
+                                            >
+                                                <ExternalLink className="w-4 h-4" />
+                                            </Button>
+                                        </div>
                                     </div>
                                     <div className="space-y-1.5">
                                         <Label className="text-xs text-muted-foreground flex items-center gap-1">
                                             <Globe className="w-3 h-3" /> Site
                                         </Label>
-                                        <Input
-                                            value={formData.website_url || ''}
-                                            onChange={e => handleChange('website_url', e.target.value)}
-                                            className="h-10"
-                                            placeholder="www.exemplo.com"
-                                        />
+                                        <div className="flex gap-2">
+                                            <Input
+                                                value={formData.website_url || ''}
+                                                onChange={e => handleChange('website_url', e.target.value)}
+                                                className="h-10"
+                                                placeholder="www.exemplo.com"
+                                            />
+                                            <Button
+                                                size="icon"
+                                                variant="outline"
+                                                className="h-10 w-10 shrink-0 hover:text-blue-400 hover:border-blue-500/30"
+                                                disabled={!formData.website_url}
+                                                onClick={() => {
+                                                    let url = formData.website_url;
+                                                    if (url && !url.startsWith('http')) url = 'https://' + url;
+                                                    if (url) window.open(url, '_blank')
+                                                }}
+                                            >
+                                                <ExternalLink className="w-4 h-4" />
+                                            </Button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -294,6 +342,23 @@ export function LeadSheet({ lead, isOpen, onClose, onSave }: LeadSheetProps) {
                             </div>
                         </div>
 
+                    </TabsContent>
+
+                    <TabsContent value="qualification" className="py-4">
+                        <QualificationForm
+                            data={(formData.extra_info as any)?.qualification || {}}
+                            onChange={(qData) => {
+                                const currentExtra = (formData.extra_info as any) || {};
+                                setFormData(prev => ({
+                                    ...prev,
+                                    extra_info: {
+                                        ...currentExtra,
+                                        qualification: qData
+                                    }
+                                }));
+                            }}
+                            leadData={formData}
+                        />
                     </TabsContent>
 
                     <TabsContent value="notes" className="py-4">

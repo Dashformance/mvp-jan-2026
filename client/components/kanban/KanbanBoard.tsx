@@ -13,13 +13,14 @@ export const TRIAGEM_COLUMNS = [
 ];
 
 export const PIPELINE_COLUMNS = [
-    { id: "NEW", title: "✅ Qualificado (Vendas)", color: "bg-cyan-500/20 text-cyan-400" },
-    { id: "ATTEMPTED", title: "Tentando Contato", color: "bg-amber-500/20 text-amber-400" },
-    { id: "CONTACTED", title: "Contatado", color: "bg-accent/20 text-accent" },
-    { id: "MEETING", title: "Reunião Agendada", color: "bg-cyan-500/20 text-cyan-400" },
-    { id: "WON", title: "Ganho / Fechado", color: "bg-emerald-500/20 text-emerald-400" },
-    { id: "LOST", title: "Perdido", color: "bg-rose-400/15 text-rose-300" },
-    { id: "DISQUALIFIED", title: "❌ Descartado", color: "bg-gray-500/20 text-gray-400" },
+    { id: "INBOX", title: "❄️ Lista Fria", color: "bg-slate-500/10 text-slate-400 border-slate-500/20" },
+    { id: "NEW", title: "✅ Qualificado", color: "bg-blue-500/10 text-blue-400 border-blue-500/20" },
+    { id: "ATTEMPTED", title: "📞 Tentativa", color: "bg-amber-500/10 text-amber-400 border-amber-500/20" },
+    { id: "CONTACTED", title: "💬 Contatado", color: "bg-indigo-500/10 text-indigo-400 border-indigo-500/20" },
+    { id: "MEETING", title: "📅 Reunião", color: "bg-cyan-500/10 text-cyan-400 border-cyan-500/20" },
+    { id: "WON", title: "💰 Fechamento", color: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" },
+    { id: "LOST", title: "🔻 Perdido", color: "bg-rose-500/10 text-rose-400 border-rose-500/20" },
+    { id: "DISQUALIFIED", title: "🚫 Desqualificado", color: "bg-gray-500/10 text-gray-500 border-gray-500/20" },
 ];
 
 interface ColumnDefinition {
