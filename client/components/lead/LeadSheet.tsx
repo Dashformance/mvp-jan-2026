@@ -66,7 +66,41 @@ export function LeadSheet({ lead, isOpen, onClose, onSave }: LeadSheetProps) {
 
     const handleSave = async () => {
         setSaving(true);
-        await onSave(formData);
+
+        // Validation with feedback
+        const cleanedData = { ...formData };
+        const warnings: string[] = [];
+
+        // Phone validation: only numbers allowed
+        if (cleanedData.phone && !/^[\d\s\-\(\)\+]+$/.test(cleanedData.phone)) {
+            warnings.push("📞 Telefone: aceita apenas números. Campo limpo.");
+            cleanedData.phone = '';
+        }
+
+        // Email validation
+        if (cleanedData.email && cleanedData.email !== '-' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanedData.email)) {
+            warnings.push("📧 Email: formato inválido. Campo limpo.");
+            cleanedData.email = '';
+        }
+
+        // URL validations (Instagram/Site)
+        const urlPattern = /^(https?:\/\/|www\.)/i;
+        if (cleanedData.instagram_url && cleanedData.instagram_url !== '-' && !urlPattern.test(cleanedData.instagram_url) && !cleanedData.instagram_url.includes('instagram')) {
+            warnings.push("📸 Instagram: use o link completo do perfil. Campo limpo.");
+            cleanedData.instagram_url = '';
+        }
+
+        if (cleanedData.website_url && cleanedData.website_url !== '-' && !urlPattern.test(cleanedData.website_url) && !cleanedData.website_url.includes('.')) {
+            warnings.push("🌐 Site: use o link completo (ex: www.site.com). Campo limpo.");
+            cleanedData.website_url = '';
+        }
+
+        // Show warnings
+        if (warnings.length > 0) {
+            warnings.forEach(w => toast.warning(w, { duration: 4000 }));
+        }
+
+        await onSave(cleanedData);
         setSaving(false);
         onClose();
     };
