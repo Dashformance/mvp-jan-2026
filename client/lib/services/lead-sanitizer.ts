@@ -151,7 +151,9 @@ export class LeadSanitizer {
         if (value === undefined || value === null) return null;
         if (typeof value === 'string') {
             const trimmed = value.trim();
-            return trimmed === '' ? null : trimmed;
+            // Treat '-', '--', or empty as null
+            if (trimmed === '' || trimmed === '-' || trimmed === '--') return null;
+            return trimmed;
         }
         return value;
     }
