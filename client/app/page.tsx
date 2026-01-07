@@ -27,13 +27,18 @@ export const API_URL = "/api";
 // DS v3.1 Semantic Status Colors
 // DS v3.1 Semantic Status Colors
 const STATUS_MAP: Record<string, { label: string, color: string }> = {
-  NEW: { label: 'Novo', color: 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/20' },
+  // Triagem
+  INBOX: { label: 'Sem qualificação', color: 'bg-slate-500/20 text-slate-400 border border-slate-500/20' },
+  // Removed SCREENING since it's no longer a column
+
+  // Pipeline de Vendas
+  NEW: { label: '✅ Qualificado (Vendas)', color: 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/20' },
   ATTEMPTED: { label: 'Tentando Contato', color: 'bg-amber-500/20 text-amber-400 border border-amber-500/20' },
   CONTACTED: { label: 'Contatado', color: 'bg-[#DECCA8]/20 text-[#DECCA8] border border-[#DECCA8]/20' },
   MEETING: { label: 'Reunião Agendada', color: 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/20' },
   WON: { label: 'Ganho / Fechado', color: 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/20' },
-  LOST: { label: 'Perdido / Descartado', color: 'bg-rose-400/15 text-rose-300 border border-rose-400/15' },
-  DISQUALIFIED: { label: 'Desqualificado', color: 'bg-zinc-500/20 text-zinc-400 border border-zinc-500/20' },
+  LOST: { label: 'Perdido', color: 'bg-rose-400/15 text-rose-300 border border-rose-400/15' },
+  DISQUALIFIED: { label: 'Desqualificado', color: 'bg-gray-500/20 text-gray-400 border border-zinc-500/20' },
 };
 
 const UF_OPTIONS = ['AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'];
@@ -99,7 +104,7 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [meta, setMeta] = useState<any>({});
   const [page, setPage] = useState(1);
-  const [limit] = useState(50);
+  const [limit] = useState(1000); // Increased limit to ensure all leads load for Kanban
 
   const [extracting, setExtracting] = useState(false);
   const [importProgress, setImportProgress] = useState<{
@@ -1677,7 +1682,7 @@ export default function Home() {
                   >
                     📥 Triagem
                     <span className="ml-2 text-xs opacity-70">
-                      ({leads.filter(l => l.status === 'INBOX' || l.status === 'SCREENING').length})
+                      ({leads.filter(l => l.status === 'INBOX' || l.status === 'DISQUALIFIED').length})
                     </span>
                   </button>
                   <button
@@ -1689,14 +1694,14 @@ export default function Home() {
                   >
                     💰 Pipeline
                     <span className="ml-2 text-xs opacity-70">
-                      ({leads.filter(l => !['INBOX', 'SCREENING'].includes(l.status)).length})
+                      ({leads.filter(l => !['INBOX', 'DISQUALIFIED'].includes(l.status)).length})
                     </span>
                   </button>
                 </div>
                 <KanbanBoard
                   leads={pipelineTab === 'triagem'
-                    ? displayedLeads.filter(l => l.status === 'INBOX' || l.status === 'SCREENING')
-                    : displayedLeads.filter(l => !['INBOX', 'SCREENING'].includes(l.status))
+                    ? displayedLeads.filter(l => l.status === 'INBOX' || l.status === 'DISQUALIFIED')
+                    : displayedLeads.filter(l => !['INBOX', 'DISQUALIFIED'].includes(l.status))
                   }
                   columns={pipelineTab === 'triagem' ? TRIAGEM_COLUMNS : PIPELINE_COLUMNS}
                   onLeadUpdate={handleKanbanUpdate}

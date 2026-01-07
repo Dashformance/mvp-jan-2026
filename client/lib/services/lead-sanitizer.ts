@@ -1,6 +1,7 @@
 /**
  * Allowlist of fields that exist in the Prisma Lead model.
  * Only these fields will be passed to Prisma.
+ * Note: 'source', 'score' are added by sanitizer, 'segment_id' must use relation
  */
 const ALLOWED_LEAD_FIELDS = new Set([
     'company_name',
@@ -13,7 +14,6 @@ const ALLOWED_LEAD_FIELDS = new Set([
     'render_quality',
     'decision_maker',
     'extra_info',
-    'segment_id',
     'status',
     'priority',
     'first_contact_date',
@@ -21,10 +21,8 @@ const ALLOWED_LEAD_FIELDS = new Set([
     'next_followup_date',
     'notes',
     'owner',
-    'source',  // NEW: Fonte do lead
-    'score',   // NEW: Pontuação calculada
-    'uf',      // NEW: Estado
-    'city',     // NEW: Cidade
+    'uf',
+    'city',
 ]);
 
 /**

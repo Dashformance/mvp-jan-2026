@@ -8,19 +8,18 @@ import { createPortal } from "react-dom";
 
 // Column definitions for different views
 export const TRIAGEM_COLUMNS = [
-    { id: "DISQUALIFIED", title: "❌ Descartado", color: "bg-gray-500/20 text-gray-400" },
-    { id: "INBOX", title: "📥 Nova Lista", color: "bg-slate-500/20 text-slate-400" },
-    { id: "SCREENING", title: "🔍 Qualificado", color: "bg-amber-500/20 text-amber-400" },
+    { id: "INBOX", title: "Lista fria", color: "bg-slate-500/20 text-slate-400" },
+    { id: "DISQUALIFIED", title: "Desqualificados", color: "bg-red-500/20 text-red-400" },
 ];
 
 export const PIPELINE_COLUMNS = [
-    { id: "NEW", title: "✅ Qualificado", color: "bg-cyan-500/20 text-cyan-400" },
+    { id: "NEW", title: "✅ Qualificado (Vendas)", color: "bg-cyan-500/20 text-cyan-400" },
     { id: "ATTEMPTED", title: "Tentando Contato", color: "bg-amber-500/20 text-amber-400" },
     { id: "CONTACTED", title: "Contatado", color: "bg-accent/20 text-accent" },
     { id: "MEETING", title: "Reunião Agendada", color: "bg-cyan-500/20 text-cyan-400" },
     { id: "WON", title: "Ganho / Fechado", color: "bg-emerald-500/20 text-emerald-400" },
     { id: "LOST", title: "Perdido", color: "bg-rose-400/15 text-rose-300" },
-    { id: "DISQUALIFIED", title: "Descartado", color: "bg-gray-500/20 text-gray-400" },
+    { id: "DISQUALIFIED", title: "❌ Descartado", color: "bg-gray-500/20 text-gray-400" },
 ];
 
 interface ColumnDefinition {
