@@ -30,6 +30,9 @@ export const LeadsService = {
             sanitized.cnpj = `MANUAL-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
         }
 
+        console.log('[LeadsService.create] Input data keys:', Object.keys(data));
+        console.log('[LeadsService.create] Sanitized data:', JSON.stringify(sanitized, null, 2));
+
         return prisma.lead.create({
             data: sanitized,
         });

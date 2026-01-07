@@ -146,8 +146,10 @@ export default function Home() {
           body: JSON.stringify(saveData),
         });
         if (!res.ok) {
-          const err = await res.json().catch(() => ({}));
-          throw new Error(err.details || err.error || 'Falha ao criar lead');
+          const errData = await res.json().catch(() => ({}));
+          // API returns { error: { message, details } }
+          const errMsg = errData.error?.message || errData.error?.details || errData.message || 'Falha ao criar lead';
+          throw new Error(typeof errMsg === 'string' ? errMsg : JSON.stringify(errMsg));
         }
         toast.success('Lead criado com sucesso!');
       } else {
@@ -157,15 +159,17 @@ export default function Home() {
           body: JSON.stringify(updatedLead),
         });
         if (!res.ok) {
-          const err = await res.json().catch(() => ({}));
-          throw new Error(err.details || err.error || 'Falha ao atualizar lead');
+          const errData = await res.json().catch(() => ({}));
+          // API returns { error: { message, details } }
+          const errMsg = errData.error?.message || errData.error?.details || errData.message || 'Falha ao atualizar lead';
+          throw new Error(typeof errMsg === 'string' ? errMsg : JSON.stringify(errMsg));
         }
         toast.success('Lead atualizado!');
       }
       await fetchLeads(page);
-    } catch (error) {
-      console.error(error);
-      toast.error('Erro ao salvar lead');
+    } catch (error: any) {
+      console.error('[handleSaveLead] Error:', error);
+      toast.error(error.message || 'Erro ao salvar lead');
     } finally {
       setLoading(false);
     }
@@ -1655,8 +1659,8 @@ export default function Home() {
                   <button
                     onClick={() => setPipelineTab('triagem')}
                     className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${pipelineTab === 'triagem'
-                        ? 'bg-slate-500/20 text-white border border-slate-500/30'
-                        : 'text-muted-foreground hover:text-white hover:bg-white/5'
+                      ? 'bg-slate-500/20 text-white border border-slate-500/30'
+                      : 'text-muted-foreground hover:text-white hover:bg-white/5'
                       }`}
                   >
                     📥 Triagem
@@ -1667,8 +1671,8 @@ export default function Home() {
                   <button
                     onClick={() => setPipelineTab('pipeline')}
                     className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${pipelineTab === 'pipeline'
-                        ? 'bg-accent/20 text-accent border border-accent/30'
-                        : 'text-muted-foreground hover:text-white hover:bg-white/5'
+                      ? 'bg-accent/20 text-accent border border-accent/30'
+                      : 'text-muted-foreground hover:text-white hover:bg-white/5'
                       }`}
                   >
                     💰 Pipeline
