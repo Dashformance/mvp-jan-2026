@@ -137,6 +137,11 @@ export default function Home() {
 
   const handleSaveLead = async (updatedLead: any) => {
     setLoading(true);
+
+    // Create abort controller for timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+
     try {
       if (updatedLead.id === 'new') {
         const { id, ...saveData } = updatedLead;
@@ -144,10 +149,11 @@ export default function Home() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(saveData),
+          signal: controller.signal,
         });
+        clearTimeout(timeoutId);
         if (!res.ok) {
           const errData = await res.json().catch(() => ({}));
-          // API returns { error: { message, details } }
           const errMsg = errData.error?.message || errData.error?.details || errData.message || 'Falha ao criar lead';
           throw new Error(typeof errMsg === 'string' ? errMsg : JSON.stringify(errMsg));
         }
@@ -157,10 +163,11 @@ export default function Home() {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(updatedLead),
+          signal: controller.signal,
         });
+        clearTimeout(timeoutId);
         if (!res.ok) {
           const errData = await res.json().catch(() => ({}));
-          // API returns { error: { message, details } }
           const errMsg = errData.error?.message || errData.error?.details || errData.message || 'Falha ao atualizar lead';
           throw new Error(typeof errMsg === 'string' ? errMsg : JSON.stringify(errMsg));
         }
@@ -168,8 +175,13 @@ export default function Home() {
       }
       await fetchLeads(page);
     } catch (error: any) {
+      clearTimeout(timeoutId);
       console.error('[handleSaveLead] Error:', error);
-      toast.error(error.message || 'Erro ao salvar lead');
+      if (error.name === 'AbortError') {
+        toast.error('⏱️ Tempo esgotado. Servidor não respondeu em 30 segundos.');
+      } else {
+        toast.error(error.message || 'Erro ao salvar lead');
+      }
     } finally {
       setLoading(false);
     }
