@@ -32,6 +32,7 @@ interface Lead {
     checklist?: any;
     contacts?: any[]; // Prism Relation
     last_contact_date?: string | Date; // NEW: Interaction tracking
+    owner?: string;
 }
 
 interface KanbanCardProps {

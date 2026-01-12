@@ -1766,7 +1766,7 @@ export default function Home() {
                 sortBy={sortBy}
                 sortOrder={sortBy?.includes('desc') || sortBy === 'date_desc' || sortBy === 'score' ? 'desc' : 'asc'}
                 onSort={handleSortChange}
-                onRowClick={handleEditLead}
+                onRowClick={openLeadSheet}
               />
             )}</CardContent>
         </Card >

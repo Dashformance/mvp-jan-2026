@@ -3,8 +3,9 @@ import { NextResponse } from "next/server";
 
 const prisma = new PrismaClient();
 
-export async function PUT(request: Request, { params }: { params: { id: string } }) {
+export async function PUT(request: Request, props: { params: Promise<{ id: string }> }) {
     try {
+        const params = await props.params;
         const { id } = params;
         const body = await request.json();
 
@@ -36,8 +37,9 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     }
 }
 
-export async function DELETE(request: Request, { params }: { params: { id: string } }) {
+export async function DELETE(request: Request, props: { params: Promise<{ id: string }> }) {
     try {
+        const params = await props.params;
         const { id } = params;
         await prisma.contact.delete({ where: { id } });
         return NextResponse.json({ success: true });
