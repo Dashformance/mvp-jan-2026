@@ -34,7 +34,7 @@ model Lead {
   decision_maker     String?
   extra_info         Json?
   segment_id         String?
-  status             LeadStatus @default(NEW)
+  status             String     @default("NEW") // Changed from LeadStatus enum to String for dynamic columns
   priority           Int        @default(0)
   date_added         DateTime   @default(now())
   first_contact_date DateTime?

@@ -29,6 +29,10 @@ interface ColumnDefinition {
     color: string;
 }
 
+import { Input } from "@/components/ui/input";
+import { Plus, Check, X } from "lucide-react";
+import { Button } from "@/components/ui/button"; // Ensure Button is imported
+
 interface KanbanBoardProps {
     leads: any[];
     columns?: ColumnDefinition[];  // NEW: Accept columns as prop
@@ -38,6 +42,8 @@ interface KanbanBoardProps {
     onDisqualify?: (id: string) => void;
     onApprove?: (id: string) => void;  // NEW: For triagem approval
     onQuickContact?: (id: string) => void; // NEW
+    onAddLead?: (status: string) => void; // NEW
+    onRenameColumn?: (id: string, newTitle: string) => void; // Explicitly defined
 }
 
 export function KanbanBoard({
@@ -48,9 +54,13 @@ export function KanbanBoard({
     onUpdateTitle,
     onDisqualify,
     onApprove,
-    onQuickContact
+    onQuickContact,
+    onAddLead,
+    onRenameColumn
 }: KanbanBoardProps) {
     const [activeLead, setActiveLead] = useState<any | null>(null);
+    const [isAddingColumn, setIsAddingColumn] = useState(false);
+    const [newColumnName, setNewColumnName] = useState("");
 
     const sensors = useSensors(
         useSensor(MouseSensor, {
@@ -95,6 +105,15 @@ export function KanbanBoard({
         }
     };
 
+    const handleAddColumnSubmit = () => {
+        if (newColumnName.trim()) {
+            const evt = new CustomEvent('kanban:add-column', { detail: { name: newColumnName } });
+            window.dispatchEvent(evt);
+            setNewColumnName("");
+            setIsAddingColumn(false);
+        }
+    };
+
     return (
         <DndContext
             sensors={sensors}
@@ -114,8 +133,46 @@ export function KanbanBoard({
                         onDisqualify={onDisqualify}
                         onApprove={onApprove}
                         onQuickContact={onQuickContact}
+                        onAddLead={onAddLead}
+                        onRenameColumn={onRenameColumn}
                     />
                 ))}
+
+                {/* Add New Column Button / input */}
+                <div className="min-w-[50px] flex items-center justify-center">
+                    {isAddingColumn ? (
+                        <div className="flex flex-col gap-2 w-[280px] bg-muted rounded-xl border border-white/5 p-4 animate-in fade-in zoom-in-95 duration-200">
+                            <span className="text-xs text-muted-foreground font-medium">Nome da nova coluna</span>
+                            <Input
+                                autoFocus
+                                value={newColumnName}
+                                onChange={(e) => setNewColumnName(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') handleAddColumnSubmit();
+                                    if (e.key === 'Escape') setIsAddingColumn(false);
+                                }}
+                                className="h-9 bg-black/20 border-white/10"
+                                placeholder="Ex: Negociação"
+                            />
+                            <div className="flex justify-end gap-2 mt-2">
+                                <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => setIsAddingColumn(false)}>
+                                    <X className="w-4 h-4" />
+                                </Button>
+                                <Button size="sm" className="h-7 w-7 p-0 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20" onClick={handleAddColumnSubmit}>
+                                    <Check className="w-4 h-4" />
+                                </Button>
+                            </div>
+                        </div>
+                    ) : (
+                        <button
+                            onClick={() => setIsAddingColumn(true)}
+                            className="h-full max-h-[500px] w-12 rounded-xl border border-dashed border-white/10 hover:border-white/30 hover:bg-white/5 flex items-center justify-center transition-all group"
+                            title="Adicionar nova coluna"
+                        >
+                            <span className="text-2xl text-muted-foreground group-hover:text-white">+</span>
+                        </button>
+                    )}
+                </div>
             </div>
 
             {typeof document !== 'undefined' && createPortal(

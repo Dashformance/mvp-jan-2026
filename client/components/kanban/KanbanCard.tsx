@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Phone, Mail, MessageCircle, ExternalLink, User, Check, X } from "lucide-react";
+import { Phone, Mail, MessageCircle, ExternalLink, User, Check, X, Pencil } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 
 /**
@@ -148,16 +148,29 @@ export function KanbanCard({ lead, onEdit, onUpdateTitle, onDisqualify, onApprov
                                 />
                             </div>
                         ) : (
-                            <CardTitle
-                                className="text-sm font-semibold truncate max-w-[180px] text-white cursor-text hover:text-accent/80 transition-colors"
-                                title="Duplo clique para editar"
-                                onDoubleClick={(e) => {
-                                    e.stopPropagation();
-                                    setIsEditingTitle(true);
-                                }}
-                            >
-                                {lead.trade_name || lead.company_name}
-                            </CardTitle>
+                            <div className="flex items-center gap-2 group/title w-full max-w-[170px]">
+                                <CardTitle
+                                    className="text-sm font-semibold truncate text-white cursor-pointer hover:text-accent/80 transition-colors"
+                                    title="Duplo clique para editar"
+                                    onDoubleClick={(e) => {
+                                        e.stopPropagation();
+                                        setIsEditingTitle(true);
+                                    }}
+                                >
+                                    {lead.trade_name || lead.company_name}
+                                </CardTitle>
+                                <Button
+                                    variant="ghost"
+                                    size="icon-sm"
+                                    className="h-4 w-4 opacity-0 group-hover/title:opacity-100 transition-opacity text-muted-foreground hover:text-white"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setIsEditingTitle(true);
+                                    }}
+                                >
+                                    <Pencil className="w-2.5 h-2.5" />
+                                </Button>
+                            </div>
                         )}
 
                         <div className="flex gap-1" onPointerDown={e => e.stopPropagation()}>

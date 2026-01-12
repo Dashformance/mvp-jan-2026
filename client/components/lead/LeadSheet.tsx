@@ -62,7 +62,7 @@ export function LeadSheet({ lead, isOpen, onClose, onSave }: LeadSheetProps) {
         if (lead) {
             setFormData({ ...lead });
         }
-    }, [lead?.id]);
+    }, [lead]);
 
     const handleChange = (field: string, value: string) => {
         setFormData(prev => ({ ...prev, [field]: value }));

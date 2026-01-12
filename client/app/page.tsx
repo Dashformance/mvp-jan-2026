@@ -148,6 +148,56 @@ export default function Home() {
     setIsSheetOpen(true);
   };
 
+  // Dynamic Columns State
+  const [columns, setColumns] = useState(PIPELINE_COLUMNS);
+
+  // Fetch Stages on Load
+  useEffect(() => {
+    fetch('/api/stages')
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          const mapped = data.map((s: any) => ({
+            id: s.name,
+            title: s.phase,
+            color: s.color || "bg-gray-500/10 text-gray-500 border-gray-500/20"
+          }));
+          setColumns(mapped);
+        }
+      })
+      .catch(err => console.error("Failed to load stages", err));
+  }, []);
+
+  // Listen for Add Column Event
+  useEffect(() => {
+    const handleAddColumn = async (e: any) => {
+      const name = e.detail?.name;
+      if (!name) return;
+
+      const tempId = name.toUpperCase().replace(/\s+/g, '_');
+      const newCol = { id: tempId, title: name, color: "bg-gray-500/10 text-gray-500 border-gray-500/20" };
+
+      // Optimistic
+      setColumns(prev => [...prev, newCol]);
+
+      try {
+        const res = await fetch('/api/stages', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: tempId, phase: name })
+        });
+        if (!res.ok) throw new Error("Failed");
+        toast.success("Coluna criada com sucesso!");
+      } catch (err) {
+        toast.error("Erro ao criar coluna");
+        setColumns(prev => prev.filter(c => c.id !== tempId));
+      }
+    };
+
+    window.addEventListener('kanban:add-column', handleAddColumn);
+    return () => window.removeEventListener('kanban:add-column', handleAddColumn);
+  }, []);
+
   const [filterBarState, setFilterBarState] = useState<{ search?: string; status?: string[]; owner?: string; source?: string[] }>({});
 
   const handleFilterChange = (filters: { search?: string; status?: string[]; owner?: string; source?: string[] }) => {
@@ -162,6 +212,7 @@ export default function Home() {
     const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
 
     try {
+      let savedLead;
       if (updatedLead.id === 'new') {
         const { id, ...saveData } = updatedLead;
         const res = await fetch(`${API_URL}/leads`, {
@@ -176,7 +227,12 @@ export default function Home() {
           const errMsg = errData.error?.message || errData.error?.details || errData.message || 'Falha ao criar lead';
           throw new Error(typeof errMsg === 'string' ? errMsg : JSON.stringify(errMsg));
         }
-        toast.success('Lead criado com sucesso!');
+        savedLead = await res.json();
+
+        // Optimistic add (with real data)
+        setLeads(prev => [savedLead, ...prev]);
+        toast.success("Lead criado com sucesso!");
+
       } else {
         const res = await fetch(`${API_URL}/leads/${updatedLead.id}`, {
           method: 'PATCH',
@@ -1744,7 +1800,7 @@ export default function Home() {
               <div className="rounded-xl border border-[rgba(255,255,255,0.06)] bg-[#181818]/50 p-6 overflow-hidden">
                 <KanbanBoard
                   leads={displayedLeads}
-                  columns={PIPELINE_COLUMNS}
+                  columns={columns}
                   onLeadUpdate={handleKanbanUpdate}
                   onEditLead={openLeadSheet}
                   onUpdateTitle={async (id, newTitle) => {
@@ -1758,6 +1814,38 @@ export default function Home() {
                   onDisqualify={(id) => handleKanbanUpdate(id, 'DISQUALIFIED')}
                   onApprove={(id) => handleKanbanUpdate(id, 'NEW')}
                   onQuickContact={handleQuickContact}
+                  onAddLead={(status) => {
+                    setSelectedLeadForSheet({
+                      id: "new",
+                      company_name: "",
+                      trade_name: "",
+                      cnpj: "",
+                      status: status, // Pre-fill status
+                      owner: currentUser,
+                      source: "Manual",
+                      checklist: { hasInstagram: false, hasRender: false }
+                    });
+                    setIsSheetOpen(true);
+                  }}
+                  onRenameColumn={async (id, newTitle) => {
+                    // Update exact column in state
+                    setColumns(cols => {
+                      const newCols = cols.map(c => c.id === id ? { ...c, title: newTitle } : c);
+                      return [...newCols]; // Force new reference
+                    });
+
+                    try {
+                      const res = await fetch('/api/stages', {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ name: id, phase: newTitle })
+                      });
+                      if (!res.ok) throw new Error("Failed update");
+                      // toast.success("Coluna renomeada!");
+                    } catch (e) {
+                      toast.error("Erro ao renomear coluna");
+                    }
+                  }}
                 />
               </div>
             ) : (
