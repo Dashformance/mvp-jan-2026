@@ -21,13 +21,17 @@ interface Lead {
     company_name: string;
     trade_name: string;
     cnpj: string;
+    // Deprecated fields kept for types but UI should prefer contacts
     phone?: string;
     email?: string;
+    decision_maker?: string;
+
     status: string;
     uf?: string;
-    decision_maker?: string;
     score?: number;
     checklist?: any;
+    contacts?: any[]; // Prism Relation
+    last_contact_date?: string | Date; // NEW: Interaction tracking
 }
 
 interface KanbanCardProps {
@@ -35,10 +39,11 @@ interface KanbanCardProps {
     onEdit: (lead: Lead) => void;
     onUpdateTitle?: (id: string, newTitle: string) => void;
     onDisqualify?: (id: string) => void;
-    onApprove?: (id: string) => void;  // NEW: For triagem approval
+    onApprove?: (id: string) => void;
+    onQuickContact?: (id: string) => void; // NEW
 }
 
-export function KanbanCard({ lead, onEdit, onUpdateTitle, onDisqualify, onApprove }: KanbanCardProps) {
+export function KanbanCard({ lead, onEdit, onUpdateTitle, onDisqualify, onApprove, onQuickContact }: KanbanCardProps) {
     const { attributes, listeners, setNodeRef, transform } = useDraggable({
         id: lead.id,
     });
@@ -46,6 +51,12 @@ export function KanbanCard({ lead, onEdit, onUpdateTitle, onDisqualify, onApprov
     const [isEditingTitle, setIsEditingTitle] = useState(false);
     const [titleValue, setTitleValue] = useState(lead.trade_name || lead.company_name);
     const inputRef = useRef<HTMLInputElement>(null);
+
+    // Resolve Primary Contact Info
+    const primaryContact = lead.contacts?.[0];
+    const displayName = primaryContact?.name || lead.decision_maker;
+    const displayPhone = primaryContact?.phone || primaryContact?.whatsapp || lead.phone;
+    const displayEmail = primaryContact?.email || lead.email;
 
     useEffect(() => {
         setTitleValue(lead.trade_name || lead.company_name);
@@ -63,16 +74,16 @@ export function KanbanCard({ lead, onEdit, onUpdateTitle, onDisqualify, onApprov
 
     const handleWhatsApp = (e: React.MouseEvent) => {
         e.stopPropagation();
-        if (!lead.phone) return;
-        const cleanPhone = lead.phone.replace(/\D/g, "");
+        const phone = primaryContact?.whatsapp || primaryContact?.phone || lead.phone;
+        if (!phone) return;
+        const cleanPhone = phone.replace(/\D/g, "");
         window.open(`https://wa.me/55${cleanPhone}`, "_blank");
     };
 
     const handleEmail = (e: React.MouseEvent) => {
         e.stopPropagation();
-        if (!lead.email) return;
-        let email = lead.email;
-        if (typeof email === 'object' && (email as any).email) email = (email as any).email;
+        const email = primaryContact?.email || lead.email;
+        if (!email) return;
         window.location.href = `mailto:${email}`;
     };
 
@@ -98,10 +109,28 @@ export function KanbanCard({ lead, onEdit, onUpdateTitle, onDisqualify, onApprov
         }
     };
 
+    const hoverStyle = "hover:border-accent/50 hover:shadow-[0_0_15px_-3px_rgba(222,204,168,0.1)]";
+
+    // Date formatting logic
+    const getLastContactLabel = () => {
+        if (!lead.last_contact_date) return null;
+        const date = new Date(lead.last_contact_date);
+        const now = new Date();
+        const diffTime = Math.abs(now.getTime() - date.getTime());
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+        if (diffDays === 0) return { text: "Hoje", color: "text-emerald-400" };
+        if (diffDays === 1) return { text: "Ontem", color: "text-muted-foreground" };
+        if (diffDays < 7) return { text: `${diffDays}d atrás`, color: "text-muted-foreground" };
+        return { text: date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }), color: "text-muted-foreground" };
+    };
+
+    const lastContact = getLastContactLabel();
+
     return (
         <div ref={setNodeRef} style={style} {...listeners} {...attributes} className="mb-3 touch-none">
             <Card
-                className="cursor-grab active:cursor-grabbing hover:shadow-lg transition-all border-l-4 border-l-accent"
+                className={`cursor-grab active:cursor-grabbing transition-all border-l-4 border-l-accent group relative overflow-hidden ${hoverStyle}`}
                 onClick={() => !isEditingTitle && onEdit(lead)}
             >
                 <CardHeader className="p-4 pb-2 space-y-1">
@@ -159,52 +188,95 @@ export function KanbanCard({ lead, onEdit, onUpdateTitle, onDisqualify, onApprov
                         </div>
                     </div>
                     <CardDescription className="text-xs truncate">
-                        {lead.decision_maker ? (
+                        {displayName ? (
                             <span className="flex items-center gap-1 text-accent font-medium">
-                                <User className="w-3 h-3" /> {lead.decision_maker}
+                                <User className="w-3 h-3" /> {displayName}
                             </span>
                         ) : (
-                            <span className="text-[#6B6B6B] italic">Sem decisor</span>
+                            <span className="text-[#6B6B6B] italic">Sem contato</span>
                         )}
                     </CardDescription>
+
                 </CardHeader>
                 <CardContent className="p-4 pt-0 pb-4">
-                    <div className="flex gap-2 text-xs text-muted-foreground mb-3 items-center">
-                        {lead.score !== undefined && lead.score > 0 && (
-                            <Badge variant="outline" className={`text-[10px] h-5 px-2 border-white/10 ${lead.score >= 85 ? 'text-emerald-400 border-emerald-500/30 bg-emerald-500/5' :
-                                lead.score >= 70 ? 'text-cyan-400 border-cyan-500/30 bg-cyan-500/5' :
-                                    lead.score >= 55 ? 'text-amber-400 border-amber-500/30 bg-amber-500/5' :
-                                        'text-gray-400 border-gray-500/30 bg-gray-500/5'
-                                }`}>
-                                {lead.score} pts
-                            </Badge>
+                    {/* Last Contact Indicator Row */}
+                    <div className="flex justify-between items-center mb-3">
+                        <div className="flex gap-2 text-xs text-muted-foreground items-center">
+                            {lead.score !== undefined && lead.score > 0 && (
+                                <Badge variant="outline" className={`text-[10px] h-5 px-2 border-white/10 ${lead.score >= 85 ? 'text-emerald-400 border-emerald-500/30 bg-emerald-500/5' :
+                                    lead.score >= 70 ? 'text-cyan-400 border-cyan-500/30 bg-cyan-500/5' :
+                                        lead.score >= 55 ? 'text-amber-400 border-amber-500/30 bg-amber-500/5' :
+                                            'text-gray-400 border-gray-500/30 bg-gray-500/5'
+                                    }`}>
+                                    {lead.score} pts
+                                </Badge>
+                            )}
+
+                        </div>
+
+                        {/* Quick Contact Checkbox */}
+                        {onQuickContact && (
+                            <div
+                                className="flex items-center gap-1 cursor-pointer bg-white/5 hover:bg-white/10 px-2 py-1 rounded-full transition-colors"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onQuickContact(lead.id);
+                                }}
+                                title="Marcar contato feito hoje"
+                            >
+                                <div className={`w-3 h-3 rounded-full border ${lastContact?.text === 'Hoje' ? 'bg-emerald-500 border-emerald-500' : 'border-muted-foreground/50'}`}>
+                                    {lastContact?.text === 'Hoje' && <Check className="w-2 h-2 text-black" />}
+                                </div>
+                                <span className="text-[10px] text-muted-foreground">{lastContact?.text === 'Hoje' ? 'Feito' : 'Hoje?'}</span>
+                            </div>
                         )}
-                        {lead.uf && <Badge variant="outline" className="text-[10px] h-5 px-2 border-white/10 text-muted-foreground">{lead.uf}</Badge>}
-                        <span className="truncate max-w-[120px]">{lead.phone || "Sem tel"}</span>
                     </div>
 
-                    <div className="flex gap-2 mt-2" onPointerDown={e => e.stopPropagation()}>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            className={`h-8 flex-1 gap-1 text-xs ${lead.phone ? 'text-[#4ADE80] border-[rgba(74,222,128,0.3)] hover:bg-[rgba(74,222,128,0.12)]' : 'opacity-30'}`}
-                            onClick={handleWhatsApp}
-                            disabled={!lead.phone}
-                        >
-                            <MessageCircle className="w-3 h-3" /> Zap
-                        </Button>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            className={`h-8 flex-1 gap-1 text-xs ${lead.email ? 'text-[#44CCFF] border-[rgba(68,204,255,0.3)] hover:bg-[rgba(68,204,255,0.12)]' : 'opacity-30'}`}
-                            onClick={handleEmail}
-                            disabled={!lead.email}
-                        >
-                            <Mail className="w-3 h-3" /> Email
-                        </Button>
+                    <div className="flex gap-2 mt-2 items-center justify-between" onPointerDown={e => e.stopPropagation()}>
+
+                        {/* Owner Badge */}
+                        <div className="flex items-center gap-1.5">
+                            <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${lead.owner === 'joao' ? 'bg-amber-500/20 text-amber-500 border border-amber-500/30' :
+                                lead.owner === 'vitor' ? 'bg-cyan-500/20 text-cyan-500 border border-cyan-500/30' :
+                                    'bg-zinc-500/20 text-zinc-400 border border-zinc-500/30'
+                                }`} title={lead.owner === 'joao' ? 'João' : lead.owner === 'vitor' ? 'Vitor' : 'Sem dono'}>
+                                {lead.owner ? lead.owner.charAt(0).toUpperCase() : '?'}
+                            </div>
+
+                            {/* Last Action Text */}
+                            {lastContact ? (
+                                <span className={`text-[10px] ${lastContact.color}`}>
+                                    {lastContact.text}
+                                </span>
+                            ) : (
+                                <span className="text-[10px] text-zinc-600">Sem atividade</span>
+                            )}
+                        </div>
+
+                        {/* Quick Actions (Compact) */}
+                        <div className="flex gap-1">
+                            <Button
+                                variant="ghost"
+                                size="icon-sm"
+                                className={`h-6 w-6 rounded-full hover:bg-emerald-500/20 hover:text-emerald-400 ${!displayPhone ? 'opacity-30 pointer-events-none' : 'text-zinc-500'}`}
+                                onClick={handleWhatsApp}
+                                title="Abrir WhatsApp"
+                            >
+                                <MessageCircle className="w-3.5 h-3.5" />
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                size="icon-sm"
+                                className={`h-6 w-6 rounded-full hover:bg-cyan-500/20 hover:text-cyan-400 ${!displayEmail ? 'opacity-30 pointer-events-none' : 'text-zinc-500'}`}
+                                onClick={handleEmail}
+                                title="Enviar Email"
+                            >
+                                <Mail className="w-3.5 h-3.5" />
+                            </Button>
+                        </div>
                     </div>
                 </CardContent>
             </Card>
-        </div>
+        </div >
     );
 }

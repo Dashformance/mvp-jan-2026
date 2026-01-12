@@ -52,38 +52,111 @@ export const LeadsService = {
         return { count: results.length };
     },
 
-    async findAll(page = 1, limit = 50) {
+    async findAll(page = 1, limit = 50, filters?: {
+        search?: string;
+        status?: string[];
+        owner?: string;
+        source?: string[];
+        city?: string;
+        scoreMin?: number;
+        scoreMax?: number;
+        sortBy?: string;
+        sortOrder?: 'asc' | 'desc';
+    }) {
+        console.log(`[LeadsService] findAll called with page=${page}, limit=${limit}, filters=`, filters);
         const skip = (page - 1) * limit;
-        const [leads, total, joaoTotal, vitorTotal, unassignedTotal] = await Promise.all([
-            prisma.lead.findMany({
-                skip,
-                take: Number(limit),
-                where: { deletedAt: null },
-                orderBy: { date_added: 'desc' },
-            }),
-            prisma.lead.count({ where: { deletedAt: null } }),
-            prisma.lead.count({ where: { OR: [{ owner: 'joao' }, { owner: null }, { owner: '' }], deletedAt: null } }),
-            prisma.lead.count({ where: { owner: 'vitor', deletedAt: null } }),
-            prisma.lead.count({ where: { OR: [{ owner: null }, { owner: '' }], deletedAt: null } }),
-        ]);
 
-        return {
-            data: leads,
-            meta: {
-                total,
-                joaoTotal,
-                vitorTotal,
-                unassignedTotal,
-                page: Number(page),
-                last_page: Math.ceil(total / limit),
-            },
-        };
+        const where: any = { deletedAt: null };
+
+        if (filters?.owner && filters.owner !== 'all') {
+            where.owner = filters.owner;
+        }
+
+        if (filters?.status && filters.status.length > 0) {
+            where.status = { in: filters.status };
+        }
+
+        if (filters?.source && filters.source.length > 0) {
+            where.source = { in: filters.source };
+        }
+
+        if (filters?.city) {
+            where.city = { contains: filters.city, mode: 'insensitive' };
+        }
+
+        if (filters?.scoreMin !== undefined) {
+            where.score = { ...where.score, gte: filters.scoreMin };
+        }
+
+        if (filters?.scoreMax !== undefined) {
+            where.score = { ...where.score, lte: filters.scoreMax };
+        }
+
+        if (filters?.search) {
+            const searchLower = filters.search.toLowerCase();
+            where.OR = [
+                { company_name: { contains: filters.search, mode: 'insensitive' } },
+                { trade_name: { contains: filters.search, mode: 'insensitive' } },
+                { cnpj: { contains: filters.search } },
+                // Enable searching by contact name once Prisma relation is more mature or use raw query if needed. 
+                // For now, simple text fields on Lead:
+                { decision_maker: { contains: filters.search, mode: 'insensitive' } }
+            ];
+        }
+
+        // Sorting Logic
+        const orderBy: any = {};
+        if (filters?.sortBy) {
+            orderBy[filters.sortBy] = filters.sortOrder || 'desc';
+        } else {
+            orderBy.date_added = 'desc';
+        }
+
+        try {
+            console.log('[LeadsService] Executing Prisma queries...');
+            const [leads, total, joaoTotal, vitorTotal, unassignedTotal] = await Promise.all([
+                prisma.lead.findMany({
+                    skip,
+                    take: Number(limit),
+                    where,
+                    orderBy,
+                    include: { contacts: { where: { is_primary: true } } }
+                }),
+                prisma.lead.count({ where }), // Total matching filters
+                prisma.lead.count({ where: { OR: [{ owner: 'joao' }, { owner: null }, { owner: '' }], deletedAt: null } }),
+                prisma.lead.count({ where: { owner: 'vitor', deletedAt: null } }),
+                prisma.lead.count({ where: { OR: [{ owner: null }, { owner: '' }], deletedAt: null } }),
+            ]);
+            console.log(`[LeadsService] Queries success. Found ${leads.length} leads.`);
+            return {
+                data: leads,
+                meta: {
+                    total,
+                    joaoTotal,
+                    vitorTotal,
+                    unassignedTotal,
+                    page: Number(page),
+                    last_page: Math.ceil(total / limit),
+                },
+            };
+        } catch (error) {
+            console.error('[LeadsService] findAll Error:', error);
+            throw error;
+        }
     },
 
     async findOne(id: string) {
         return prisma.lead.findUnique({
             where: { id },
-            include: { segment: true }
+            include: {
+                segment: true,
+                contacts: {
+                    orderBy: [
+                        { is_primary: 'desc' },
+                        { created_at: 'asc' }
+                    ]
+                }
+            }
         });
     },
 
@@ -148,6 +221,32 @@ export const LeadsService = {
     async update(id: string, data: any) {
         // Use strict sanitizer for update
         const sanitizedData = LeadSanitizer.sanitizeForUpdate(data);
+
+        // Fetch current lead to merge data for accurate score calculation
+        if (data.extra_info || data.website_url || data.instagram_url || data.render_quality) {
+            const currentLead = await prisma.lead.findUnique({
+                where: { id },
+                select: { extra_info: true, website_url: true, instagram_url: true, render_quality: true }
+            });
+
+            if (currentLead) {
+                // Merge existing 'extra_info' with new data, handling the fact that sanitizedData.extra_info might only be partial
+                const mergedExtraInfo = {
+                    ...(currentLead.extra_info as object || {}),
+                    ...(sanitizedData.extra_info as object || {})
+                };
+
+                // Merge other fields relevant for score
+                const mergedLeadData = {
+                    ...currentLead,
+                    ...sanitizedData,
+                    extra_info: mergedExtraInfo
+                };
+
+                // Recalculate score using the advanced calculator
+                sanitizedData.score = calculateScore(mergedLeadData);
+            }
+        }
 
         return prisma.lead.update({
             where: { id },

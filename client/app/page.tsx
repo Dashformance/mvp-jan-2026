@@ -15,6 +15,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Pencil, Trash2, Plus, RefreshCcw, Search, X, LayoutGrid, List as ListIcon, Check, Filter, Calendar, Users, Briefcase, MapPin, Target, Database, Download, Mail, Phone, ExternalLink, ArrowRight, Loader2, Globe, Sparkles, Split, ChevronDown, BarChart3, LogOut } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { KanbanBoard, PIPELINE_COLUMNS } from "@/components/kanban/KanbanBoard";
+import { ViewToggle } from "@/components/kanban/ViewToggle";
+import { LeadsTable } from "@/components/table/LeadsTable";
+import { FilterBar } from "@/components/kanban/FilterBar";
 
 import { LeadSheet } from "@/components/lead/LeadSheet";
 import { TrashSheet } from "@/components/TrashSheet";
@@ -116,6 +119,10 @@ export default function Home() {
     scanned?: number;
     checked?: number;
   } | null>(null);
+
+  // Advanced FilterBar state
+
+
   const [filters, setFilters] = useState(defaultFilters);
   const [importQuantity, setImportQuantity] = useState("10");
   const [searchResults, setSearchResults] = useState<{ total: number, leads: any[] } | null>(null);
@@ -139,6 +146,12 @@ export default function Home() {
       checklist: { hasInstagram: false, hasRender: false }
     });
     setIsSheetOpen(true);
+  };
+
+  const [filterBarState, setFilterBarState] = useState<{ search?: string; status?: string[]; owner?: string; source?: string[] }>({});
+
+  const handleFilterChange = (filters: { search?: string; status?: string[]; owner?: string; source?: string[] }) => {
+    setFilterBarState(filters);
   };
 
   const handleSaveLead = async (updatedLead: any) => {
@@ -202,7 +215,7 @@ export default function Home() {
   const [filterOwner, setFilterOwner] = useState<string>('all');
   const [viewMode, setViewMode] = useState<'list' | 'kanban'>('kanban');
 
-  const [sortBy, setSortBy] = useState<'status' | 'alpha' | 'date_asc' | 'date_desc'>('date_desc');
+  const [sortBy, setSortBy] = useState<'status' | 'alpha' | 'date_asc' | 'date_desc' | 'score' | 'owner'>('date_desc');
   const [searchQuery, setSearchQuery] = useState('');
 
   // Load user preference
@@ -268,6 +281,16 @@ export default function Home() {
       }
     });
 
+  const handleSortChange = (column: string) => {
+    // Map table columns to sort state
+    if (column === 'score') setSortBy('score');
+    else if (column === 'owner') setSortBy('owner');
+    else if (column === 'alpha') setSortBy('alpha');
+    else if (column === 'status') setSortBy('status');
+    else if (column === 'date_desc') setSortBy('date_desc');
+    // If we support asc/desc toggle in the future, we would check current state here
+  };
+
   // Review Dialog State
   const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
   const [candidates, setCandidates] = useState<any[]>([]);
@@ -283,7 +306,7 @@ export default function Home() {
 
   useEffect(() => {
     fetchLeads(page);
-  }, [page]);
+  }, [page, filterBarState, filterOwner, filterMyLeads, currentUser]);
 
   // Recalculate counts when division source changes
   useEffect(() => {
@@ -300,7 +323,40 @@ export default function Home() {
   const fetchLeads = async (pageToFetch = 1) => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_URL}/leads?page=${pageToFetch}&limit=${limit}`);
+      let url = `${API_URL}/leads?page=${pageToFetch}&limit=${limit}`;
+
+      // Append Advanced Filters
+      if (filterBarState.search) url += `&search=${encodeURIComponent(filterBarState.search)}`;
+      if (filterBarState.status && filterBarState.status.length > 0) url += `&status=${filterBarState.status.join(',')}`;
+      if (filterBarState.source && filterBarState.source.length > 0) url += `&source=${filterBarState.source.join(',')}`;
+
+      // Resolve Owner for API
+      // If "My Leads" is active, use currentUser
+      // If specific owner tab is active, use that owner
+      // If "All" tab is active, use 'all' (no filter)
+      let apiOwner = undefined;
+      if (filterMyLeads) {
+        apiOwner = currentUser;
+      } else if (filterOwner && filterOwner !== 'all') {
+        apiOwner = filterOwner;
+      }
+
+      if (apiOwner) url += `&owner=${apiOwner}`;
+
+      // Append Sorting
+      let sortField = 'date_added';
+      let sortOrder = 'desc';
+
+      if (sortBy === 'alpha') { sortField = 'trade_name'; sortOrder = 'asc'; }
+      else if (sortBy === 'date_asc') { sortField = 'date_added'; sortOrder = 'asc'; }
+      else if (sortBy === 'date_desc') { sortField = 'date_added'; sortOrder = 'desc'; }
+      else if (sortBy === 'status') { sortField = 'status'; sortOrder = 'asc'; }
+      else if (sortBy === 'score') { sortField = 'score'; sortOrder = 'desc'; }
+      else if (sortBy === 'owner') { sortField = 'owner'; sortOrder = 'asc'; }
+
+      url += `&sortBy=${sortField}&sortOrder=${sortOrder}`;
+
+      const res = await fetch(url);
       const data = await res.json();
       if (res.ok) {
         setLeads(data.data || []);
@@ -648,6 +704,35 @@ export default function Home() {
 
   // Alias for inline status change in list view
   const handleStatusChange = handleKanbanUpdate;
+
+  const handleQuickContact = async (id: string) => {
+    // 1. Optimistic Update
+    const now = new Date().toISOString();
+    setLeads(leads.map(l => l.id === id ? { ...l, last_contact_date: now } : l));
+
+    try {
+      // 2. Create Interaction (Backend will update lead.last_contact_date)
+      const res = await fetch(`${API_URL}/interactions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          lead_id: id,
+          type: 'WHATSAPP', // Defaulting to WhatsApp as it's the most common "quick" action
+          notes: 'Contato rápido registrado via Kanban (Hoje)',
+          date: now
+        })
+      });
+
+      if (!res.ok) throw new Error("Falha ao registrar interação");
+
+      toast.success("Interação registrada!");
+    } catch (e) {
+      console.error(e);
+      toast.error("Erro ao registrar interação");
+      // Revert? Or just refetch.
+      fetchLeads(page);
+    }
+  };
 
 
 
@@ -1564,23 +1649,7 @@ export default function Home() {
                 {filterMyLeads ? 'Meus Leads' : (filterOwner === 'all' ? 'Todos os Leads' : `Leads de ${filterOwner === 'joao' ? 'João' : 'Vitor'}`)}
                 ({filterOwner === 'all' ? ownerCounts.all : (filterOwner === 'joao' ? ownerCounts.joao : ownerCounts.vitor)})
               </CardTitle>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  placeholder="Buscar por nome, email, telefone..."
-                  value={searchQuery}
-                  onChange={e => setSearchQuery(e.target.value)}
-                  className="pl-9 h-9 w-[280px] bg-muted border-white/10 text-sm"
-                />
-                {searchQuery && (
-                  <button
-                    onClick={() => setSearchQuery('')}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-white"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                )}
-              </div>
+              {/* Search moved to FilterBar */}
               <div className="flex bg-muted p-1 rounded-full border border-white/5">
                 <button
                   onClick={() => setViewMode('list')}
@@ -1664,6 +1733,12 @@ export default function Home() {
               </div>
             )}
           </CardHeader>
+          <div className="px-6 py-4 border-b border-white/5 bg-[#1C1C1C] flex justify-between items-center gap-4">
+            <div className="flex-1">
+              <FilterBar onFilterChange={handleFilterChange} />
+            </div>
+            <ViewToggle view={viewMode} onViewChange={setViewMode} />
+          </div>
           <CardContent className="p-0 sm:p-0">
             {viewMode === 'kanban' ? (
               <div className="rounded-xl border border-[rgba(255,255,255,0.06)] bg-[#181818]/50 p-6 overflow-hidden">
@@ -1672,98 +1747,28 @@ export default function Home() {
                   columns={PIPELINE_COLUMNS}
                   onLeadUpdate={handleKanbanUpdate}
                   onEditLead={openLeadSheet}
-                  onUpdateTitle={(id, title) => handleSaveLead({ id, trade_name: title })}
+                  onUpdateTitle={async (id, newTitle) => {
+                    setLeads(leads.map(l => l.id === id ? { ...l, trade_name: newTitle } : l));
+                    await fetch(`${API_URL}/leads/${id}`, {
+                      method: 'PATCH',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ trade_name: newTitle })
+                    });
+                  }}
                   onDisqualify={(id) => handleKanbanUpdate(id, 'DISQUALIFIED')}
                   onApprove={(id) => handleKanbanUpdate(id, 'NEW')}
+                  onQuickContact={handleQuickContact}
                 />
               </div>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-muted hover:bg-muted/80 border-b-0">
-                    <TableHead className="w-[40px]">
-                      <Checkbox
-                        checked={displayedLeads.length > 0 && selectedLeads.size === displayedLeads.length}
-                        onCheckedChange={selectAllLeads}
-                        className="border-white/20 data-[state=checked]:bg-white data-[state=checked]:text-black"
-                      />
-                    </TableHead>
-                    <TableHead className="w-[200px] text-white font-semibold">Empresa</TableHead>
-                    <TableHead className="w-[300px] text-white font-semibold">Contatos</TableHead>
-                    <TableHead className="w-[160px] text-white font-semibold">Status</TableHead>
-                    <TableHead className="w-[80px] text-white font-semibold">Resp.</TableHead>
-                    <TableHead className="w-[120px] text-white font-semibold">Data Criação</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {loading ? (
-                    <TableRow>
-                      <TableCell colSpan={8} className="text-center h-32 text-muted-foreground">Carregando leads...</TableCell>
-                    </TableRow>
-                  ) : (displayedLeads || []).map((lead: any) => (
-                    <TableRow
-                      key={lead.id}
-                      className={`border-b border-white/5 hover:bg-white/5 transition-colors cursor-pointer ${selectedLeads.has(lead.id) ? 'bg-muted/50' : ''}`}
-                      onClick={() => openLeadSheet(lead)}
-                    >
-                      <TableCell onClick={(e) => e.stopPropagation()}>
-                        <Checkbox
-                          checked={selectedLeads.has(lead.id)}
-                          onCheckedChange={() => toggleSelectLead(lead.id)}
-                          className="border-ring data-[state=checked]:bg-white data-[state=checked]:text-black"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <div className="font-medium text-white text-base">{lead.trade_name || lead.company_name}</div>
-                        <div className="text-xs text-muted-foreground">{lead.company_name}</div>
-                        <div className="text-xs font-mono text-muted-foreground/80 mt-1">{lead.cnpj}</div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="space-y-1 text-sm">
-                          {lead.email ? (
-                            <div className="flex items-center gap-2" title={lead.email}>
-                              <span className="text-[#6B6B6B]">✉️</span> <span className="text-[#D4D4D4] break-all">{lead.email}</span>
-                            </div>
-                          ) : <span className="text-xs text-[#6B6B6B] italic">Sem email</span>}
-                          {lead.phone ? (
-                            <div className="flex items-center gap-2">
-                              <span className="text-[#6B6B6B]">📞</span> <span className="text-[#D4D4D4]">{lead.phone}</span>
-                            </div>
-                          ) : <span className="text-xs text-[#6B6B6B] italic">Sem telefone</span>}
-                        </div>
-                      </TableCell>
-                      <TableCell onClick={(e) => e.stopPropagation()}>
-                        {/* Inline Status Select */}
-                        <Select
-                          value={lead.status}
-                          onValueChange={(newStatus) => handleStatusChange(lead.id, newStatus)}
-                        >
-                          <SelectTrigger className={`h-8 w-auto border-0 ${STATUS_MAP[lead.status]?.color || 'bg-muted text-white'} rounded-full px-3 text-xs font-medium shadow-none focus:ring-0`}>
-                            <SelectValue>{STATUS_MAP[lead.status]?.label || lead.status}</SelectValue>
-                          </SelectTrigger>
-                          <SelectContent>
-                            {Object.entries(STATUS_MAP).map(([key, val]) => (
-                              <SelectItem key={key} value={key}>{val.label}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </TableCell>
-                      <TableCell>
-                        <div className="w-7 h-7 rounded-full flex items-center justify-center bg-transparent border border-white/20 text-white">
-                          <span className="text-[10px] font-medium">
-                            {lead.owner === 'vitor' ? 'VN' : 'J'}
-                          </span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-xs text-muted-foreground">
-                        {new Date(lead.date_added).toLocaleDateString()}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
-          </CardContent>
+              <LeadsTable
+                leads={leads}
+                sortBy={sortBy}
+                sortOrder={sortBy?.includes('desc') || sortBy === 'date_desc' || sortBy === 'score' ? 'desc' : 'asc'}
+                onSort={handleSortChange}
+                onRowClick={handleEditLead}
+              />
+            )}</CardContent>
         </Card >
 
         {/* Pagination Controls */}

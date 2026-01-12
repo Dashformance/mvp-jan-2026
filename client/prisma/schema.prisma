@@ -50,9 +50,47 @@ model Lead {
   instagram_url      String?
   render_quality     String?
   website_url        String?
+  contacts           Contact[]
   segment            Segment?   @relation(fields: [segment_id], references: [id])
 
+  interactions       Interaction[]
+  updated_at         DateTime   @default(now()) @updatedAt
+
   @@map("leads")
+}
+
+model Interaction {
+  id        String   @id @default(uuid())
+  lead_id   String
+  content   String
+  type      String   // CALL, EMAIL, WHATSAPP, MEETING, NOTE
+  date      DateTime @default(now())
+  user_id   String?  // Username or ID of who performed the action
+  
+  lead      Lead     @relation(fields: [lead_id], references: [id], onDelete: Cascade)
+  
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@index([lead_id])
+  @@map("interactions")
+}
+
+model Contact {
+  id         String   @id @default(uuid())
+  lead_id    String
+  name       String
+  role       String?
+  phone      String?
+  whatsapp   String?
+  email      String?
+  is_primary Boolean  @default(false)
+  notes      String?
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  lead       Lead     @relation(fields: [lead_id], references: [id], onDelete: Cascade)
+
+  @@map("contacts")
 }
 
 enum LeadStatus {
@@ -65,4 +103,17 @@ enum LeadStatus {
   DISQUALIFIED
   INBOX
   SCREENING
+}
+
+model Stage {
+  id         String   @id @default(uuid())
+  name       String
+  phase      String
+  color      String?
+  icon       String?
+  position   Int      @default(0)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@map("stages")
 }

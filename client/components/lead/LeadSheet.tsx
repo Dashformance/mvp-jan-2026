@@ -12,6 +12,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { QualificationForm } from "./QualificationForm";
 import { toast } from "sonner";
+import { ContactList } from "./ContactList";
+import { Timeline } from "./Timeline";
 
 /**
  * Visualizen DS v3.1 LeadSheet
@@ -155,10 +157,10 @@ export function LeadSheet({ lead, isOpen, onClose, onSave }: LeadSheetProps) {
                             Qualificação
                         </TabsTrigger>
                         <TabsTrigger
-                            value="notes"
+                            value="history"
                             className="rounded-lg data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm text-muted-foreground h-9 text-xs"
                         >
-                            Notas
+                            Histórico
                         </TabsTrigger>
                     </TabsList>
 
@@ -183,93 +185,60 @@ export function LeadSheet({ lead, isOpen, onClose, onSave }: LeadSheetProps) {
                                     />
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div className="space-y-1.5">
-                                        <Label className="text-xs text-muted-foreground flex items-center gap-1">
-                                            <Phone className="w-3 h-3" /> Whatsapp
-                                        </Label>
-                                        <div className="flex gap-2">
-                                            <Input
-                                                value={formData.phone || ''}
-                                                onChange={e => handleChange('phone', e.target.value)}
-                                                className="h-10"
-                                                placeholder="(00) 00000-0000"
-                                            />
-                                            <Button
-                                                size="icon"
-                                                variant="outline"
-                                                className="h-10 w-10 shrink-0 border-emerald-500/30 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20"
-                                                disabled={!formData.phone}
-                                                onClick={() => {
-                                                    const num = formData.phone?.replace(/\D/g, '') || '';
-                                                    if (num) window.open(`https://wa.me/55${num}`, '_blank');
-                                                }}
-                                            >
-                                                <MessageCircleIcon className="w-4 h-4" />
-                                            </Button>
-                                        </div>
-                                    </div>
-                                    <div className="space-y-1.5">
-                                        <Label className="text-xs text-muted-foreground flex items-center gap-1">
-                                            <Mail className="w-3 h-3" /> Email
-                                        </Label>
+                            </div>
+
+                            {/* Contatos - Multiplos */}
+                            <div className="space-y-1.5 pt-2">
+                                <ContactList leadId={lead.id} />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3 pt-2 border-t border-border">
+                                <div className="space-y-1.5">
+                                    <Label className="text-xs text-muted-foreground flex items-center gap-1">
+                                        <Instagram className="w-3 h-3" /> Instagram
+                                    </Label>
+                                    <div className="flex gap-2">
                                         <Input
-                                            value={formData.email || ''}
-                                            onChange={e => handleChange('email', e.target.value)}
+                                            value={formData.instagram_url || ''}
+                                            onChange={e => handleChange('instagram_url', e.target.value)}
                                             className="h-10"
-                                            placeholder="contato@empresa.com"
+                                            placeholder="link do perfil"
                                         />
+                                        <Button
+                                            size="icon"
+                                            variant="outline"
+                                            className="h-10 w-10 shrink-0 hover:text-pink-400 hover:border-pink-500/30"
+                                            disabled={!formData.instagram_url}
+                                            onClick={() => formData.instagram_url && window.open(formData.instagram_url, '_blank')}
+                                        >
+                                            <ExternalLink className="w-4 h-4" />
+                                        </Button>
                                     </div>
                                 </div>
-
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div className="space-y-1.5">
-                                        <Label className="text-xs text-muted-foreground flex items-center gap-1">
-                                            <Instagram className="w-3 h-3" /> Instagram
-                                        </Label>
-                                        <div className="flex gap-2">
-                                            <Input
-                                                value={formData.instagram_url || ''}
-                                                onChange={e => handleChange('instagram_url', e.target.value)}
-                                                className="h-10"
-                                                placeholder="link do perfil"
-                                            />
-                                            <Button
-                                                size="icon"
-                                                variant="outline"
-                                                className="h-10 w-10 shrink-0 hover:text-pink-400 hover:border-pink-500/30"
-                                                disabled={!formData.instagram_url}
-                                                onClick={() => formData.instagram_url && window.open(formData.instagram_url, '_blank')}
-                                            >
-                                                <ExternalLink className="w-4 h-4" />
-                                            </Button>
-                                        </div>
-                                    </div>
-                                    <div className="space-y-1.5">
-                                        <Label className="text-xs text-muted-foreground flex items-center gap-1">
-                                            <Globe className="w-3 h-3" /> Site
-                                        </Label>
-                                        <div className="flex gap-2">
-                                            <Input
-                                                value={formData.website_url || ''}
-                                                onChange={e => handleChange('website_url', e.target.value)}
-                                                className="h-10"
-                                                placeholder="www.exemplo.com"
-                                            />
-                                            <Button
-                                                size="icon"
-                                                variant="outline"
-                                                className="h-10 w-10 shrink-0 hover:text-blue-400 hover:border-blue-500/30"
-                                                disabled={!formData.website_url}
-                                                onClick={() => {
-                                                    let url = formData.website_url;
-                                                    if (url && !url.startsWith('http')) url = 'https://' + url;
-                                                    if (url) window.open(url, '_blank')
-                                                }}
-                                            >
-                                                <ExternalLink className="w-4 h-4" />
-                                            </Button>
-                                        </div>
+                                <div className="space-y-1.5">
+                                    <Label className="text-xs text-muted-foreground flex items-center gap-1">
+                                        <Globe className="w-3 h-3" /> Site
+                                    </Label>
+                                    <div className="flex gap-2">
+                                        <Input
+                                            value={formData.website_url || ''}
+                                            onChange={e => handleChange('website_url', e.target.value)}
+                                            className="h-10"
+                                            placeholder="www.exemplo.com"
+                                        />
+                                        <Button
+                                            size="icon"
+                                            variant="outline"
+                                            className="h-10 w-10 shrink-0 hover:text-blue-400 hover:border-blue-500/30"
+                                            disabled={!formData.website_url}
+                                            onClick={() => {
+                                                let url = formData.website_url;
+                                                if (url && !url.startsWith('http')) url = 'https://' + url;
+                                                if (url) window.open(url, '_blank')
+                                            }}
+                                        >
+                                            <ExternalLink className="w-4 h-4" />
+                                        </Button>
                                     </div>
                                 </div>
                             </div>
@@ -361,14 +330,10 @@ export function LeadSheet({ lead, isOpen, onClose, onSave }: LeadSheetProps) {
                         />
                     </TabsContent>
 
-                    <TabsContent value="notes" className="py-4">
-                        <Label className="text-muted-foreground">Notas & Histórico</Label>
-                        <Textarea
-                            className="h-[300px] mt-2 bg-muted text-foreground placeholder:text-muted-foreground rounded-xl border-border focus:border-ring"
-                            placeholder="Ex: Tentei contato dia 05/01, caixa postal. Enviei email de apresentação..."
-                            value={formData.notes || ''}
-                            onChange={e => handleChange('notes', e.target.value)}
-                        />
+                    <TabsContent value="history" className="h-[430px] flex flex-col">
+                        <div className="flex-1 -mt-2">
+                            <Timeline leadId={lead.id} />
+                        </div>
                     </TabsContent>
                 </Tabs>
 
@@ -392,6 +357,6 @@ export function LeadSheet({ lead, isOpen, onClose, onSave }: LeadSheetProps) {
                     </div>
                 </SheetFooter>
             </SheetContent>
-        </Sheet>
+        </Sheet >
     );
 }

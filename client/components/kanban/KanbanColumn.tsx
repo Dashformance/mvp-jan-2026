@@ -19,9 +19,10 @@ interface KanbanColumnProps {
     onUpdateTitle?: (id: string, newTitle: string) => void;
     onDisqualify?: (id: string) => void;
     onApprove?: (id: string) => void;  // NEW: For triagem approval
+    onQuickContact?: (id: string) => void; // NEW
 }
 
-export function KanbanColumn({ id, title, color, leads, onEdit, onUpdateTitle, onDisqualify, onApprove }: KanbanColumnProps) {
+export function KanbanColumn({ id, title, color, leads, onEdit, onUpdateTitle, onDisqualify, onApprove, onQuickContact }: KanbanColumnProps) {
     const { setNodeRef, isOver } = useDroppable({
         id: id,
     });
@@ -56,7 +57,9 @@ export function KanbanColumn({ id, title, color, leads, onEdit, onUpdateTitle, o
                         onEdit={onEdit}
                         onUpdateTitle={onUpdateTitle}
                         onDisqualify={onDisqualify}
+
                         onApprove={isTriagemColumn ? onApprove : undefined}
+                        onQuickContact={onQuickContact}
                     />
                 ))}
                 {leads.length === 0 && (

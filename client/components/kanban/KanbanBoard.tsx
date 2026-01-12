@@ -37,6 +37,7 @@ interface KanbanBoardProps {
     onUpdateTitle?: (id: string, newTitle: string) => void;
     onDisqualify?: (id: string) => void;
     onApprove?: (id: string) => void;  // NEW: For triagem approval
+    onQuickContact?: (id: string) => void; // NEW
 }
 
 export function KanbanBoard({
@@ -46,7 +47,8 @@ export function KanbanBoard({
     onEditLead,
     onUpdateTitle,
     onDisqualify,
-    onApprove
+    onApprove,
+    onQuickContact
 }: KanbanBoardProps) {
     const [activeLead, setActiveLead] = useState<any | null>(null);
 
@@ -111,6 +113,7 @@ export function KanbanBoard({
                         onUpdateTitle={onUpdateTitle}
                         onDisqualify={onDisqualify}
                         onApprove={onApprove}
+                        onQuickContact={onQuickContact}
                     />
                 ))}
             </div>
@@ -123,6 +126,7 @@ export function KanbanBoard({
                                 lead={activeLead}
                                 onEdit={() => { }}
                                 onUpdateTitle={onUpdateTitle}
+                                onQuickContact={onQuickContact}
                             />
                         </div>
                     ) : null}
