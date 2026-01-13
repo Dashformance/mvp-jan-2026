@@ -222,30 +222,36 @@ export const LeadsService = {
         // Use strict sanitizer for update
         const sanitizedData = LeadSanitizer.sanitizeForUpdate(data);
 
-        // Fetch current lead to merge data for accurate score calculation
-        if (data.extra_info || data.website_url || data.instagram_url || data.render_quality) {
-            const currentLead = await prisma.lead.findUnique({
-                where: { id },
-                select: { extra_info: true, website_url: true, instagram_url: true, render_quality: true }
+        // Always fetch current lead for status change tracking
+        const currentLead = await prisma.lead.findUnique({
+            where: { id },
+            select: { extra_info: true, website_url: true, instagram_url: true, render_quality: true, status: true, owner: true }
+        });
+
+        // Merge data for accurate score calculation if relevant fields are being updated
+        if (currentLead && (data.extra_info || data.website_url || data.instagram_url || data.render_quality)) {
+            const mergedExtraInfo = {
+                ...(currentLead.extra_info as object || {}),
+                ...(sanitizedData.extra_info as object || {})
+            };
+            const mergedLeadData = {
+                ...currentLead,
+                ...sanitizedData,
+                extra_info: mergedExtraInfo
+            };
+            sanitizedData.score = calculateScore(mergedLeadData);
+        }
+
+        // Log status change as interaction
+        if (currentLead && sanitizedData.status && currentLead.status !== sanitizedData.status) {
+            await prisma.interaction.create({
+                data: {
+                    lead_id: id,
+                    type: 'STATUS_CHANGE',
+                    content: `MOVETO:${sanitizedData.status}`, // Machine readable format
+                    user_id: sanitizedData.owner || currentLead.owner || 'system'
+                }
             });
-
-            if (currentLead) {
-                // Merge existing 'extra_info' with new data, handling the fact that sanitizedData.extra_info might only be partial
-                const mergedExtraInfo = {
-                    ...(currentLead.extra_info as object || {}),
-                    ...(sanitizedData.extra_info as object || {})
-                };
-
-                // Merge other fields relevant for score
-                const mergedLeadData = {
-                    ...currentLead,
-                    ...sanitizedData,
-                    extra_info: mergedExtraInfo
-                };
-
-                // Recalculate score using the advanced calculator
-                sanitizedData.score = calculateScore(mergedLeadData);
-            }
         }
 
         return prisma.lead.update({
@@ -417,51 +423,121 @@ export const LeadsService = {
 
     async getConversionFunnel() {
         const statuses = ['INBOX', 'NEW', 'ATTEMPTED', 'CONTACTED', 'MEETING', 'WON', 'LOST', 'DISQUALIFIED'];
+
+        // Group by status AND owner
         const counts = await prisma.lead.groupBy({
-            by: ['status'],
+            by: ['status', 'owner'],
             where: { deletedAt: null },
-            _count: { status: true }
+            _count: { _all: true }
         });
 
-        const countMap: Record<string, number> = {};
-        counts.forEach((c: any) => { countMap[c.status] = c._count.status; });
-        const total = Object.values(countMap).reduce((a: number, b: number) => a + b, 0);
+        // Structure: { [status]: { total: 0, joao: 0, vitor: 0 } }
+        const map: Record<string, { total: number, joao: number, vitor: number }> = {};
+
+        // Initialize defaults
+        statuses.forEach(s => {
+            map[s] = { total: 0, joao: 0, vitor: 0 };
+        });
+
+        counts.forEach((c: any) => {
+            const s = c.status;
+            const o = c.owner ? c.owner.toLowerCase() : 'unassigned';
+            const val = c._count._all;
+
+            if (!map[s]) map[s] = { total: 0, joao: 0, vitor: 0 };
+
+            map[s].total += val;
+            if (o === 'joao') map[s].joao += val;
+            else if (o === 'vitor') map[s].vitor += val;
+            // 'unassigned' or others only add to total
+        });
+
+        const totalLeads = Object.values(map).reduce((acc, curr) => acc + curr.total, 0);
 
         return statuses.map(status => ({
             status,
-            count: countMap[status] || 0,
-            percentage: total > 0 ? Math.round(((countMap[status] || 0) / total) * 100) : 0
+            count: map[status].total,
+            joao: map[status].joao,
+            vitor: map[status].vitor,
+            percentage: totalLeads > 0 ? Math.round((map[status].total / totalLeads) * 100) : 0
         }));
     },
 
     async getTimelineStats(days = 30) {
         const startDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
-        const leads = await prisma.lead.findMany({
+
+        // Fetch added leads
+        const addedLeads = await prisma.lead.findMany({
             where: {
                 deletedAt: null,
                 date_added: { gte: startDate }
             },
-            select: { date_added: true, status: true }
+            select: { date_added: true }
         });
 
-        const byDate: Record<string, { added: number, won: number }> = {};
+        // Fetch all interactions (including STATUS_CHANGE)
+        const interactions = await prisma.interaction.findMany({
+            where: { date: { gte: startDate } },
+            select: { date: true, type: true, content: true }
+        });
+
+        // Initialize date map with dynamic structure
+        const byDate: Record<string, any> = {};
         for (let i = 0; i < days; i++) {
             const date = new Date(Date.now() - i * 24 * 60 * 60 * 1000);
             const key = date.toISOString().split('T')[0];
-            byDate[key] = { added: 0, won: 0 };
+            byDate[key] = { date: key, added: 0, contacted: 0, scheduled: 0 };
         }
 
-        leads.forEach((lead: any) => {
+        // Aggregate added leads
+        addedLeads.forEach((lead: any) => {
             const key = lead.date_added.toISOString().split('T')[0];
-            if (byDate[key]) {
-                byDate[key].added++;
-                if (lead.status === 'WON') byDate[key].won++;
+            if (byDate[key]) byDate[key].added++;
+        });
+
+        // Aggregate interactions
+        interactions.forEach((int: any) => {
+            const key = int.date.toISOString().split('T')[0];
+            if (!byDate[key]) return;
+
+            if (['CALL', 'EMAIL', 'WHATSAPP'].includes(int.type)) {
+                byDate[key].contacted++;
+            } else if (int.type === 'MEETING') {
+                byDate[key].scheduled++;
+            } else if (int.type === 'STATUS_CHANGE') {
+                // Parse formats: "MOVETO:STATUS" or "Status alterado de X para STATUS"
+                let status = null;
+                if (int.content.startsWith('MOVETO:')) {
+                    status = int.content.split(':')[1];
+                } else {
+                    const match = int.content.match(/para\s+([A-Z_]+)/i);
+                    if (match) status = match[1];
+                }
+
+                if (status) {
+                    const statusKey = status.toUpperCase();
+                    if (!byDate[key][statusKey]) byDate[key][statusKey] = 0;
+                    byDate[key][statusKey]++;
+                }
             }
         });
 
-        return Object.entries(byDate)
-            .map(([date, data]) => ({ date, ...data }))
-            .sort((a, b) => a.date.localeCompare(b.date));
+        // 6. Ensure all date entries have all status keys (even if 0) to prevent Recharts issues
+        const allKeys = new Set<string>(['added', 'contacted', 'scheduled']);
+        const values = Object.values(byDate);
+        values.forEach((v: any) => {
+            Object.keys(v).forEach(k => allKeys.add(k));
+        });
+
+        const finalized = values.map((v: any) => {
+            const entry = { ...v };
+            allKeys.forEach(k => {
+                if (entry[k] === undefined) entry[k] = 0;
+            });
+            return entry;
+        });
+
+        return finalized.sort((a: any, b: any) => a.date.localeCompare(b.date));
     },
 
     async getPerformanceByOwner() {

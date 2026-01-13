@@ -15,7 +15,8 @@ const ICONS = {
     EMAIL: Mail,
     WHATSAPP: MessageCircle,
     MEETING: Calendar,
-    NOTE: FileText
+    NOTE: FileText,
+    STATUS_CHANGE: Clock
 };
 
 const COLORS: any = {
@@ -23,7 +24,8 @@ const COLORS: any = {
     EMAIL: "bg-amber-500/10 text-amber-400 border-amber-500/20",
     WHATSAPP: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
     MEETING: "bg-purple-500/10 text-purple-400 border-purple-500/20",
-    NOTE: "bg-slate-500/10 text-slate-400 border-slate-500/20"
+    NOTE: "bg-slate-500/10 text-slate-400 border-slate-500/20",
+    STATUS_CHANGE: "bg-cyan-500/10 text-cyan-400 border-cyan-500/20"
 };
 
 const LABELS: any = {
@@ -31,7 +33,8 @@ const LABELS: any = {
     EMAIL: "Email",
     WHATSAPP: "WhatsApp",
     MEETING: "Reunião",
-    NOTE: "Nota"
+    NOTE: "Nota",
+    STATUS_CHANGE: "Mudança de Status"
 };
 
 export function Timeline({ leadId }: TimelineProps) {

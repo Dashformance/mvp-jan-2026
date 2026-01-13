@@ -35,15 +35,16 @@ import { Button } from "@/components/ui/button"; // Ensure Button is imported
 
 interface KanbanBoardProps {
     leads: any[];
-    columns?: ColumnDefinition[];  // NEW: Accept columns as prop
+    columns?: ColumnDefinition[];
     onLeadUpdate: (id: string, newStatus: string) => void;
     onEditLead: (lead: any) => void;
     onUpdateTitle?: (id: string, newTitle: string) => void;
     onDisqualify?: (id: string) => void;
-    onApprove?: (id: string) => void;  // NEW: For triagem approval
-    onQuickContact?: (id: string) => void; // NEW
-    onAddLead?: (status: string) => void; // NEW
-    onRenameColumn?: (id: string, newTitle: string) => void; // Explicitly defined
+    onApprove?: (id: string) => void;
+    onQuickContact?: (id: string) => void;
+    onAddLead?: (status: string) => void;
+    onRenameColumn?: (id: string, newTitle: string) => void;
+    onToggleFavorite?: (id: string, isStarred: boolean) => void;
 }
 
 export function KanbanBoard({
@@ -56,7 +57,8 @@ export function KanbanBoard({
     onApprove,
     onQuickContact,
     onAddLead,
-    onRenameColumn
+    onRenameColumn,
+    onToggleFavorite
 }: KanbanBoardProps) {
     const [activeLead, setActiveLead] = useState<any | null>(null);
     const [isAddingColumn, setIsAddingColumn] = useState(false);
@@ -120,7 +122,7 @@ export function KanbanBoard({
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
         >
-            <div className="flex gap-4 overflow-x-auto pb-4 h-[calc(100vh-200px)] items-start">
+            <div className="flex h-full min-h-0 gap-4 overflow-x-auto pb-4 custom-scrollbar">
                 {columns.map((col) => (
                     <KanbanColumn
                         key={col.id}
@@ -135,6 +137,7 @@ export function KanbanBoard({
                         onQuickContact={onQuickContact}
                         onAddLead={onAddLead}
                         onRenameColumn={onRenameColumn}
+                        onToggleFavorite={onToggleFavorite}
                     />
                 ))}
 
@@ -184,6 +187,7 @@ export function KanbanBoard({
                                 onEdit={() => { }}
                                 onUpdateTitle={onUpdateTitle}
                                 onQuickContact={onQuickContact}
+                                onToggleFavorite={onToggleFavorite}
                             />
                         </div>
                     ) : null}

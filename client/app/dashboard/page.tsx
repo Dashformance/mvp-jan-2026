@@ -6,8 +6,14 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
+import {
     Users, TrendingUp, Target, Trophy, Calendar, ArrowUpRight,
-    ArrowDownRight, Loader2, BarChart3, Activity, Zap, LogOut
+    ArrowDownRight, Loader2, BarChart3, Activity, Zap, LogOut, Plus, Check, X
 } from "lucide-react";
 import {
     AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -40,6 +46,15 @@ export default function DashboardPage() {
     const [performance, setPerformance] = useState<any>(null);
     const [geoData, setGeoData] = useState<{ byRegion: Record<string, number>, total: number }>({ byRegion: {}, total: 0 });
     const [salesForce, setSalesForce] = useState<any>(null);
+    const [activeMetrics, setActiveMetrics] = useState<string[]>(['added']);
+
+    const toggleMetric = (metric: string) => {
+        setActiveMetrics(prev =>
+            prev.includes(metric)
+                ? prev.filter(m => m !== metric)
+                : [...prev, metric]
+        );
+    };
 
     useEffect(() => {
         console.log("Dashboard reloading stats with period:", period);
@@ -194,9 +209,95 @@ export default function DashboardPage() {
                 {/* Timeline Chart */}
                 <Card className="bg-[#1C1C1C] border-white/5 lg:col-span-2">
                     <CardHeader>
-                        <CardTitle className="flex items-center gap-2 text-lg">
-                            <Activity className="w-5 h-5 text-cyan-400" />
-                            Leads por Dia
+                        <CardTitle className="flex items-center justify-between gap-2 text-lg">
+                            <div className="flex items-center gap-2">
+                                <Activity className="w-5 h-5 text-cyan-400" />
+                                Leads & Atividades
+                            </div>
+                            <div className="flex flex-wrap gap-1.5">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => toggleMetric('added')}
+                                    className={`h-7 text-[10px] px-2 border-dashed ${activeMetrics.includes('added') ? 'bg-cyan-500/10 text-cyan-400 border-cyan-500/30' : 'text-muted-foreground border-white/10'}`}
+                                >
+                                    <div className={`w-1.5 h-1.5 rounded-full mr-1.5 ${activeMetrics.includes('added') ? 'bg-cyan-400' : 'bg-slate-500'}`} />
+                                    Leads
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => toggleMetric('contacted')}
+                                    className={`h-7 text-[10px] px-2 border-dashed ${activeMetrics.includes('contacted') ? 'bg-blue-500/10 text-blue-400 border-blue-500/30' : 'text-muted-foreground border-white/10'}`}
+                                >
+                                    <div className={`w-1.5 h-1.5 rounded-full mr-1.5 ${activeMetrics.includes('contacted') ? 'bg-blue-400' : 'bg-slate-500'}`} />
+                                    Contatos
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => toggleMetric('scheduled')}
+                                    className={`h-7 text-[10px] px-2 border-dashed ${activeMetrics.includes('scheduled') ? 'bg-purple-500/10 text-purple-400 border-purple-500/30' : 'text-muted-foreground border-white/10'}`}
+                                >
+                                    <div className={`w-1.5 h-1.5 rounded-full mr-1.5 ${activeMetrics.includes('scheduled') ? 'bg-purple-400' : 'bg-slate-500'}`} />
+                                    Reuniões
+                                </Button>
+
+                                {/* Dynamic Active Metrics */}
+                                {activeMetrics
+                                    .filter(m => !['added', 'contacted', 'scheduled'].includes(m))
+                                    .map(metric => (
+                                        <div key={metric} className="flex items-center gap-0.5 animate-in fade-in zoom-in duration-200">
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => toggleMetric(metric)}
+                                                className="h-7 text-[10px] px-2 pr-1 border-dashed bg-white/5 text-white border-white/20 hover:bg-white/10 flex items-center gap-1.5 rounded-r-none border-r-0"
+                                            >
+                                                <div className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+                                                {STATUS_LABELS[metric] || metric}
+                                            </Button>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => toggleMetric(metric)}
+                                                className="h-7 w-6 p-0 border-dashed bg-white/5 text-white/40 border-white/20 hover:bg-white/10 hover:text-red-400 rounded-l-none"
+                                            >
+                                                <X className="w-3 h-3" />
+                                            </Button>
+                                        </div>
+                                    ))
+                                }
+
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0 hover:bg-white/5 text-cyan-400">
+                                            <Plus className="w-4 h-4" />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end" className="bg-[#1C1C1C] border-white/10 w-48">
+                                        <div className="px-2 py-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                                            Monitorar Movimentação
+                                        </div>
+                                        {Object.entries(STATUS_LABELS).map(([key, label]) => {
+                                            const isActive = activeMetrics.includes(key);
+                                            return (
+                                                <DropdownMenuItem
+                                                    key={key}
+                                                    onSelect={(e) => {
+                                                        e.preventDefault();
+                                                        toggleMetric(key);
+                                                    }}
+                                                    className="text-xs text-white hover:bg-white/10 cursor-pointer flex justify-between py-2"
+                                                >
+                                                    {label}
+                                                    {isActive && <Check className="w-3 h-3 text-cyan-400 ml-2" />}
+                                                </DropdownMenuItem>
+                                            )
+                                        })}
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            </div>
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -208,27 +309,82 @@ export default function DashboardPage() {
                                             <stop offset="5%" stopColor="#22d3ee" stopOpacity={0.3} />
                                             <stop offset="95%" stopColor="#22d3ee" stopOpacity={0} />
                                         </linearGradient>
+                                        <linearGradient id="colorContacted" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
+                                            <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                                        </linearGradient>
+                                        <linearGradient id="colorScheduled" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#a855f7" stopOpacity={0.3} />
+                                            <stop offset="95%" stopColor="#a855f7" stopOpacity={0} />
+                                        </linearGradient>
+                                        <linearGradient id="colorGeneric" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#94a3b8" stopOpacity={0.3} />
+                                            <stop offset="95%" stopColor="#94a3b8" stopOpacity={0} />
+                                        </linearGradient>
+                                        <linearGradient id="colorGeneric" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#94a3b8" stopOpacity={0.3} />
+                                            <stop offset="95%" stopColor="#94a3b8" stopOpacity={0} />
+                                        </linearGradient>
                                     </defs>
                                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
                                     <XAxis
                                         dataKey="date"
                                         stroke="#666"
-                                        tickFormatter={(date) => new Date(date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
+                                        tickFormatter={(date) => new Date(date + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
                                         tick={{ fontSize: 11 }}
                                     />
                                     <YAxis stroke="#666" tick={{ fontSize: 11 }} />
                                     <Tooltip
                                         contentStyle={{ backgroundColor: '#1C1C1C', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }}
-                                        labelFormatter={(date) => new Date(date).toLocaleDateString('pt-BR')}
+                                        labelFormatter={(date) => new Date(date + 'T12:00:00').toLocaleDateString('pt-BR')}
                                     />
-                                    <Area
-                                        type="monotone"
-                                        dataKey="added"
-                                        stroke="#22d3ee"
-                                        fill="url(#colorAdded)"
-                                        strokeWidth={2}
-                                        name="Leads Adicionados"
-                                    />
+                                    {activeMetrics.includes('added') && (
+                                        <Area
+                                            type="monotone"
+                                            dataKey="added"
+                                            stroke="#22d3ee"
+                                            fill="url(#colorAdded)"
+                                            strokeWidth={2}
+                                            name="Leads Adicionados"
+                                        />
+                                    )}
+                                    {activeMetrics.includes('contacted') && (
+                                        <Area
+                                            type="monotone"
+                                            dataKey="contacted"
+                                            stroke="#3b82f6"
+                                            fill="url(#colorContacted)"
+                                            strokeWidth={2}
+                                            name="Contatos Feitos"
+                                        />
+                                    )}
+                                    {activeMetrics.includes('scheduled') && (
+                                        <Area
+                                            type="monotone"
+                                            dataKey="scheduled"
+                                            stroke="#a855f7"
+                                            fill="url(#colorScheduled)"
+                                            strokeWidth={2}
+                                            name="Reuniões Realizadas"
+                                        />
+                                    )}
+
+                                    {/* Dynamic Areas for status movements */}
+                                    {activeMetrics
+                                        .filter(m => !['added', 'contacted', 'scheduled'].includes(m))
+                                        .map(metric => (
+                                            <Area
+                                                key={metric}
+                                                type="monotone"
+                                                dataKey={metric}
+                                                stroke="#94a3b8"
+                                                fill="url(#colorGeneric)"
+                                                strokeWidth={2}
+                                                name={`Movidos para ${STATUS_LABELS[metric] || metric}`}
+                                                connectNulls
+                                            />
+                                        ))
+                                    }
                                 </AreaChart>
                             </ResponsiveContainer>
                         </div>
@@ -261,47 +417,74 @@ export default function DashboardPage() {
                                 const maxVal = Math.max(...FUNNEL_STAGES.map(s => funnelMap.get(s.id) || 0), 10); // Min 10 to avoid div by zero issues
 
                                 return (
-                                    <div className="flex flex-col items-center gap-3">
+                                    <div className="flex flex-col gap-4">
+                                        <div className="flex justify-between items-center text-xs px-4 mb-2">
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-2 h-2 rounded-full bg-slate-500/50"></div>
+                                                <span className="text-slate-400">João</span>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-cyan-400">Vitor</span>
+                                                <div className="w-2 h-2 rounded-full bg-cyan-400"></div>
+                                            </div>
+                                        </div>
+
                                         {FUNNEL_STAGES.map((stage, idx) => {
-                                            const count = funnelMap.get(stage.id) || 0;
-                                            const widthPercent = 100 - (idx * 12); // Decreasing width for funnel shape
-                                            const barPercent = Math.max((count / maxVal) * 100, 2); // Minimum visibility
+                                            const dataItem = funnel.find(f => f.status === stage.id) || { count: 0, joao: 0, vitor: 0 };
+                                            const total = dataItem.count;
+                                            const joao = dataItem.joao || 0;
+                                            const vitor = dataItem.vitor || 0;
+
+                                            // Scale relative to row max or sufficient size
+                                            const rowMax = Math.max(joao, vitor, 5);
+                                            // Actually better to have a fixed max for the whole chart for true comparison?
+                                            // But users often want to see relative distribution. 
+                                            // Let's use a local maxRowVal but clamped so small bars are visible.
+
+                                            const maxAny = Math.max(...funnel.map(f => Math.max(f.joao || 0, f.vitor || 0)), 10);
+
+                                            const joaoPercent = (joao / maxAny) * 100;
+                                            const vitorPercent = (vitor / maxAny) * 100;
+
+                                            const conversionPct = ((total / (overview?.total || 1)) * 100).toFixed(1);
 
                                             return (
-                                                <div
-                                                    key={stage.id}
-                                                    className="w-full flex flex-col items-center group relative translate-x-0 transition-all hover:scale-[1.02]"
-                                                    style={{ width: `${widthPercent}%` }}
-                                                >
-                                                    {/* Row Data */}
-                                                    <div className="w-full flex justify-between text-xs text-muted-foreground mb-1 px-2">
-                                                        <span className="font-medium text-white/90">{stage.label}</span>
-                                                        <span className="font-mono text-white">{count}</span>
+                                                <div key={stage.id} className="group">
+                                                    <div className="flex justify-between items-end text-xs mb-1 px-1">
+                                                        <span className="text-muted-foreground font-medium">{stage.label}</span>
+                                                        <span className="text-white font-mono">{total}</span>
                                                     </div>
 
-                                                    {/* Funnel Bar Container (Trapezoid-ish effect via width reduction) */}
-                                                    <div className="w-full h-8 bg-white/5 rounded-md relative overflow-hidden backdrop-blur-sm border border-white/5">
-                                                        {/* Filled Bar */}
-                                                        <div
-                                                            className="h-full absolute left-1/2 -translate-x-1/2 transition-all duration-700 ease-out flex items-center justify-center"
-                                                            style={{
-                                                                width: `${barPercent}%`,
-                                                                backgroundColor: stage.color,
-                                                                boxShadow: `0 0 20px ${stage.color}40`
-                                                            }}
-                                                        >
-                                                            {count > 0 && barPercent > 15 && (
-                                                                <span className="text-[10px] font-bold text-black/80">
-                                                                    {((count / (overview?.total || 1)) * 100).toFixed(1)}%
-                                                                </span>
+                                                    <div className="relative h-8 bg-white/5 rounded-md flex overflow-hidden border border-white/5">
+                                                        <div className="absolute left-1/2 top-0 bottom-0 w-[1px] bg-white/10 z-10"></div>
+
+                                                        {/* Left Side (João) */}
+                                                        <div className="flex-1 flex justify-end items-center relative pr-0.5">
+                                                            {joao > 0 && <span className="absolute right-2 z-20 text-[10px] text-white/70 font-mono mr-[calc(100%_+_4px)]">{joao}</span>}
+                                                            <div
+                                                                className="h-full bg-slate-500/50 rounded-l-sm transition-all duration-700 ease-out hover:bg-slate-500/70"
+                                                                style={{ width: `${joaoPercent}%` }}
+                                                            />
+                                                        </div>
+
+                                                        {/* Right Side (Vitor) */}
+                                                        <div className="flex-1 flex justify-start items-center relative pl-0.5">
+                                                            <div
+                                                                className="h-full bg-cyan-500 rounded-r-sm transition-all duration-700 ease-out hover:bg-cyan-400"
+                                                                style={{ width: `${vitorPercent}%` }}
+                                                            />
+                                                            {vitor > 0 && <span className="absolute left-2 z-20 text-[10px] text-black/80 font-bold ml-[calc(100%_+_4px)]">{vitor}</span>}
+                                                        </div>
+
+                                                        {/* Center Pct */}
+                                                        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-30">
+                                                            {Number(conversionPct) > 0 && (
+                                                                <div className="bg-[#1C1C1C] border border-white/10 px-1.5 py-0.5 rounded text-[9px] text-muted-foreground font-mono">
+                                                                    {conversionPct}%
+                                                                </div>
                                                             )}
                                                         </div>
                                                     </div>
-
-                                                    {/* Connector Line (except last) */}
-                                                    {idx < FUNNEL_STAGES.length - 1 && (
-                                                        <div className="h-3 w-[1px] bg-white/10 my-0.5" />
-                                                    )}
                                                 </div>
                                             );
                                         })}

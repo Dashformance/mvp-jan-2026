@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Phone, Mail, MessageCircle, ExternalLink, User, Check, X, Pencil } from "lucide-react";
+import { Phone, Mail, MessageCircle, ExternalLink, User, Check, X, Pencil, Star } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 
 /**
@@ -33,6 +33,7 @@ interface Lead {
     contacts?: any[]; // Prism Relation
     last_contact_date?: string | Date; // NEW: Interaction tracking
     owner?: string;
+    is_starred?: boolean;
 }
 
 interface KanbanCardProps {
@@ -41,10 +42,11 @@ interface KanbanCardProps {
     onUpdateTitle?: (id: string, newTitle: string) => void;
     onDisqualify?: (id: string) => void;
     onApprove?: (id: string) => void;
-    onQuickContact?: (id: string) => void; // NEW
+    onQuickContact?: (id: string) => void;
+    onToggleFavorite?: (id: string, isStarred: boolean) => void;
 }
 
-export function KanbanCard({ lead, onEdit, onUpdateTitle, onDisqualify, onApprove, onQuickContact }: KanbanCardProps) {
+export function KanbanCard({ lead, onEdit, onUpdateTitle, onDisqualify, onApprove, onQuickContact, onToggleFavorite }: KanbanCardProps) {
     const { attributes, listeners, setNodeRef, transform } = useDraggable({
         id: lead.id,
     });
@@ -79,6 +81,7 @@ export function KanbanCard({ lead, onEdit, onUpdateTitle, onDisqualify, onApprov
         if (!phone) return;
         const cleanPhone = phone.replace(/\D/g, "");
         window.open(`https://wa.me/55${cleanPhone}`, "_blank");
+        if (onQuickContact) onQuickContact(lead.id);
     };
 
     const handleEmail = (e: React.MouseEvent) => {
@@ -86,6 +89,7 @@ export function KanbanCard({ lead, onEdit, onUpdateTitle, onDisqualify, onApprov
         const email = primaryContact?.email || lead.email;
         if (!email) return;
         window.location.href = `mailto:${email}`;
+        if (onQuickContact) onQuickContact(lead.id);
     };
 
     const handleSearch = (e: React.MouseEvent) => {
@@ -110,7 +114,22 @@ export function KanbanCard({ lead, onEdit, onUpdateTitle, onDisqualify, onApprov
         }
     };
 
-    const hoverStyle = "hover:border-accent/50 hover:shadow-[0_0_15px_-3px_rgba(222,204,168,0.1)]";
+    const score = lead.score || 0;
+    const isPremium = score >= 80;
+    const isMid = score >= 50 && score < 80;
+
+    let borderStyle = "border-l-accent";
+    let glowStyle = "";
+
+    if (isPremium) {
+        borderStyle = "border-accent border-l-4";
+        glowStyle = "shadow-[0_0_20px_-5px_rgba(222,204,168,0.4)] border-accent/60";
+    } else if (isMid) {
+        borderStyle = "border-blue-500/50 border-l-4";
+        glowStyle = "shadow-[0_0_15px_-5px_rgba(59,130,246,0.3)] border-blue-500/40";
+    }
+
+    const hoverStyle = `hover:border-accent/50 ${isPremium ? 'hover:shadow-[0_0_25px_-5px_rgba(222,204,168,0.5)]' : 'hover:shadow-[0_0_15px_-3px_rgba(222,204,168,0.1)]'}`;
 
     // Date formatting logic
     const getLastContactLabel = () => {
@@ -131,9 +150,14 @@ export function KanbanCard({ lead, onEdit, onUpdateTitle, onDisqualify, onApprov
     return (
         <div ref={setNodeRef} style={style} {...listeners} {...attributes} className="mb-3 touch-none">
             <Card
-                className={`cursor-grab active:cursor-grabbing transition-all border-l-4 border-l-accent group relative overflow-hidden ${hoverStyle}`}
+                className={`cursor-grab active:cursor-grabbing transition-all group relative overflow-hidden ${borderStyle} ${glowStyle} ${hoverStyle} bg-[#222222]`}
                 onClick={() => !isEditingTitle && onEdit(lead)}
             >
+                {/* Visual indicator for Starred */}
+                {lead.is_starred && (
+                    <div className="absolute top-0 right-0 w-8 h-8 flex items-center justify-center translate-x-2 -translate-y-2 rotate-45 bg-accent z-0">
+                    </div>
+                )}
                 <CardHeader className="p-4 pb-2 space-y-1">
                     <div className="flex justify-between items-start h-[24px]">
                         {isEditingTitle ? (
@@ -173,7 +197,20 @@ export function KanbanCard({ lead, onEdit, onUpdateTitle, onDisqualify, onApprov
                             </div>
                         )}
 
-                        <div className="flex gap-1" onPointerDown={e => e.stopPropagation()}>
+                        <div className="flex gap-1 items-center" onPointerDown={e => e.stopPropagation()}>
+                            <Button
+                                variant="ghost"
+                                size="icon-sm"
+                                className={`h-6 w-6 transition-colors ${lead.is_starred ? 'text-accent' : 'text-muted-foreground hover:text-white'}`}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onToggleFavorite?.(lead.id, !lead.is_starred);
+                                }}
+                                title={lead.is_starred ? "Remover dos favoritos" : "Adicionar aos favoritos"}
+                            >
+                                <Star className={`w-3.5 h-3.5 ${lead.is_starred ? 'fill-accent' : ''}`} />
+                            </Button>
+
                             {onApprove && (
                                 <Button
                                     variant="ghost"

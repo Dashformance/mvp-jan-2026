@@ -9,8 +9,9 @@ import {
     TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { ArrowUpDown, ArrowUp, ArrowDown, User, MessageCircle } from "lucide-react";
+import { ArrowUpDown, ArrowUp, ArrowDown, User, MessageCircle, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ColumnFilter } from "./ColumnFilter";
 
 interface Lead {
     id: string;
@@ -25,6 +26,7 @@ interface Lead {
     contacts?: any[];
     city?: string;
     uf?: string;
+    is_starred?: boolean;
 }
 
 interface LeadsTableProps {
@@ -33,9 +35,22 @@ interface LeadsTableProps {
     sortOrder?: 'asc' | 'desc';
     onSort: (column: string) => void;
     onRowClick: (lead: Lead) => void;
+    onToggleFavorite?: (id: string, isStarred: boolean) => void;
+    filters?: any;
+    onFilterChange: (filters: any) => void;
 }
 
-export function LeadsTable({ leads, sortBy, sortOrder, onSort, onRowClick }: LeadsTableProps) {
+const STATUS_OPTIONS = [
+    { value: 'NEW', label: 'Novo', color: 'text-blue-400' },
+    { value: 'ATTEMPTED', label: 'Tentativa', color: 'text-amber-400' },
+    { value: 'CONTACTED', label: 'Contatado', color: 'text-indigo-400' },
+    { value: 'MEETING', label: 'Reunião', color: 'text-cyan-400' },
+    { value: 'WON', label: 'Ganho', color: 'text-emerald-400' },
+    { value: 'LOST', label: 'Perdido', color: 'text-rose-400' },
+    { value: 'DISQUALIFIED', label: 'Desqualificado', color: 'text-gray-400' },
+];
+
+export function LeadsTable({ leads, sortBy, sortOrder, onSort, onRowClick, onToggleFavorite, filters, onFilterChange }: LeadsTableProps) {
 
     const getSortIcon = (column: string) => {
         if (sortBy !== column) return <ArrowUpDown className="ml-2 h-4 w-4 opacity-50" />;
@@ -44,6 +59,11 @@ export function LeadsTable({ leads, sortBy, sortOrder, onSort, onRowClick }: Lea
             : <ArrowDown className="ml-2 h-4 w-4 text-emerald-400" />;
     };
 
+    const handleColumnFilter = (key: string, value: any) => {
+        onFilterChange({ ...filters, [key]: value });
+    };
+
+    // ... helper functions ...
     const getLastContactLabel = (dateString?: string | Date) => {
         if (!dateString) return <span className="text-muted-foreground/50">-</span>;
         const date = new Date(dateString);
@@ -74,11 +94,22 @@ export function LeadsTable({ leads, sortBy, sortOrder, onSort, onRowClick }: Lea
                 <TableHeader className="bg-[#1c1c1c]">
                     <TableRow className="border-b border-white/5 hover:bg-transparent">
 
+                        <TableHead className="w-[40px] px-2"></TableHead>
                         <TableHead className="w-[300px]">
-                            <Button variant="ghost" className="h-8 p-0 hover:bg-transparent hover:text-white font-bold text-[11px] uppercase tracking-wider" onClick={() => onSort('alpha')}>
-                                Empresa
-                                {getSortIcon('alpha')}
-                            </Button>
+                            <div className="flex items-center">
+                                <Button variant="ghost" className="h-8 p-0 hover:bg-transparent hover:text-white font-bold text-[11px] uppercase tracking-wider" onClick={() => onSort('alpha')}>
+                                    Empresa
+                                    {getSortIcon('alpha')}
+                                </Button>
+                                {/* We map 'company' filter to the global search to keep it consistent or use a specific field if backend supports */}
+                                {/* For Notion Style, let's treat it as generic search */}
+                                <ColumnFilter
+                                    column="Empresa"
+                                    type="text"
+                                    value={filters?.search}
+                                    onChange={(v) => handleColumnFilter('search', v)}
+                                />
+                            </div>
                         </TableHead>
 
                         <TableHead className="w-[150px]">
@@ -86,24 +117,48 @@ export function LeadsTable({ leads, sortBy, sortOrder, onSort, onRowClick }: Lea
                         </TableHead>
 
                         <TableHead className="w-[150px]">
-                            <Button variant="ghost" className="h-8 p-0 hover:bg-transparent hover:text-white font-bold text-[11px] uppercase tracking-wider" onClick={() => onSort('status')}>
-                                Status
-                                {getSortIcon('status')}
-                            </Button>
+                            <div className="flex items-center">
+                                <Button variant="ghost" className="h-8 p-0 hover:bg-transparent hover:text-white font-bold text-[11px] uppercase tracking-wider" onClick={() => onSort('status')}>
+                                    Status
+                                    {getSortIcon('status')}
+                                </Button>
+                                <ColumnFilter
+                                    column="Status"
+                                    type="select"
+                                    options={STATUS_OPTIONS}
+                                    value={filters?.status}
+                                    onChange={(v) => handleColumnFilter('status', v)}
+                                />
+                            </div>
                         </TableHead>
 
                         <TableHead className="w-[120px]">
-                            <Button variant="ghost" className="h-8 p-0 hover:bg-transparent hover:text-white font-bold text-[11px] uppercase tracking-wider" onClick={() => onSort('owner')}>
-                                Responsável
-                                {getSortIcon('owner')}
-                            </Button>
+                            <div className="flex items-center">
+                                <Button variant="ghost" className="h-8 p-0 hover:bg-transparent hover:text-white font-bold text-[11px] uppercase tracking-wider" onClick={() => onSort('owner')}>
+                                    Responsável
+                                    {getSortIcon('owner')}
+                                </Button>
+                                {/* Owner filter disabled for now in table to avoid conflict with tabs, or we can enable it if it overrides tabs? */}
+                                {/* Let's keep it simple for now and rely on tabs */}
+                            </div>
                         </TableHead>
 
-                        <TableHead className="w-[100px] text-right">
-                            <Button variant="ghost" className="h-8 p-0 hover:bg-transparent hover:text-white font-bold text-[11px] uppercase tracking-wider" onClick={() => onSort('score')}>
-                                Score
-                                {getSortIcon('score')}
-                            </Button>
+                        <TableHead className="w-[120px] text-right">
+                            <div className="flex items-center justify-end">
+                                <Button variant="ghost" className="h-8 p-0 hover:bg-transparent hover:text-white font-bold text-[11px] uppercase tracking-wider" onClick={() => onSort('score')}>
+                                    Score
+                                    {getSortIcon('score')}
+                                </Button>
+                                <ColumnFilter
+                                    column="Score"
+                                    type="range"
+                                    value={{ min: filters?.scoreMin, max: filters?.scoreMax }}
+                                    onChange={(v) => {
+                                        handleColumnFilter('scoreMin', v?.min);
+                                        handleColumnFilter('scoreMax', v?.max);
+                                    }}
+                                />
+                            </div>
                         </TableHead>
 
                         <TableHead className="w-[150px] text-right">
@@ -124,6 +179,17 @@ export function LeadsTable({ leads, sortBy, sortOrder, onSort, onRowClick }: Lea
                                 className="border-b border-white/5 hover:bg-white/[0.02] cursor-pointer group transition-colors"
                                 onClick={() => onRowClick(lead)}
                             >
+                                <TableCell className="w-[40px] px-2" onClick={(e) => e.stopPropagation()}>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon-sm"
+                                        className={`h-7 w-7 transition-colors ${lead.is_starred ? 'text-accent' : 'text-muted-foreground hover:text-white'}`}
+                                        onClick={() => onToggleFavorite?.(lead.id, !lead.is_starred)}
+                                    >
+                                        <Star className={`w-3.5 h-3.5 ${lead.is_starred ? 'fill-accent' : ''}`} />
+                                    </Button>
+                                </TableCell>
+
                                 <TableCell className="font-medium">
                                     <div className="flex flex-col">
                                         <span className="text-sm text-white/90 group-hover:text-accent transition-colors">

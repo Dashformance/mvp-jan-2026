@@ -18,6 +18,7 @@ import { Label } from "@/components/ui/label";
 
 interface FilterBarProps {
     onFilterChange: (filters: { search?: string; status?: string[]; owner?: string; source?: string[] }) => void;
+    currentFilters?: { search?: string; status?: string[]; owner?: string; source?: string[] };
 }
 
 const SOURCE_OPTIONS = [
@@ -38,15 +39,26 @@ const STATUS_OPTIONS = [
     { id: 'DISQUALIFIED', label: 'Desqualificado', color: 'bg-gray-500/10 text-gray-400' },
 ];
 
-export function FilterBar({ onFilterChange }: FilterBarProps) {
-    const [search, setSearch] = useState("");
-    const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
-    const [selectedSources, setSelectedSources] = useState<string[]>([]);
+export function FilterBar({ onFilterChange, currentFilters }: FilterBarProps) {
+    const [search, setSearch] = useState(currentFilters?.search || "");
+    const [selectedStatuses, setSelectedStatuses] = useState<string[]>(currentFilters?.status || []);
+    const [selectedSources, setSelectedSources] = useState<string[]>(currentFilters?.source || []);
+
+    // Sync with external changes (e.g. from Table Filters)
+    useEffect(() => {
+        if (currentFilters) {
+            if (currentFilters.search !== undefined && currentFilters.search !== search) setSearch(currentFilters.search);
+            if (currentFilters.status && JSON.stringify(currentFilters.status) !== JSON.stringify(selectedStatuses)) setSelectedStatuses(currentFilters.status);
+            if (currentFilters.source && JSON.stringify(currentFilters.source) !== JSON.stringify(selectedSources)) setSelectedSources(currentFilters.source);
+        }
+    }, [currentFilters]);
 
     // Debounce search
     useEffect(() => {
         const timer = setTimeout(() => {
-            notifyChange();
+            if (currentFilters?.search !== search) {
+                notifyChange();
+            }
         }, 500);
         return () => clearTimeout(timer);
     }, [search, selectedStatuses, selectedSources]);

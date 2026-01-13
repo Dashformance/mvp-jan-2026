@@ -42,6 +42,7 @@ export const LeadUpdateSchema = z.object({
     first_contact_date: z.string().datetime().optional().nullable(),
     last_contact_date: z.string().datetime().optional().nullable(),
     next_followup_date: z.string().datetime().optional().nullable(),
+    is_starred: z.boolean().optional(),
 }).passthrough(); // Allow extra fields, LeadSanitizer will strip them
 
 // Schema for creating a Lead (POST)
@@ -64,6 +65,7 @@ export const LeadCreateSchema = z.object({
     segment_id: z.string().uuid().optional().nullable(),
     extra_info: z.record(z.string(), z.any()).optional().nullable(),
     checklist: z.record(z.string(), z.any()).optional().nullable(),
+    is_starred: z.boolean().optional().default(false),
 }).passthrough();
 
 export type LeadUpdateInput = z.infer<typeof LeadUpdateSchema>;

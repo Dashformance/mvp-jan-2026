@@ -18,6 +18,7 @@ import { KanbanBoard, PIPELINE_COLUMNS } from "@/components/kanban/KanbanBoard";
 import { ViewToggle } from "@/components/kanban/ViewToggle";
 import { LeadsTable } from "@/components/table/LeadsTable";
 import { FilterBar } from "@/components/kanban/FilterBar";
+import { ActiveFilters } from "@/components/kanban/ActiveFilters";
 
 import { LeadSheet } from "@/components/lead/LeadSheet";
 import { TrashSheet } from "@/components/TrashSheet";
@@ -198,10 +199,40 @@ export default function Home() {
     return () => window.removeEventListener('kanban:add-column', handleAddColumn);
   }, []);
 
-  const [filterBarState, setFilterBarState] = useState<{ search?: string; status?: string[]; owner?: string; source?: string[] }>({});
+  const [filterBarState, setFilterBarState] = useState<{
+    search?: string;
+    status?: string[];
+    owner?: string;
+    source?: string[];
+    city?: string;          // New
+    scoreMin?: number;      // New
+    scoreMax?: number;      // New
+  }>({});
 
-  const handleFilterChange = (filters: { search?: string; status?: string[]; owner?: string; source?: string[] }) => {
-    setFilterBarState(filters);
+  const handleFilterChange = (filters: any) => {
+    setFilterBarState(prev => ({ ...prev, ...filters }));
+  };
+
+  const handleRemoveFilter = (key: string, value?: any) => {
+    setFilterBarState(prev => {
+      const newState = { ...prev };
+      if (key === 'status' || key === 'source') {
+        // Array removal
+        const arr = newState[key] as string[] | undefined;
+        if (arr) {
+          newState[key] = arr.filter(v => v !== value);
+          if (newState[key]?.length === 0) delete newState[key];
+        }
+      } else {
+        // value removal
+        delete newState[key as keyof typeof newState];
+      }
+      return newState;
+    });
+  };
+
+  const handleClearFilters = () => {
+    setFilterBarState({});
   };
 
   const handleSaveLead = async (updatedLead: any) => {
@@ -212,7 +243,7 @@ export default function Home() {
     const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
 
     try {
-      let savedLead;
+      let savedLead: any;
       if (updatedLead.id === 'new') {
         const { id, ...saveData } = updatedLead;
         const res = await fetch(`${API_URL}/leads`, {
@@ -385,6 +416,11 @@ export default function Home() {
       if (filterBarState.search) url += `&search=${encodeURIComponent(filterBarState.search)}`;
       if (filterBarState.status && filterBarState.status.length > 0) url += `&status=${filterBarState.status.join(',')}`;
       if (filterBarState.source && filterBarState.source.length > 0) url += `&source=${filterBarState.source.join(',')}`;
+
+      // New Filters Round 2
+      if (filterBarState.city) url += `&city=${encodeURIComponent(filterBarState.city)}`;
+      if (filterBarState.scoreMin !== undefined) url += `&scoreMin=${filterBarState.scoreMin}`;
+      if (filterBarState.scoreMax !== undefined) url += `&scoreMax=${filterBarState.scoreMax}`;
 
       // Resolve Owner for API
       // If "My Leads" is active, use currentUser
@@ -774,7 +810,7 @@ export default function Home() {
         body: JSON.stringify({
           lead_id: id,
           type: 'WHATSAPP', // Defaulting to WhatsApp as it's the most common "quick" action
-          notes: 'Contato rápido registrado via Kanban (Hoje)',
+          content: 'Contato rápido registrado via Kanban (Hoje)',
           date: now
         })
       });
@@ -790,7 +826,25 @@ export default function Home() {
     }
   };
 
+  const handleToggleFavorite = async (id: string, isStarred: boolean) => {
+    // Optimistic Update
+    setLeads(leads.map(l => l.id === id ? { ...l, is_starred: isStarred } : l));
 
+    try {
+      const res = await fetch(`${API_URL}/leads/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ is_starred: isStarred })
+      });
+
+      if (!res.ok) throw new Error("Falha ao atualizar favorito");
+      toast.success(isStarred ? "Lead favoritado!" : "Removido dos favoritos");
+    } catch (e) {
+      console.error(e);
+      toast.error("Erro ao favoritar lead");
+      fetchLeads(page); // Revert
+    }
+  };
 
   const openLeadSheet = (lead: any) => {
     setSelectedLeadForSheet(lead);
@@ -868,8 +922,8 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-background p-8 font-sans text-foreground">
-      <div className="max-w-[1600px] mx-auto space-y-8">
+    <div className="h-screen bg-background flex flex-col font-sans text-foreground overflow-y-auto">
+      <div className="flex-none p-8 pb-0 max-w-[1600px] mx-auto w-full space-y-4">
 
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-center gap-4 py-6 border-b border-[rgba(255,255,255,0.06)]">
@@ -1503,7 +1557,7 @@ export default function Home() {
                       </div>
 
                       {/* Right Column: Pre-Visualization & Results */}
-                      <div className="flex-1 flex flex-col h-full bg-[#121212]/30 relative overflow-hidden">
+                      <div className="flex-1 flex flex-col h-full bg-[#121212]/30 relative overflow-y-auto custom-scrollbar">
                         {importProgress && (
                           <div className="absolute inset-0 z-50 bg-[#0a0a0a]/90 flex flex-col items-center justify-start pt-[15vh] p-8 backdrop-blur-md animate-in fade-in duration-500">
                             <div className="w-full max-w-lg space-y-10">
@@ -1697,8 +1751,9 @@ export default function Home() {
         </div>
 
 
+
         {/* Leads Table */}
-        <Card className="bg-[#1C1C1C] border border-white/5 shadow-none">
+        <Card className="bg-[#1C1C1C] border border-white/5 shadow-none flex-1 flex flex-col overflow-y-auto">
           <CardHeader className="flex flex-row items-center justify-between pb-4 border-b border-white/5">
             <div className="flex items-center gap-4">
               <CardTitle className="text-accent">
@@ -1795,9 +1850,14 @@ export default function Home() {
             </div>
             <ViewToggle view={viewMode} onViewChange={setViewMode} />
           </div>
+          <ActiveFilters
+            filters={filterBarState}
+            onRemove={handleRemoveFilter}
+            onClearAll={handleClearFilters}
+          />
           <CardContent className="p-0 sm:p-0">
             {viewMode === 'kanban' ? (
-              <div className="rounded-xl border border-[rgba(255,255,255,0.06)] bg-[#181818]/50 p-6 overflow-hidden">
+              <div className="h-[calc(100vh-160px)] min-h-0 rounded-xl border border-[rgba(255,255,255,0.06)] bg-[#181818]/50 p-6 flex flex-col">
                 <KanbanBoard
                   leads={displayedLeads}
                   columns={columns}
@@ -1855,12 +1915,15 @@ export default function Home() {
                 sortOrder={sortBy?.includes('desc') || sortBy === 'date_desc' || sortBy === 'score' ? 'desc' : 'asc'}
                 onSort={handleSortChange}
                 onRowClick={openLeadSheet}
+                onToggleFavorite={handleToggleFavorite}
+                filters={filterBarState}
+                onFilterChange={handleFilterChange}
               />
             )}</CardContent>
-        </Card >
+        </Card>
 
         {/* Pagination Controls */}
-        < div className="flex justify-between items-center text-sm text-slate-500" >
+        <div className="flex justify-between items-center text-sm text-slate-500">
           <div>
             Página {meta?.page || 1} de {meta?.last_page || 1} (Total: {meta?.total || 0})
           </div>
@@ -1872,7 +1935,7 @@ export default function Home() {
               Próxima
             </Button>
           </div>
-        </div >
+        </div>
 
         {/* Edit Dialog */}
         <LeadSheet
@@ -1881,7 +1944,8 @@ export default function Home() {
           onClose={() => {
             setIsSheetOpen(false);
             setSelectedLeadForSheet(null);
-          }}
+          }
+          }
           onSave={handleSaveLead}
         />
 

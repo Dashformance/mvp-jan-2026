@@ -19,8 +19,9 @@ interface KanbanColumnProps {
     onUpdateTitle?: (id: string, newTitle: string) => void;
     onDisqualify?: (id: string) => void;
     onApprove?: (id: string) => void;  // NEW: For triagem approval
-    onQuickContact?: (id: string) => void; // NEW
-    onAddLead?: (status: string) => void; // NEW: Add card to column
+    onQuickContact?: (id: string) => void;
+    onAddLead?: (status: string) => void;
+    onToggleFavorite?: (id: string, isStarred: boolean) => void;
 }
 
 import { useState, useRef, useEffect } from "react";
@@ -39,7 +40,8 @@ export function KanbanColumn({
     onApprove,
     onQuickContact,
     onAddLead,
-    onRenameColumn // NEW prop
+    onRenameColumn,
+    onToggleFavorite
 }: KanbanColumnProps & { onRenameColumn?: (id: string, newTitle: string) => void }) {
     const { setNodeRef, isOver } = useDroppable({
         id: id,
@@ -78,9 +80,9 @@ export function KanbanColumn({
     const isTriagemColumn = id === 'INBOX' || id === 'SCREENING';
 
     return (
-        <div className="flex flex-col h-full min-w-[280px] w-[280px] bg-muted rounded-xl border border-white/5">
+        <div className="flex flex-col h-full min-h-0 min-w-[280px] w-[280px] bg-muted rounded-xl border border-white/5">
             {/* Header */}
-            <div className="p-4 border-b border-[rgba(255,255,255,0.06)] flex justify-between items-center group/header h-[60px]">
+            <div className="sticky top-0 z-10 bg-muted p-4 border-b border-[rgba(255,255,255,0.06)] flex justify-between items-center group/header h-[60px] shrink-0">
                 <div className="flex items-center gap-3 flex-1">
                     <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${color.includes('bg-') ? color.split(' ')[0] : 'bg-white/20'}`} />
 
@@ -124,7 +126,7 @@ export function KanbanColumn({
             {/* Droppable Area */}
             <div
                 ref={setNodeRef}
-                className={`flex-1 p-3 overflow-y-auto min-h-[150px] transition-colors duration-150 ${isOver ? 'bg-[rgba(255,255,255,0.03)] ring-2 ring-border ring-inset' : ''}`}
+                className={`flex-1 min-h-0 p-3 overflow-y-auto overscroll-contain custom-scrollbar transition-colors duration-150 ${isOver ? 'bg-[rgba(255,255,255,0.03)] ring-2 ring-border ring-inset' : ''}`}
             >
                 {leads.map((lead) => (
                     <KanbanCard
@@ -136,6 +138,7 @@ export function KanbanColumn({
 
                         onApprove={isTriagemColumn ? onApprove : undefined}
                         onQuickContact={onQuickContact}
+                        onToggleFavorite={onToggleFavorite}
                     />
                 ))}
                 {leads.length === 0 && (

@@ -18,6 +18,7 @@
 8. [Design System](#design-system)
 9. [Como Rodar o Projeto](#como-rodar-o-projeto)
 10. [Melhorias Sugeridas](#melhorias-sugeridas)
+11. [Status de Implementação & Roadmap](#status-de-implementação--roadmap)
 
 ---
 
@@ -534,6 +535,79 @@ npx prisma studio
 - [ ] CI/CD com GitHub Actions
 - [ ] Monitoring com Sentry
 - [ ] Analytics com Vercel Analytics (já instalado)
+
+---
+
+## Status de Implementação & Roadmap
+
+### ✅ Implementado (Jan 2026)
+
+#### Core & UI
+- [x] **Round 1: Múltiplos Contatos:** Tabela `contacts` (1-N), migração de dados e UI de lista.
+- [x] **Round 2: Visualização em Tabela:** Alternância entre Kanban/Lista, filtros avançados e ordenação.
+- [x] **Round 3: Refatoração Kanban:** Scroll suave, colunas independentes e DnD otimizado.
+- [x] **Round 4: Score Visual & Favoritos:** Bordas coloridas por score, glow effect e sistema de "estrelar" leads.
+- [x] **Round 7: Histórico Automático:** Tabela `activities`, log automático de interações e timeline.
+
+#### Features Específicas
+- [x] **Funil de Vendas Dividido:** Gráfico "Butterfly" comparando performance entre vendedores (João vs Vitor).
+- [x] **Métricas Customizáveis:** Seletor de métricas no gráfico de linha (Adicionados, Contatados, Agendados).
+- [x] **Correções:** Ajuste de fuso horário em gráficos e logs automáticos (WhatsApp/Email).
+- [x] **Colunas Dinâmicas:** Estágios persistidos no banco (`stages` table) e sincronizados na UI.
+- [x] **Kanban Scroll Fix:** Scroll de página habilitado para visualizar muitos leads.
+
+---
+
+### 🚀 Roadmap - Próximos Passos
+
+#### Round 5: Abas de Fases do Pipeline
+- [ ] UI: Abas superiores no Kanban ([Todos] [Qualificação] [Vendas] [Pós-Venda])
+- [ ] UI: Filtrar colunas visíveis por fase selecionada
+- [ ] UI: Manter ordem das colunas ao trocar abas
+
+#### Round 6: Kanban Editável (CRUD de Estágios)
+- [ ] UI: Editar nome do estágio (duplo clique)
+- [ ] UI: Botão de criar nova coluna
+- [ ] UI: Menu de excluir estágio (com estratégia de migração de leads)
+- [ ] UI: Drag-and-drop de colunas (reordenar)
+
+#### Round 8: Login & Sessão de Usuário
+- [ ] UI: Tela de Login (Avatar + PIN ou Email/Senha)
+- [ ] State: Persistência de sessão segura (localStorage ou Supabase Auth)
+- [ ] UI: Display de usuário no header e botão Logout
+- [ ] Refactor: Remover seletor de usuário temporário (`UserSelector`)
+
+#### Round 9: Notificações In-App
+- [ ] DB: Tabela `notifications` (id, user_id, type, message, read, created_at)
+- [ ] Backend: Gerar notificações via gatilhos (ex: lead atribuído, tarefa vencida, follow-up pendente)
+- [ ] UI: "Sininho" no Header com badge de não lidas
+- [ ] UI: Lista dropdown de notificações com mark as read
+
+---
+
+### 💡 Backlog de Melhorias (Não Priorizadas)
+
+#### Integrações
+- [ ] WhatsApp Business API (envio de mensagens)
+- [ ] Calendly/Google Calendar (agendar reuniões)
+- [ ] Mailchimp/SendGrid (automação de emails)
+
+#### UX Avançado
+- [ ] Importação via CSV/Excel
+- [ ] Templates de mensagem (email/WhatsApp)
+- [ ] Automação de follow-ups (regras configuráveis)
+- [ ] Bulk edit inline na tabela
+
+#### Performance
+- [ ] React Query/SWR para cache de dados
+- [ ] Virtualização de listas (react-window)
+- [ ] Lazy loading de componentes pesados
+
+#### Código & Arquitetura
+- [ ] Refatorar `page.tsx` (1900+ linhas) em subcomponentes
+- [ ] Migrar para server components onde possível
+- [ ] Adicionar testes (Jest/Vitest)
+- [ ] Error boundaries e loading skeletons
 
 ---
 

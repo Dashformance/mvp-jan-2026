@@ -82,6 +82,23 @@ export function ContactList({ leadId }: ContactListProps) {
         fetchContacts();
     };
 
+    const logInteraction = async (type: string, detail: string) => {
+        try {
+            await fetch('/api/interactions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    lead_id: leadId,
+                    type,
+                    content: `Contato via ${detail} (Lista de Contatos)`,
+                    date: new Date().toISOString()
+                })
+            });
+        } catch (e) {
+            console.error("Failed to log interaction", e);
+        }
+    };
+
     return (
         <div className="space-y-4">
             <div className="flex justify-between items-center">
@@ -117,8 +134,8 @@ export function ContactList({ leadId }: ContactListProps) {
                         <div
                             key={contact.id}
                             className={`p-3 rounded-lg border transition-colors relative group ${contact.is_primary
-                                    ? "bg-accent/5 border-accent/20"
-                                    : "bg-muted/30 border-white/5 hover:bg-muted/50"
+                                ? "bg-accent/5 border-accent/20"
+                                : "bg-muted/30 border-white/5 hover:bg-muted/50"
                                 }`}
                         >
                             <div className="flex justify-between items-start mb-2">
@@ -173,6 +190,7 @@ export function ContactList({ leadId }: ContactListProps) {
                                     <a
                                         href={`https://wa.me/55${contact.whatsapp.replace(/\D/g, "")}`}
                                         target="_blank"
+                                        onClick={() => logInteraction('WHATSAPP', 'WhatsApp')}
                                         className="flex items-center gap-1 text-xs text-muted-foreground hover:text-emerald-400 transition-colors px-2 py-1 bg-white/5 rounded-md border border-white/5 hover:border-emerald-500/30"
                                     >
                                         <MessageCircle className="w-3 h-3" /> {contact.whatsapp}
@@ -181,6 +199,7 @@ export function ContactList({ leadId }: ContactListProps) {
                                 {contact.phone && (
                                     <a
                                         href={`tel:${contact.phone}`}
+                                        onClick={() => logInteraction('CALL', 'Telefone')}
                                         className="flex items-center gap-1 text-xs text-muted-foreground hover:text-white transition-colors px-2 py-1 bg-white/5 rounded-md border border-white/5"
                                     >
                                         <Phone className="w-3 h-3" /> {contact.phone}
@@ -189,6 +208,7 @@ export function ContactList({ leadId }: ContactListProps) {
                                 {contact.email && (
                                     <a
                                         href={`mailto:${contact.email}`}
+                                        onClick={() => logInteraction('EMAIL', 'Email')}
                                         className="flex items-center gap-1 text-xs text-muted-foreground hover:text-sky-400 transition-colors px-2 py-1 bg-white/5 rounded-md border border-white/5 hover:border-sky-500/30"
                                     >
                                         <Mail className="w-3 h-3" /> {contact.email}
