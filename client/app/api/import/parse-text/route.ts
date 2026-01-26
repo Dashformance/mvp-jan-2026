@@ -41,13 +41,21 @@ INPUT TEXT:
 ${text}
 """
 
+EXTRACTION RULES:
+1. **Company Name**: Look at the very first lines of each block. If the name is split into two lines (e.g., "Helbor" and "Empreendimentos"), JOIN THEM into a single string "Helbor Empreendimentos".
+2. **Name vs. Domain**: Do NOT use the domain name from the website URL or Instagram handle as the company_name if a more formal name exists in the text.
+   - Example: If the text says "Helbor Empreendimentos" but the URL is "corretoron.com.br", the company_name MUST be "Helbor Empreendimentos", NOT "corretoron".
+3. **Contacts**: Extract names, roles, phones, and emails. Group them into the "contacts" array.
+4. **Address**: Clean and format the address. Extract "city" and "uf" (2 letters) into their own fields.
+5. **Notes**: Put any extra information that doesn't fit the schema in the "notes" field.
+
 OUTPUT REQUIREMENTS:
 1. Return ONLY a valid JSON object.
 2. NO markdown formatting.
 3. Escape all special characters inside strings (especially newlines).
 4. Strictly follow this schema:
 {
-  "summary": "string (summary in Portuguese)",
+  "summary": "string (resumo em português)",
   "leads": [
     {
       "company_name": "string",
