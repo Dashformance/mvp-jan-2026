@@ -5,4 +5,4 @@ const nextConfig: NextConfig = {
 };
 
 export default nextConfig;
-// force rebuild timestamp Tue Jan  6 14:09:24 -03 2026
+// force rebuild timestamp Mon Jan 26 02:44:00 -03 2026

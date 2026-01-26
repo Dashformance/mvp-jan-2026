@@ -12,9 +12,11 @@ export default function DebugEnvPage() {
     const [testLoading, setTestLoading] = useState(false)
 
     useEffect(() => {
+        const envKeys = Object.keys(process.env).filter(key => key.startsWith('NEXT_PUBLIC_'))
         setInfo({
             url: process.env.NEXT_PUBLIC_SUPABASE_URL || 'NOT SET',
-            keyExists: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? 'YES (Hidden)' : 'NO'
+            keyExists: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? 'YES (Hidden)' : 'NO',
+            availableKeys: envKeys.length > 0 ? envKeys.join(', ') : 'NONE'
         })
     }, [])
 
@@ -54,6 +56,7 @@ export default function DebugEnvPage() {
             <div className="space-y-4 mb-10">
                 <p>Project URL: <span className={info.url === 'NOT SET' ? 'text-red-500' : 'text-accent'}>{info.url}</span></p>
                 <p>Anon Key Present: <span className={info.keyExists === 'NO' ? 'text-red-500' : 'text-accent'}>{info.keyExists}</span></p>
+                <p className="text-xs text-text-muted">Keys Disponíveis: <span className="text-white">{info.availableKeys}</span></p>
             </div>
 
             <div className="p-6 border border-border-subtle rounded-xl bg-bg-elevated mb-10">
