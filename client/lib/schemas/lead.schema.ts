@@ -9,6 +9,7 @@ const LeadStatusSchema = z.enum([
     'CONTACTED',
     'MEETING',
     'WON',
+    'SOLD',
     'LOST',
     'DISQUALIFIED'
 ]);

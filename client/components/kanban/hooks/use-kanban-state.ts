@@ -291,10 +291,12 @@ export function useKanbanState() {
                     }
                 }
             } else {
-                throw new Error("Failed");
+                const errorData = await res.json().catch(() => ({ error: 'Unknown API error' }));
+                console.error(`[API ERROR] Patch failed with status ${res.status}:`, errorData);
+                throw new Error(errorData.error?.message || errorData.error || "Failed to update lead");
             }
-        } catch (e) {
-            toast.error(lead.id === 'new' ? "Erro ao criar lead" : "Erro ao atualizar lead");
+        } catch (e: any) {
+            toast.error(lead.id === 'new' ? "Erro ao criar lead" : `Erro ao atualizar lead: ${e.message}`);
             console.error(e);
         }
     };
