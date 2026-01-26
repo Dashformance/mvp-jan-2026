@@ -84,6 +84,7 @@ export function CastButton() {
       `}
             title="Transmitir para TV"
         >
+            {/* @ts-expect-error - Custom element not fully typed in JSX */}
             <is-google-cast-button style={{ width: '24px', height: '24px', display: 'block' }} />
             {/* We use the custom element provided by Google, but wrap it for styling or fallback to icon */}
             <Cast className="w-5 h-5" />
