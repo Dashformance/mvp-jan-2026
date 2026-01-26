@@ -21,9 +21,14 @@ const ALLOWED_LEAD_FIELDS = new Set([
     'next_followup_date',
     'notes',
     'owner',
+    'owner_id',
     'uf',
     'city',
     'contract_value',
+    'score',
+    'source',
+    'is_starred',
+    'segment_id'
 ]);
 
 /**
@@ -216,6 +221,7 @@ export class LeadSanitizer {
         if (sanitized.source !== undefined) sanitized.source = this.toNullIfEmpty(sanitized.source);
         if (sanitized.uf !== undefined) sanitized.uf = this.toNullIfEmpty(sanitized.uf);
         if (sanitized.city !== undefined) sanitized.city = this.toNullIfEmpty(sanitized.city);
+        if (sanitized.owner_id !== undefined) sanitized.owner_id = this.toNullIfEmpty(sanitized.owner_id);
         if (sanitized.contract_value !== undefined) {
             // Ensure it's a number or null
             const val = parseFloat(sanitized.contract_value);

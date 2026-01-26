@@ -33,14 +33,10 @@ export function ConnectedKanbanBoard() {
             onLeadUpdate={updateLeadStatus}
             onEditLead={openLeadSheet}
             onUpdateTitle={(id, newTitle) => {
-                // Find lead and update title? "onUpdateTitle" in KanbanCard usually updates company name
-                // We need a helper or just reuse updateLead if we have the full object.
-                // KanbanBoard passes (id, newTitle) which might be insufficient for updateLead(object).
-                // Checking KanbanCard usage: it calls onUpdateTitle(id, newTitle).
-                // We need to find the lead first.
                 const lead = leads.find(l => l.id === id);
                 if (lead) {
-                    updateLead({ ...lead, company_name: newTitle });
+                    // Update both to ensure visibility and consistency
+                    updateLead({ ...lead, company_name: newTitle, trade_name: newTitle });
                 }
             }}
             onDisqualify={(id) => updateLeadStatus(id, 'DISQUALIFIED')}
