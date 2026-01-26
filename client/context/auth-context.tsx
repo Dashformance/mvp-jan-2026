@@ -47,6 +47,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     useEffect(() => {
+        if (!supabase) {
+            setLoading(false)
+            return
+        }
+
         const {
             data: { subscription },
         } = supabase.auth.onAuthStateChange(async (_event, session) => {
@@ -67,9 +72,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         })
 
         return () => subscription.unsubscribe()
-    }, []) // eslint-disable-line react-hooks/exhaustive-deps
+    }, [supabase]) // eslint-disable-line react-hooks/exhaustive-deps
+
 
     const signInWithGoogle = async () => {
+        if (!supabase) return
         await supabase.auth.signInWithOAuth({
             provider: "google",
             options: {
@@ -79,6 +86,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     const signInWithEmail = async (email: string, password: string) => {
+        if (!supabase) return { error: { message: "Supabase client not initialized" } }
         const { error } = await supabase.auth.signInWithPassword({
             email,
             password,
@@ -91,6 +99,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     const signOut = async () => {
+        if (!supabase) return
         await supabase.auth.signOut()
         setProfile(null)
         router.push("/login")
