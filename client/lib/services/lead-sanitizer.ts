@@ -167,6 +167,14 @@ export class LeadSanitizer {
         // Priority
         sanitized.priority = Number(data.priority) || 0;
 
+        // Contract Value
+        if (data.contract_value !== undefined && data.contract_value !== null) {
+            const val = typeof data.contract_value === 'string' ? parseFloat(data.contract_value.replace(/\./g, '').replace(',', '.')) : data.contract_value;
+            sanitized.contract_value = isNaN(val) ? 0 : val;
+        } else {
+            sanitized.contract_value = 0;
+        }
+
         // JSON fields - store as JSON, not null
         sanitized.extra_info = data.extra_info || {};
 

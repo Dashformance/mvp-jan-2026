@@ -2,14 +2,19 @@ import { Area, AreaChart, ResponsiveContainer } from "recharts";
 import { cn } from "@/lib/utils";
 
 interface SparklineProps {
-    data: number[];
+    data: any[];
+    dataKey?: string;
     color?: string;
     className?: string;
 }
 
-export function Sparkline({ data, color = "#DECCA8", className }: SparklineProps) {
-    // Transform array of numbers into object array for Recharts
-    const chartData = data.map((val, i) => ({ i, val }));
+export function Sparkline({ data, dataKey, color = "#DECCA8", className }: SparklineProps) {
+    // Transform data into format expected by Recharts
+    const chartData = data.map((val, i) => {
+        if (typeof val === 'number') return { i, val };
+        if (dataKey && typeof val === 'object' && val !== null) return { i, val: val[dataKey] };
+        return { i, val: 0 };
+    });
 
     return (
         <div className={cn("h-12 w-24", className)}>
