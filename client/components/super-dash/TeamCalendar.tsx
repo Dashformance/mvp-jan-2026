@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Calendar as CalendarIcon, Clock, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Calendar as CalendarIcon, Clock, Plus, ChevronLeft, ChevronRight, Trash2, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
     format, isSameDay, addDays, startOfWeek, isToday, parseISO,
@@ -200,7 +200,31 @@ export const TeamCalendar: React.FC<TeamCalendarProps> = ({ meetings = [], class
     );
 };
 
+import { deleteMeeting } from '@/app/actions/meeting-actions';
+import { toast } from 'sonner';
+
 const MeetingCard = ({ meeting, index }: { meeting: any, index: number }) => {
+    const [isDeleting, setIsDeleting] = useState(false);
+
+    const handleDelete = async (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!confirm('Tem certeza que deseja remover esta reunião?')) return;
+
+        setIsDeleting(true);
+        try {
+            const res = await deleteMeeting(meeting.id);
+            if (res.success) {
+                toast.success('Reunião removida');
+            } else {
+                toast.error('Erro ao remover');
+            }
+        } catch (error) {
+            toast.error('Erro ao remover');
+        } finally {
+            setIsDeleting(false);
+        }
+    };
+
     return (
         <motion.div
             layout
@@ -243,6 +267,17 @@ const MeetingCard = ({ meeting, index }: { meeting: any, index: number }) => {
                     )}
                 </div>
             </div>
-        </motion.div>
+
+            {/* Actions */}
+            <button
+                onClick={handleDelete}
+                disabled={isDeleting}
+                className="opacity-0 group-hover:opacity-100 p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-all"
+                title="Remover da agenda"
+            >
+                <Trash2 className="w-4 h-4" />
+            </button>
+        </div>
+        </motion.div >
     );
 }

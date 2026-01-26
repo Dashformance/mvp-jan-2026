@@ -622,11 +622,12 @@ export const LeadsService = {
                 userWhere.date_added = { gte: minDate };
             }
 
-            const [total, won, contacted, meeting] = await Promise.all([
+            const [total, won, contacted, meeting, added] = await Promise.all([
                 prisma.lead.count({ where: userWhere }),
                 prisma.lead.count({ where: { ...userWhere, status: 'WON' } }),
                 prisma.lead.count({ where: { ...userWhere, status: 'CONTACTED' } }),
-                prisma.lead.count({ where: { ...userWhere, status: 'MEETING' } })
+                prisma.lead.count({ where: { ...userWhere, status: 'MEETING' } }),
+                prisma.lead.count({ where: userWhere }) // 'total' is effectively 'added' or 'assigned', using same filter
             ]);
 
             result[user.key] = {
@@ -634,6 +635,7 @@ export const LeadsService = {
                 won,
                 contacted,
                 meeting,
+                added: total, // Using total as added count for now since userWhere already filters by owner
                 conversionRate: total > 0 ? Math.round((won / total) * 100) : 0
             };
         }));

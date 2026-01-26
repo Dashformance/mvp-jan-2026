@@ -10,7 +10,6 @@ import { UserMenu } from "@/components/auth/UserMenu";
 import { motion, AnimatePresence } from "framer-motion";
 import { CircularProgressbar, buildStyles } from 'react-circular-progressbar';
 import 'react-circular-progressbar/dist/styles.css';
-import { MOCK_SUPERDASH_DATA } from "./mock-data";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
@@ -33,13 +32,6 @@ import { CastButton } from "@/components/CastButton";
 
 
 // Mock XP Feed Events
-const MOCK_XP_EVENTS = [
-    { id: '1', message: 'João converteu um lead', xp: 100, timestamp: new Date(Date.now() - 1000 * 60 * 5), type: 'conversion' as const },
-    { id: '2', message: 'Maria agendou reunião', xp: 50, timestamp: new Date(Date.now() - 1000 * 60 * 15), type: 'task' as const },
-    { id: '3', message: 'Pedro completou 3 dias seguidos', xp: 75, timestamp: new Date(Date.now() - 1000 * 60 * 30), type: 'streak' as const },
-    { id: '4', message: 'João contatou 10 leads', xp: 25, timestamp: new Date(Date.now() - 1000 * 60 * 45), type: 'lead' as const },
-];
-
 // Mock Daily Quests
 const MOCK_QUESTS = [
     { id: '1', title: 'Contatar 5 leads', description: 'Faça primeiro contato com novos leads', xpReward: 50, completed: true },
@@ -333,7 +325,7 @@ export default function SuperDashPage() {
                             players={leaderboardPlayers}
                             currentUserId={profile?.id}
                         />
-                        <XPFeed events={MOCK_XP_EVENTS} maxEvents={5} />
+                        <XPFeed events={data?.feed || []} maxEvents={6} />
                     </div>
 
                     {/* CENTER: Player Cards Arena */}

@@ -129,3 +129,23 @@ export async function createMeeting(data: {
     }
 }
 
+
+export async function deleteMeeting(leadId: string) {
+    try {
+        if (!leadId) throw new Error('Lead ID is required');
+
+        await prisma.lead.update({
+            where: { id: leadId },
+            data: {
+                next_followup_date: null,
+                status: 'CONTACTED' // Revert to contacted as safe default
+            }
+        });
+
+        revalidatePath('/super-dash');
+        return { success: true };
+    } catch (error) {
+        console.error('Failed to delete meeting:', error);
+        return { success: false, error: 'Failed to delete meeting' };
+    }
+}

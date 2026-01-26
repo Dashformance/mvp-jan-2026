@@ -40,10 +40,11 @@ export async function GET() {
         // 1 Sale = 1000 XP
         // 1 Meeting = 300 XP
         // 1 Contact = 50 XP
+        // 1 New Lead = 10 XP
 
         const collaborators = ownerKeys.map((key, index) => {
             // Use SEASONAL stats for Score/XP
-            const sStats = seasonalStats[key] || { total: 0, won: 0, contacted: 0, meeting: 0, conversionRate: 0 };
+            const sStats = seasonalStats[key] || { total: 0, won: 0, contacted: 0, meeting: 0, conversionRate: 0, added: 0 };
 
             // Use LIFETIME stats for Revenue/Total Sales if requested? 
             // User said: "Unica coisa que será mantida é o faturamento". 
@@ -51,7 +52,8 @@ export async function GET() {
             const lStats = lifetimeStats[key] || { won: 0 };
 
             // Calculate XP (Seasonal)
-            const xp = (sStats.won * 1000) + (sStats.meeting * 300) + (sStats.contacted * 50);
+            // Added leads now contribute to XP
+            const xp = (sStats.won * 1000) + (sStats.meeting * 300) + (sStats.contacted * 50) + ((sStats.added || 0) * 10);
 
             // Level formula (Seasonal)
             // Forced to Level 1 as per request
