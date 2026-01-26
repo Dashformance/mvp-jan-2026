@@ -11,17 +11,25 @@
   --font-display: var(--font-numbers), 'Space Grotesk', 'Inter', sans-serif;
   --font-mono: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
-  /* === COLOR PALETTE: DARK GLASSMORPHISM === */
+  /* === COLOR PALETTE: DARK GLASSMORPHISM (WAR ROOM EDITION) === */
 
   /* Backgrounds: Depth Hierarchy */
   --color-bg-void: #050505;
+  /* Deepest black */
   --color-bg-base: #0A0A0A;
+  /* App background */
   --color-bg-deep: #0F0F0F;
-  --color-bg-primary: #181818;
-  --color-bg-elevated: #222222;
+  /* Section background */
+  --color-bg-card: #111111;
+  /* Cards (War Room standard) */
+  --color-bg-elevated: #111111;
+  /* Match bg-card for consistency */
   --color-bg-surface: #1C1C1C;
-  --color-bg-hover: #2A2A2A;
+  /* Secondary surfaces */
+  --color-bg-hover: #222222;
+  /* Subtle hover */
   --color-bg-active: #333333;
+  /* Active state */
 
   /* Glass Effects */
   --color-glass-bg: rgba(255, 255, 255, 0.03);
@@ -36,7 +44,7 @@
   --color-accent-muted: rgba(222, 204, 168, 0.15);
   --color-accent-glow: rgba(222, 204, 168, 0.30);
 
-  /* Functional Neons (Gamification) */
+  /* Functional Neons (Gamification & War Room) */
   --color-neon-green: #00FF88;
   --color-neon-green-soft: #22C55E;
   --color-neon-green-bg: rgba(0, 255, 136, 0.10);
@@ -66,6 +74,16 @@
   --color-neon-purple-bg: rgba(168, 85, 247, 0.10);
   --color-neon-purple-glow: rgba(168, 85, 247, 0.40);
 
+  /* War Room Specific Gradients (Gauge) */
+  --color-gauge-stop-1: #FF4757;
+  /* 0% */
+  --color-gauge-stop-2: #FF9F43;
+  /* 35% */
+  --color-gauge-stop-3: #FFE066;
+  /* 60% */
+  --color-gauge-stop-4: #00FF88;
+  /* 100% */
+
   /* RPG Ranks */
   --color-rank-bronze: #CD7F32;
   --color-rank-bronze-bg: rgba(205, 127, 50, 0.15);
@@ -83,8 +101,11 @@
   /* Typography Scale */
   --text-7xl: 4.5rem;
   /* Level Up */
+  --text-6xl: 3.75rem;
+  /* War Room Clock */
   --text-5xl: 3rem;
   /* KPIs */
+  --text-4xl: 2.25rem;
 
   /* Spacing */
   --spacing-1: 0.25rem;
@@ -114,20 +135,22 @@
 
   /* Text Colors */
   --color-text-primary: #FFFFFF;
-  --color-text-secondary: #B0B0B0;
-  --color-text-muted: #888888;
-  --color-text-disabled: #555555;
+  --color-text-secondary: #888888;
+  --color-text-muted: #555555;
+  --color-text-disabled: #404040;
   --color-text-inverse: #0F0F0F;
 
   /* Border Colors */
   --color-border-subtle: rgba(255, 255, 255, 0.05);
-  --color-border-default: rgba(255, 255, 255, 0.10);
-  --color-border-strong: rgba(255, 255, 255, 0.20);
+  --color-border-default: rgba(255, 255, 255, 0.08);
+  --color-border-strong: rgba(255, 255, 255, 0.15);
   --color-border-accent: rgba(222, 204, 168, 0.30);
   --color-border-focus: rgba(222, 204, 168, 0.50);
 
   /* Animations */
   --animate-pulse: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  --animate-blink: blink 1s infinite;
+  --animate-pulse-glow: pulse-glow 2s infinite;
 
   @keyframes pulse {
 
@@ -138,6 +161,33 @@
 
     50% {
       opacity: 0.5;
+    }
+  }
+
+  @keyframes blink {
+
+    0%,
+    50% {
+      opacity: 1;
+    }
+
+    51%,
+    100% {
+      opacity: 0.3;
+    }
+  }
+
+  @keyframes pulse-glow {
+
+    0%,
+    100% {
+      opacity: 1;
+      box-shadow: 0 0 0 0 rgba(255, 71, 87, 0.7);
+    }
+
+    50% {
+      opacity: 0.8;
+      box-shadow: 0 0 0 8px rgba(255, 71, 87, 0);
     }
   }
 }

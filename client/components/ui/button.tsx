@@ -17,28 +17,28 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        // Design System v2.0: Primary = Champagne
+        // War Room: Primary = Champagne
         default:
-          "bg-accent text-bg-void font-semibold hover:bg-accent-light hover:-translate-y-0.5 shadow-sm",
+          "bg-accent text-bg-void font-bold hover:bg-accent-light hover:-translate-y-0.5 shadow-[0_0_20px_rgba(222,204,168,0.2)]",
         primary:
-          "bg-accent text-bg-void font-semibold hover:bg-accent-light hover:-translate-y-0.5 shadow-sm",
-        // Design System v2.0: Secondary = Elevated bg
+          "bg-accent text-bg-void font-bold hover:bg-accent-light hover:-translate-y-0.5 shadow-[0_0_20px_rgba(222,204,168,0.2)]",
+        // War Room: Secondary = Elevated bg
         secondary:
-          "bg-bg-elevated text-white border border-border-default hover:bg-bg-hover hover:border-border-strong",
-        // Design System v2.0: Ghost = Muted to Highlight
+          "bg-bg-elevated text-white border border-border-default hover:bg-bg-hover hover:border-border-strong hover:-translate-y-0.5",
+        // War Room: Ghost = Minimalist
         ghost:
-          "bg-transparent text-text-muted hover:text-white hover:bg-glass-bg",
-        // Design System v2.0: Destructive = Red Neon
+          "bg-transparent text-text-secondary hover:text-white hover:bg-white/5",
+        // War Room: Destructive = Red Neon
         destructive:
-          "bg-neon-red-bg text-neon-red border border-neon-red/20 hover:bg-neon-red/20 hover:shadow-[0_0_15px_rgba(255,71,87,0.3)]",
-        // Design System v2.0: XP = Green Neon Glow
+          "bg-neon-red-bg text-neon-red border border-neon-red/30 hover:bg-neon-red/20 hover:shadow-[0_0_15px_rgba(255,71,87,0.4)] hover:-translate-y-0.5",
+        // War Room: XP = Green Neon Glow
         xp:
-          "bg-neon-green-bg text-neon-green border border-neon-green/30 hover:bg-neon-green/20 hover:shadow-[0_0_15px_rgba(0,255,136,0.3)]",
-        // Design System v2.0: Glass = Pure Glassmorphism
+          "bg-neon-green-bg text-neon-green border border-neon-green/30 hover:bg-neon-green/20 hover:shadow-[0_0_15px_rgba(0,255,136,0.4)] hover:-translate-y-0.5",
+        // War Room: Glass = Pure Glassmorphism
         glass:
-          "glass glass-hover text-white",
+          "glass glass-hover text-white shadow-lg backdrop-blur-md hover:-translate-y-0.5",
         outline:
-          "bg-transparent text-white border border-border-strong hover:bg-glass-bg hover:border-accent/40",
+          "bg-transparent text-white border border-border-strong hover:bg-white/5 hover:border-accent/40",
         link: "text-accent underline-offset-4 hover:underline",
       },
       size: {

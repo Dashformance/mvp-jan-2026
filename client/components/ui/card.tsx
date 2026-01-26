@@ -14,9 +14,9 @@ const cardVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-bg-elevated border-border-subtle text-white",
-        glass: "glass text-white",
-        game: "bg-linear-to-b from-glass-bg to-transparent border-border-subtle hover:-translate-y-1 hover:border-border-default hover:shadow-xl",
+        default: "bg-bg-card border-border-subtle text-white shadow-xl shadow-black/20",
+        glass: "glass text-white shadow-2xl",
+        game: "bg-linear-to-b from-white/[0.03] to-transparent border-glass-border hover:-translate-y-1.5 hover:border-white/[0.15] hover:shadow-[0_20px_50px_rgba(0,0,0,0.5)] transition-all duration-500",
       },
     },
     defaultVariants: {
@@ -44,7 +44,7 @@ function CardHeader({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="card-header"
       className={cn(
-        "flex flex-col gap-1.5 p-6 border-b border-border-subtle/50",
+        "flex flex-col gap-1.5 p-6 border-b border-white/4",
         className
       )}
       {...props}
