@@ -126,6 +126,7 @@ export async function GET() {
             activeLeads: activeLeadsSeasonal,
             growth: 100, // New season, infinite growth? Or 0. Let's keep 100 for hype.
             revenue: globalStats.revenue,
+            moneyOnTable: globalStats.moneyOnTable,
             pipelineValue: globalStats.pipelineValue
         };
 

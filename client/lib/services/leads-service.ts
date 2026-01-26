@@ -379,7 +379,7 @@ export const LeadsService = {
             ];
         }
 
-        const [total, byStatus, byOwner, addedToday, addedThisWeek, addedThisMonth, revenueStats, pipelineStats] = await Promise.all([
+        const [total, byStatus, byOwner, addedToday, addedThisWeek, addedThisMonth, revenueStats, pipelineStats, broadPipelineStats] = await Promise.all([
             prisma.lead.count({ where: baseWhere }),
             prisma.lead.groupBy({
                 by: ['status'],
@@ -414,7 +414,12 @@ export const LeadsService = {
                 where: { ...baseWhere, status: 'SOLD' },
                 _sum: { contract_value: true }
             }),
-            // Money on Table (Pipeline)
+            // Money on Table (MEETING + WON (Em Fechamento))
+            prisma.lead.aggregate({
+                where: { ...baseWhere, status: { in: ['MEETING', 'WON'] } },
+                _sum: { contract_value: true }
+            }),
+            // Total Pipeline (Broadly)
             prisma.lead.aggregate({
                 where: { ...baseWhere, status: { in: ['NEW', 'ATTEMPTED', 'CONTACTED', 'MEETING', 'WON'] } },
                 _sum: { contract_value: true }
@@ -435,7 +440,8 @@ export const LeadsService = {
             addedThisWeek,
             addedThisMonth,
             revenue: revenueStats._sum.contract_value ? Number(revenueStats._sum.contract_value.toString()) : 0,
-            pipelineValue: pipelineStats._sum.contract_value ? Number(pipelineStats._sum.contract_value.toString()) : 0
+            moneyOnTable: pipelineStats._sum.contract_value ? Number(pipelineStats._sum.contract_value.toString()) : 0,
+            pipelineValue: broadPipelineStats?._sum?.contract_value ? Number(broadPipelineStats._sum.contract_value.toString()) : 0
         };
     },
 

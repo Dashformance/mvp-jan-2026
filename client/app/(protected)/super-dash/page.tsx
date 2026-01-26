@@ -135,6 +135,7 @@ export default function SuperDashPage() {
 
     // Calculate totals
     const totalRevenue = overview.revenue || 0;
+    const totalMoneyOnTable = overview.moneyOnTable || 0;
     const totalPipeline = overview.pipelineValue || 0;
     const totalMeetings = collaborators.reduce((sum: number, c: any) => sum + c.stats.meetings, 0);
     const totalContacts = collaborators.reduce((sum: number, c: any) => sum + c.stats.contacts, 0);
@@ -237,12 +238,12 @@ export default function SuperDashPage() {
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="col-span-2 bg-gradient-to-br from-[#DECCA8]/10 to-bg-elevated border border-[#DECCA8]/20 rounded-2xl p-6 relative overflow-hidden group hover:border-[#DECCA8]/40 transition-all"
+                        className="col-span-1 bg-gradient-to-br from-[#DECCA8]/10 to-bg-elevated border border-[#DECCA8]/20 rounded-2xl p-6 relative overflow-hidden group hover:border-[#DECCA8]/40 transition-all"
                     >
                         {/* Sparkline Overlay */}
                         <div className="absolute bottom-0 right-0 opacity-20 pointer-events-none">
                             <Sparkline
-                                data={timeData.map((d: any) => d.sales * 2500)} // Keep mock trend for now or map to real if available
+                                data={timeData.map((d: any) => d.sales * 2500)}
                                 color="#DECCA8"
                                 className="w-32 h-16"
                             />
@@ -252,14 +253,45 @@ export default function SuperDashPage() {
                         <div className="relative">
                             <div className="flex items-center gap-2 text-[#DECCA8] mb-2">
                                 <DollarSign className="w-5 h-5" />
-                                <span className="text-xs uppercase tracking-wider font-bold">Receita Total</span>
+                                <span className="text-[10px] uppercase tracking-wider font-bold">Receita Total</span>
                             </div>
-                            <div className="font-display text-5xl font-black text-[#DECCA8] tracking-tight drop-shadow-lg">
+                            <div className="font-display text-4xl font-black text-[#DECCA8] tracking-tight drop-shadow-lg">
                                 R$ {totalRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                             </div>
-                            <div className="mt-2 flex items-center gap-2 text-xs text-[#DECCA8]/80">
+                            <div className="mt-2 flex items-center gap-2 text-[10px] text-[#DECCA8]/80">
                                 <TrendingUp className="w-3 h-3" />
                                 +{overview.growth}% vs mês anterior
+                            </div>
+                        </div>
+                    </motion.div>
+
+                    {/* Money on Table Card */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.1 }}
+                        className="col-span-1 bg-gradient-to-br from-neon-cyan/5 to-bg-elevated border border-neon-cyan/20 rounded-2xl p-6 relative overflow-hidden group hover:border-neon-cyan/40 transition-all"
+                    >
+                        <div className="absolute bottom-0 right-0 opacity-20 pointer-events-none">
+                            <Sparkline
+                                data={[10, 15, 8, 12, 20]} // Mock pipeline trend
+                                color="#00F0FF"
+                                className="w-32 h-16"
+                            />
+                        </div>
+
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-neon-cyan/5 rounded-full blur-3xl" />
+                        <div className="relative">
+                            <div className="flex items-center gap-2 text-neon-cyan mb-2">
+                                <Zap className="w-5 h-5" />
+                                <span className="text-[10px] uppercase tracking-wider font-bold">Dinheiro na Mesa!</span>
+                            </div>
+                            <div className="font-display text-4xl font-black text-white tracking-tight drop-shadow-lg">
+                                R$ {totalMoneyOnTable.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                            </div>
+                            <div className="mt-2 flex items-center gap-2 text-[10px] text-neon-cyan/80 font-medium">
+                                <Activity className="w-3 h-3" />
+                                Reuniões + Em Fechamento
                             </div>
                         </div>
                     </motion.div>
