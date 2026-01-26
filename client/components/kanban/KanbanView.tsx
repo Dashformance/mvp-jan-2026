@@ -44,6 +44,9 @@ export function KanbanView() {
         // Sort
         sortBy,
         setSortBy,
+        loadMore,
+        meta,
+        page,
         filters: legacyFilters // Passing legacy filters to Import mostly (refactor needed)
     } = useKanban();
 
@@ -134,6 +137,22 @@ export function KanbanView() {
                 </div>
             </div>
 
+            {/* Total Results Counter */}
+            {viewMode === 'list' && meta?.total !== undefined && (
+                <div className="flex items-center justify-between text-[10px] uppercase font-bold tracking-widest text-[#DECCA8]/50 px-1">
+                    <div className="flex items-center gap-2">
+                        <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
+                        Mostrando {leads.length} de {meta.total} leads encontrados
+                    </div>
+                    {loading && (
+                        <div className="flex items-center gap-2">
+                            <RefreshCcw className="w-3 h-3 animate-spin" />
+                            Atualizando...
+                        </div>
+                    )}
+                </div>
+            )}
+
             {/* Filters */}
             <div className="space-y-4">
                 <FilterBar
@@ -181,6 +200,25 @@ export function KanbanView() {
                     </div>
                 )}
             </div>
+
+            {/* Pagination / Load More */}
+            {viewMode === 'list' && meta?.last_page && page < meta.last_page && (
+                <div className="flex justify-center pt-2 pb-8">
+                    <Button
+                        variant="ghost"
+                        className="bg-accent/10 border border-accent/20 text-accent hover:bg-accent/20 px-8 py-6 rounded-2xl gap-3 transition-all hover:scale-105 active:scale-95 group shadow-lg shadow-accent/5"
+                        onClick={() => loadMore()}
+                        disabled={loading}
+                    >
+                        {loading ? (
+                            <RefreshCcw className="w-5 h-5 animate-spin" />
+                        ) : (
+                            <RefreshCcw className="w-5 h-5 group-hover:rotate-180 transition-transform duration-500" />
+                        )}
+                        <span className="font-bold tracking-tight">Carregar mais leads</span>
+                    </Button>
+                </div>
+            )}
 
             {/* Components */}
             <LeadSheet

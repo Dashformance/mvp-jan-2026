@@ -33,9 +33,6 @@ export const LeadsService = {
             sanitized.cnpj = `MANUAL-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
         }
 
-        console.log('[LeadsService.create] Input data keys:', Object.keys(data));
-        console.log('[LeadsService.create] Sanitized data:', JSON.stringify(sanitized, null, 2));
-
         const createData: any = {
             ...sanitized,
             owner_id: data.owner_id || undefined, // Explicitly pass owner_id
@@ -45,19 +42,30 @@ export const LeadsService = {
         if (Array.isArray(contacts) && contacts.length > 0) {
             createData.contacts = {
                 create: contacts.map((contact: any) => {
-                    // Remove temporary ID and lead_id (Prisma handles relation)
                     const { id, lead_id, ...contactFields } = contact;
                     return contactFields;
                 })
             };
         }
 
-        return prisma.lead.create({
+        const lead = await prisma.lead.create({
             data: createData,
         });
+
+        // Log creation as interaction for the feed
+        await prisma.interaction.create({
+            data: {
+                lead_id: lead.id,
+                type: 'CREATE',
+                content: 'Lead criado manualmente',
+                user_id: lead.owner_id || data.owner || 'system'
+            }
+        });
+
+        return lead;
     },
 
-    async createMany(leads: any[]) {
+    async createMany(leads: any[], userId?: string) {
         const ops = leads.map((lead: any) => {
             const data = { ...lead, deletedAt: null };
             return prisma.lead.upsert({
@@ -68,6 +76,19 @@ export const LeadsService = {
         });
 
         const results = await prisma.$transaction(ops);
+
+        // Log import as a single interaction for the feed
+        if (results.length > 0) {
+            await prisma.interaction.create({
+                data: {
+                    lead_id: results[0].id, // Link to first lead in batch
+                    type: 'IMPORT',
+                    content: `IMPORT:${results.length}`,
+                    user_id: userId || 'system'
+                }
+            });
+        }
+
         return { count: results.length };
     },
 
@@ -767,10 +788,10 @@ export const LeadsService = {
             let xp = 0;
 
             // Resolve User Name
-            let userName = 'Alguém';
+            let userName = 'Consultor';
             const user = users.find(u => u.ids.includes(interaction.user_id) || u.names.some(n => n.toLowerCase() === (interaction.user_id || '').toLowerCase()));
             if (user) userName = user.name;
-            else if (interaction.user_id) userName = interaction.user_id; // Fallback
+            else if (interaction.user_id && interaction.user_id !== 'system') userName = interaction.user_id;
 
             // Determine type and XP based on interaction
             if (interaction.type === 'STATUS_CHANGE') {
@@ -792,15 +813,24 @@ export const LeadsService = {
                 message = `${userName} realizou um contato`;
                 xp = 50;
             } else if (interaction.type === 'NOTE') {
-                // Ignore standard notes or treat as low XP?
                 type = 'lead';
                 message = `${userName} adicionou uma nota`;
+                xp = 10;
+            } else if (interaction.type === 'IMPORT') {
+                type = 'lead';
+                const count = interaction.content.split(':')[1] || 'vários';
+                message = `${userName} importou ${count} leads`;
+                xp = parseInt(count) * 10 || 50;
+            } else if (interaction.type === 'CREATE') {
+                type = 'lead';
+                message = `${userName} adicionou um lead`;
                 xp = 10;
             }
 
             // Fallback for custom content
             if (!message && interaction.content) {
-                message = interaction.content;
+                if (interaction.content.length > 50) message = interaction.content.substring(0, 50) + '...';
+                else message = interaction.content;
             }
 
             return {

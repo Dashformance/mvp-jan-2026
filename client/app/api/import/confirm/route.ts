@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { withApiErrorHandling } from '@/lib/api-handler';
 import { createClient } from '@/lib/supabase/server';
+import { UserService } from '@/lib/services/user-service';
 
 interface ContactInput {
     name: string;
@@ -45,10 +46,8 @@ export const POST = withApiErrorHandling(async (req: NextRequest) => {
     let errorCount = 0;
     const errorDetails: any[] = [];
 
-    // Fetch internal DB user to find correct ID
-    const dbUser = await prisma.user.findUnique({
-        where: { supabase_uid: user.id }
-    });
+    // Fetch internal DB user (using UserService for auto-provisioning/healing)
+    const dbUser = await UserService.getOrCreateUser(user);
 
     if (!dbUser) {
         return NextResponse.json({ error: "User profile not found in database" }, { status: 404 });

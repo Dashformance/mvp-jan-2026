@@ -83,10 +83,11 @@ export function useKanbanState() {
     const [isSheetOpen, setIsSheetOpen] = useState(false);
     const [selectedLeadForSheet, setSelectedLeadForSheet] = useState<any>(null);
 
-    const fetchLeads = useCallback(async (pageToFetch = 1) => {
+    const fetchLeads = useCallback(async (pageToFetch = 1, append = false) => {
         setLoading(true);
         try {
-            let url = `${API_URL}/leads?page=${pageToFetch}&limit=1000`;
+            const limit = 50;
+            let url = `${API_URL}/leads?page=${pageToFetch}&limit=${limit}`;
 
             // Append Advanced Filters
             if (filterBarState.search) url += `&search=${encodeURIComponent(filterBarState.search)}`;
@@ -113,7 +114,7 @@ export function useKanbanState() {
             const res = await fetch(url);
             const data = await res.json();
             if (res.ok) {
-                setLeads(data.data || []);
+                setLeads(prev => append ? [...prev, ...(data.data || [])] : (data.data || []));
                 setMeta(data.meta || {});
                 setPage(pageToFetch);
             } else {
@@ -126,7 +127,12 @@ export function useKanbanState() {
         } finally {
             setLoading(false);
         }
-    }, [page, filterBarState, sortBy]);
+    }, [filterBarState, sortBy]);
+
+    const loadMore = useCallback(async () => {
+        if (loading || (meta.last_page && page >= meta.last_page)) return;
+        await fetchLeads(page + 1, true);
+    }, [page, meta.last_page, loading, fetchLeads]);
 
     // Initial Fetch & Columns
     useEffect(() => {
@@ -348,6 +354,30 @@ export function useKanbanState() {
         }
     };
 
+    const bulkUpdateLeads = async (ids: string[], data: any) => {
+        try {
+            setLoading(true);
+            const res = await fetch(`${API_URL}/leads/batch`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ids, data })
+            });
+
+            if (res.ok) {
+                toast.success(`${ids.length} leads atualizados com sucesso`);
+                // Optimistic update
+                setLeads(prev => prev.map(l => ids.includes(l.id) ? { ...l, ...data } : l));
+                setSelectedLeads(new Set());
+            } else {
+                throw new Error("Failed");
+            }
+        } catch (err) {
+            toast.error("Erro ao atualizar leads em massa");
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const toggleSelectLead = (id: string) => {
         setSelectedLeads(prev => {
             const next = new Set(prev);
@@ -429,12 +459,14 @@ export function useKanbanState() {
         toggleFavorite,
         quickContact,
         deleteLead,
+        bulkUpdateLeads,
         selectedLeads,
         toggleSelectLead,
         selectAllLeads,
         meta,
         page,
         setPage,
+        loadMore,
         filterBarState,
         setFilterBarState,
         sortBy,

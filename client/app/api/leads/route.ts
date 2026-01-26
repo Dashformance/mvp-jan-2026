@@ -3,6 +3,7 @@ import { LeadsService } from '@/lib/services/leads-service';
 import { withApiErrorHandling } from '@/lib/api-handler';
 import { createClient } from '@/lib/supabase/server';
 import { prisma } from '@/lib/prisma';
+import { UserService } from '@/lib/services/user-service';
 
 export const GET = withApiErrorHandling(async (req: NextRequest) => {
     console.log("[DEBUG] GET /api/leads hit");
@@ -15,30 +16,11 @@ export const GET = withApiErrorHandling(async (req: NextRequest) => {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        // Fetch Internal User ID (Try SupabaseUID first, then Email fallback)
-        let dbUser = await prisma.user.findUnique({
-            where: { supabase_uid: user.id }
-        });
-
-        // Fallback: Link by email if UID mismatch
-        if (!dbUser && user.email) {
-            console.log(`[API] DB User not found by UID ${user.id}, trying email ${user.email}`);
-            dbUser = await prisma.user.findUnique({
-                where: { email: user.email }
-            });
-
-            // Auto-heal: Update UID if found by email
-            if (dbUser && !dbUser.supabase_uid) {
-                await prisma.user.update({
-                    where: { id: dbUser.id },
-                    data: { supabase_uid: user.id }
-                });
-            }
-        }
+        // Fetch Internal User ID (using UserService for auto-provisioning/healing)
+        const dbUser = await UserService.getOrCreateUser(user);
 
         if (!dbUser) {
-            console.error(`[API] User profile not found for email: ${user.email}`);
-            return NextResponse.json({ error: "User profile not found in DB" }, { status: 404 });
+            return NextResponse.json({ error: "User profile not found or could not be created" }, { status: 404 });
         }
 
         console.log(`[API] DB User: ${dbUser.email} (${dbUser.id}) | Role: ${dbUser.role}`);
@@ -102,13 +84,11 @@ export const POST = withApiErrorHandling(async (req: NextRequest) => {
     const body = await req.json();
     console.log("[ROUTE] Creating lead with body keys:", Object.keys(body));
 
-    // Fetch Internal User ID to link correctly
-    const dbUser = await prisma.user.findUnique({
-        where: { supabase_uid: user.id }
-    });
+    // Fetch internal DB user (using UserService for auto-provisioning/healing)
+    const dbUser = await UserService.getOrCreateUser(user);
 
     if (!dbUser) {
-        return NextResponse.json({ error: "User profile not found in DB" }, { status: 404 });
+        return NextResponse.json({ error: "User profile not found or could not be created" }, { status: 404 });
     }
 
     // Force owner assignment to logged user (INTERNAL ID)

@@ -23,6 +23,7 @@ export interface KanbanContextType {
     toggleFavorite: (id: string, isStarred: boolean) => Promise<void>;
     quickContact: (id: string) => Promise<void>;
     deleteLead: (id: string) => Promise<void>;
+    bulkUpdateLeads: (ids: string[], data: any) => Promise<void>;
     cleanupDuplicates: () => Promise<void>;
 
     // Selection
@@ -34,6 +35,7 @@ export interface KanbanContextType {
     meta: any;
     page: number;
     setPage: (page: number) => void;
+    loadMore: () => Promise<void>;
 
     // FilterBar
     filterBarState: any;

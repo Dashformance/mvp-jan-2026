@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
+import { UserService } from '@/lib/services/user-service';
 
 export async function GET() {
     try {
@@ -14,16 +14,8 @@ export async function GET() {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const dbUser = await prisma.user.findUnique({
-            where: { email: user.email },
-            select: {
-                id: true,
-                email: true,
-                name: true,
-                role: true,
-                avatar_url: true,
-            }
-        });
+        // Fetch Internal User ID (using UserService for auto-provisioning/healing)
+        const dbUser = await UserService.getOrCreateUser(user);
 
         if (!dbUser) {
             return NextResponse.json({ error: 'User not found in database' }, { status: 404 });

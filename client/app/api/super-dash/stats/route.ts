@@ -49,7 +49,7 @@ export async function GET() {
             // Use LIFETIME stats for Revenue/Total Sales if requested? 
             // User said: "Unica coisa que será mantida é o faturamento". 
             // Main revenue comes from lifetime won * ticket.
-            const lStats = lifetimeStats[key] || { won: 0 };
+            const lStats = lifetimeStats[key] || { won: 0, total: 0 };
 
             // Calculate XP (Seasonal)
             // Added leads now contribute to XP
@@ -92,7 +92,7 @@ export async function GET() {
             return {
                 id: key,
                 name: key === 'joao' ? 'João Vitor' : key === 'bruno' ? 'Bruno' : 'Nitz',
-                role: key === 'joao' ? 'SDR Senior' : key === 'bruno' ? 'Closer' : 'SDR Junior',
+                role: 'Consultor',
                 avatar: key === 'joao' ? 'JV' : key === 'bruno' ? 'BR' : 'NZ',
                 level,
                 xp,
@@ -100,10 +100,10 @@ export async function GET() {
                 score,
                 badges: sStats.won > 5 ? ["Top Gun"] : [],
                 stats: {
-                    contacts: sStats.contacted, // Seasonal
+                    contacts: lStats.total, // PERMANENT / Total Leads in CRM
                     responses: Math.floor(sStats.contacted * 0.6),
                     meetings: sStats.meeting, // Seasonal
-                    sales: sStats.won, // Seasonal for ranking? Usually yes. "Vendas Mês" implies seasonal.
+                    sales: sStats.won, // Seasonal
                     revenue // PERMANENT
                 },
                 funnel: userFunnel.slice(0, 4),
