@@ -12,7 +12,7 @@ interface XPEvent {
     id: string;
     message: string;
     xp: number;
-    timestamp: Date;
+    timestamp: Date | string;
     type: 'lead' | 'conversion' | 'task' | 'streak' | 'badge';
 }
 
@@ -49,7 +49,8 @@ export function XPFeed({ events, maxEvents = 5, className = "" }: XPFeedProps) {
         }
     };
 
-    const formatTime = (date: Date) => {
+    const formatTime = (dateInput: Date | string) => {
+        const date = typeof dateInput === 'string' ? new Date(dateInput) : dateInput;
         const now = new Date();
         const diffMs = now.getTime() - date.getTime();
         const diffMins = Math.floor(diffMs / 60000);
