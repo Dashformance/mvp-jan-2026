@@ -41,19 +41,27 @@ INPUT TEXT:
 ${text}
 """
 
-EXTRACTION RULES:
-1. **Company Name**: Look at the very first lines of each block. If the name is split into two lines (e.g., "Helbor" and "Empreendimentos"), JOIN THEM into a single string "Helbor Empreendimentos".
-2. **Name vs. Domain**: Do NOT use the domain name from the website URL or Instagram handle as the company_name if a more formal name exists in the text.
-   - Example: If the text says "Helbor Empreendimentos" but the URL is "corretoron.com.br", the company_name MUST be "Helbor Empreendimentos", NOT "corretoron".
-3. **Contacts**: Extract names, roles, phones, and emails. Group them into the "contacts" array.
-4. **Address**: Clean and format the address. Extract "city" and "uf" (2 letters) into their own fields.
-5. **Notes**: Put any extra information that doesn't fit the schema in the "notes" field.
+SEMANTIC ANCHOR RULES:
+1. **"Empreendimentos" Anchor**: If you find the word "Empreendimentos", the COMPANH_NAME is the text immediately preceding or following it.
+   - Priority 1: The word/words immediately ABOVE "Empreendimentos" (e.g., "Helbor" \n "Empreendimentos" -> "Helbor Empreendimentos").
+   - Priority 2: The word/words immediately BELOW "Empreendimentos".
+   - Join them if they form a logical formal name.
+2. **Forbidden Names**: NEVER use the following as company_name:
+   - Domain names or URLs (e.g., "corretoron.com.br", "www.site.com").
+   - Instagram handles (@username).
+   - Generic terms like "Atendimento", "(11) ...", "Avenida ...", "Rua ...".
+   - Generic platform names (e.g., "Corretoron", "DWV").
+3. **Formal Name Priority**: Always prefer a multi-word formal name over a single-word domain-derived name.
+
+DATA EXTRACTION RULES:
+1. **Contacts**: Extract primary contact (is_primary: true) and others. Include phones, emails, and roles.
+2. **Address**: Extract full address and separate "city" and "uf" (2 letters).
+3. **Website & Instagram**: Store in website_url and instagram_url.
 
 OUTPUT REQUIREMENTS:
 1. Return ONLY a valid JSON object.
 2. NO markdown formatting.
-3. Escape all special characters inside strings (especially newlines).
-4. Strictly follow this schema:
+3. Strictly follow this schema:
 {
   "summary": "string (resumo em português)",
   "leads": [

@@ -67,6 +67,13 @@ export function ImportWizard({ open, onOpenChange }: ImportWizardProps) {
         }
     }, [open]);
 
+    const [step, setStep] = useState<Step>('UPLOAD');
+
+    // Global Import States
+    const [globalStageId, setGlobalStageId] = useState<string>('');
+    const [globalOwnerId, setGlobalOwnerId] = useState<string>('');
+    const [globalSource, setGlobalSource] = useState<string>('Import');
+
     // Auto-select first stage or 'NEW' when columns load
     useEffect(() => {
         if (columns.length > 0 && !globalStageId) {
@@ -81,13 +88,6 @@ export function ImportWizard({ open, onOpenChange }: ImportWizardProps) {
             setGlobalOwnerId(profile.id);
         }
     }, [profile, globalOwnerId]);
-
-    const [step, setStep] = useState<Step>('UPLOAD');
-
-    // Global Import States
-    const [globalStageId, setGlobalStageId] = useState<string>('');
-    const [globalOwnerId, setGlobalOwnerId] = useState<string>('');
-    const [globalSource, setGlobalSource] = useState<string>('Import');
 
     // File Import State
     const [file, setFile] = useState<File | null>(null);

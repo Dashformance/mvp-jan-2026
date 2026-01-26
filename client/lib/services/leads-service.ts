@@ -268,10 +268,16 @@ export const LeadsService = {
         // Use strict sanitizer for update
         const sanitizedData = LeadSanitizer.sanitizeForUpdate(data);
 
+        // Defensive check: if no fields are left after sanitization, skip DB call
+        if (Object.keys(sanitizedData).length === 0) {
+            console.warn(`[LeadsService] Update called for ${id} but no valid fields were provided.`);
+            return prisma.lead.findUnique({ where: { id } });
+        }
+
         // Always fetch current lead for status change tracking
         const currentLead = await prisma.lead.findUnique({
             where: { id },
-            select: { extra_info: true, website_url: true, instagram_url: true, render_quality: true, status: true, owner: true }
+            select: { extra_info: true, website_url: true, instagram_url: true, render_quality: true, status: true, owner: true, owner_id: true }
         });
 
         // Merge data for accurate score calculation if relevant fields are being updated
@@ -295,7 +301,7 @@ export const LeadsService = {
                     lead_id: id,
                     type: 'STATUS_CHANGE',
                     content: `MOVETO:${sanitizedData.status}`, // Machine readable format
-                    user_id: sanitizedData.owner || currentLead.owner || 'system'
+                    user_id: sanitizedData.owner_id || currentLead.owner_id || 'system'
                 }
             });
         }
@@ -304,7 +310,8 @@ export const LeadsService = {
             where: { id },
             data: sanitizedData,
         });
-    },
+    }
+    ,
 
     async cleanupDuplicates() {
         const allLeads = await prisma.lead.findMany({

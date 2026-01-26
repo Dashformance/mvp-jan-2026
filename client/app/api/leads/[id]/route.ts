@@ -14,21 +14,39 @@ export const GET = withApiErrorHandling(async (req: NextRequest, { params }: { p
 
 export const PATCH = withApiErrorHandling(async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     const { id } = await params;
-    const body = await req.json();
+    let body;
+    try {
+        body = await req.json();
+    } catch (e) {
+        console.error(`[ROUTE] Failed to parse JSON body for lead ${id}`);
+        return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
+    }
+
+    console.log(`[PATCH /api/leads/${id}] Received body keys:`, Object.keys(body));
 
     // Validate payload with Zod schema
     const parseResult = LeadUpdateSchema.safeParse(body);
     if (!parseResult.success) {
-        console.log(`[ROUTE] Validation failed for lead ${id}:`, parseResult.error.flatten());
+        const errors = parseResult.error.flatten();
+        console.log(`[ROUTE] Validation failed for lead ${id}:`, errors);
         return NextResponse.json({
             error: 'Validation failed',
-            details: parseResult.error.flatten().fieldErrors
+            details: errors.fieldErrors
         }, { status: 400 });
     }
 
-    console.log(`[ROUTE] Updating lead ${id} with validated payload keys:`, Object.keys(parseResult.data));
-    const lead = await LeadsService.update(id, parseResult.data);
-    return NextResponse.json(lead);
+    try {
+        const lead = await LeadsService.update(id, parseResult.data);
+        return NextResponse.json(lead);
+    } catch (error: any) {
+        console.error(`[ROUTE] LeadsService.update failed for ${id}:`, error);
+        // Explicitly return JSON so we don't hit default error pages
+        return NextResponse.json({
+            error: 'Database update failed',
+            message: error.message,
+            code: error.code
+        }, { status: 500 });
+    }
 });
 
 export const DELETE = withApiErrorHandling(async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {

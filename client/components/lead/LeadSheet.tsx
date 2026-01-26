@@ -41,6 +41,7 @@ interface Lead {
     website?: string;
     notes?: string;
     owner?: string;
+    owner_id?: string;
     source?: string;
     score?: number;
     checklist?: any;
@@ -59,6 +60,22 @@ interface LeadSheetProps {
 export function LeadSheet({ lead, open, onOpenChange, onSave }: LeadSheetProps) {
     const [formData, setFormData] = useState<Partial<Lead>>({});
     const [saving, setSaving] = useState(false);
+    const [availableUsers, setAvailableUsers] = useState<any[]>([]);
+
+    useEffect(() => {
+        const fetchUsers = async () => {
+            try {
+                const res = await fetch('/api/users');
+                if (res.ok) {
+                    const data = await res.json();
+                    setAvailableUsers(data);
+                }
+            } catch (err) {
+                console.error("Failed to fetch users in LeadSheet", err);
+            }
+        };
+        fetchUsers();
+    }, []);
 
     useEffect(() => {
         if (lead) {
@@ -66,8 +83,21 @@ export function LeadSheet({ lead, open, onOpenChange, onSave }: LeadSheetProps) 
         }
     }, [lead]);
 
-    const handleChange = (field: string, value: string) => {
-        setFormData(prev => ({ ...prev, [field]: value }));
+    const handleChange = (field: string, value: any) => {
+        setFormData(prev => {
+            const next = { ...prev, [field]: value };
+
+            // If updating trade_name and company_name is empty, sync them
+            if (field === 'trade_name' && !prev.company_name) {
+                next.company_name = value;
+            }
+            // If updating company_name and trade_name is empty, sync them
+            if (field === 'company_name' && !prev.trade_name) {
+                next.trade_name = value;
+            }
+
+            return next;
+        });
     };
 
     const handleSave = async () => {
@@ -126,22 +156,34 @@ export function LeadSheet({ lead, open, onOpenChange, onSave }: LeadSheetProps) 
                         {formData.cnpj && <span className="font-mono bg-bg-deep text-text-muted px-2 py-0.5 rounded-md text-xs">{formData.cnpj}</span>}
                         {formData.uf && <span className="bg-neon-cyan-bg text-neon-cyan px-2 py-0.5 rounded-md text-xs font-medium border border-neon-cyan/20">{formData.uf}</span>}
                         {/* Owner Badge */}
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${formData.owner === 'vitor' ? 'bg-neon-green-bg text-neon-green-soft border border-neon-green/20' : 'bg-accent-muted text-accent border border-accent/20'}`}>
-                            {formData.owner === 'vitor' ? 'Vitz' : 'João'}
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-accent-muted text-accent border border-accent/20`}>
+                            {availableUsers.find(u => u.id === formData.owner_id)?.name || formData.owner || 'Sem dono'}
                         </span>
                     </SheetDescription>
                 </SheetHeader>
 
-                {/* Quick Owner Switch */}
+                {/* Dynamic Owner Switch */}
                 <div className="absolute top-4 right-12">
-                    <select
-                        className="bg-bg-elevated/80 text-[10px] uppercase font-bold text-text-muted border border-border-subtle rounded-full px-3 py-1 outline-none cursor-pointer hover:border-accent/40 focus:border-accent transition-all"
-                        value={formData.owner || 'joao'}
-                        onChange={(e) => handleChange('owner', e.target.value)}
+                    <Select
+                        value={formData.owner_id || 'none'}
+                        onValueChange={(val) => {
+                            const user = availableUsers.find(u => u.id === val);
+                            handleChange('owner_id', val === 'none' ? null : val);
+                            if (user) handleChange('owner', user.name.split(' ')[0].toLowerCase());
+                        }}
                     >
-                        <option value="joao">Owner: João</option>
-                        <option value="vitor">Owner: Vitz</option>
-                    </select>
+                        <SelectTrigger className="w-[140px] h-7 bg-bg-elevated/80 text-[10px] uppercase font-bold text-text-muted border-border-subtle rounded-full px-3 py-1 outline-none">
+                            <SelectValue placeholder="Responsável" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-bg-surface border-border-subtle text-white">
+                            <SelectItem value="none">Sem responsável</SelectItem>
+                            {availableUsers.map(u => (
+                                <SelectItem key={u.id} value={u.id} className="text-[10px] uppercase font-bold">
+                                    {u.name}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
                 </div>
 
                 <Tabs defaultValue="details" className="w-full">

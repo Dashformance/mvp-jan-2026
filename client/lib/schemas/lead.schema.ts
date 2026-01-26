@@ -30,6 +30,8 @@ export const LeadUpdateSchema = z.object({
     priority: z.number().int().min(0).max(10).optional(),
     notes: z.string().optional().nullable(),
     owner: z.string().optional().nullable(),
+    owner_id: z.string().uuid().optional().nullable(),
+    is_starred: z.boolean().optional(),
     uf: z.string().optional().nullable(),
     city: z.string().optional().nullable(),
     segment_id: z.string().uuid().optional().nullable(),
@@ -42,7 +44,6 @@ export const LeadUpdateSchema = z.object({
     first_contact_date: z.string().datetime().optional().nullable(),
     last_contact_date: z.string().datetime().optional().nullable(),
     next_followup_date: z.string().datetime().optional().nullable(),
-    is_starred: z.boolean().optional(),
     contract_value: z.number().optional().nullable(),
 }).passthrough(); // Allow extra fields, LeadSanitizer will strip them
 
