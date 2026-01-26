@@ -10,6 +10,12 @@ declare global {
         cast: any;
         chrome: any;
     }
+
+    namespace JSX {
+        interface IntrinsicElements {
+            'is-google-cast-button': React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement>;
+        }
+    }
 }
 
 export function CastButton() {
