@@ -9,6 +9,7 @@ import { createClient } from '@/lib/supabase/server';
  */
 export const POST = withApiErrorHandling(async (req: NextRequest) => {
     const supabase = await createClient();
+    if (!supabase) return NextResponse.json({ error: "Supabase not initialized" }, { status: 500 });
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {

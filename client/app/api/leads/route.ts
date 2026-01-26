@@ -8,6 +8,7 @@ export const GET = withApiErrorHandling(async (req: NextRequest) => {
     console.log("[DEBUG] GET /api/leads hit");
     try {
         const supabase = await createClient();
+        if (!supabase) return NextResponse.json({ error: "Supabase not initialized" }, { status: 500 });
         const { data: { user } } = await supabase.auth.getUser();
 
         if (!user) {
@@ -89,6 +90,7 @@ export const GET = withApiErrorHandling(async (req: NextRequest) => {
 
 export const POST = withApiErrorHandling(async (req: NextRequest) => {
     const supabase = await createClient();
+    if (!supabase) return NextResponse.json({ error: "Supabase not initialized" }, { status: 500 });
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {

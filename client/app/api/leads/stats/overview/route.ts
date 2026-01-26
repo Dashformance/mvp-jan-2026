@@ -5,6 +5,7 @@ import { LeadsService } from '@/lib/services/leads-service';
 export async function GET(req: Request) {
     try {
         const supabase = await createClient();
+        if (!supabase) return NextResponse.json({ error: "Supabase not initialized" }, { status: 500 });
         const { data: { user } } = await supabase.auth.getUser();
 
         const url = new URL(req.url);
