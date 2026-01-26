@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { UserService } from '@/lib/services/user-service';
 
 export async function GET() {
     try {
@@ -11,6 +12,9 @@ export async function GET() {
         if (authError || !user) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
+
+        // Ensure the requester is provisioned in the database
+        await UserService.getOrCreateUser(user);
 
         const users = await prisma.user.findMany({
             select: {

@@ -183,7 +183,7 @@ export function KanbanView() {
                 {viewMode === 'kanban' ? (
                     <ConnectedKanbanBoard />
                 ) : (
-                    <div className="h-full border border-white/10 rounded-xl overflow-hidden bg-black/20 backdrop-blur-sm">
+                    <div className="absolute inset-0 border border-white/10 rounded-xl overflow-y-auto overflow-x-hidden bg-black/20 backdrop-blur-sm custom-scrollbar pb-24">
                         <LeadsTable
                             leads={leads}
                             selectedLeads={selectedLeads}

@@ -137,7 +137,15 @@ export function LeadsTable({
     const handleBulkOwnerChange = async (owner: string) => {
         if (!selectedLeads || selectedLeads.size === 0) return;
         const ids = Array.from(selectedLeads);
-        await (onBulkUpdate || bulkUpdateLeads)(ids, { owner });
+
+        const ownerMap: Record<string, string> = {
+            'joao': '21d216a4-e8c9-464d-b486-0b4db827f5ba',
+            'bruno': '0184fc53-a696-4ed6-b5e4-2391fd21b902',
+            'nitz': '1e83c3b1-b8ed-4a59-a37b-4425947525ea'
+        };
+
+        const owner_id = ownerMap[owner] || null;
+        await (onBulkUpdate || bulkUpdateLeads)(ids, { owner, owner_id });
     };
 
     return (

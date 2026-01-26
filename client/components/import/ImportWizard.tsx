@@ -12,6 +12,13 @@ import { toast } from "sonner";
 import { useKanban } from "@/components/kanban/kanban-context";
 import { useAuth } from "@/context/auth-context";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 
 interface ImportWizardProps {
     open: boolean;
@@ -407,20 +414,22 @@ export function ImportWizard({ open, onOpenChange }: ImportWizardProps) {
                                     <div className="space-y-1">
                                         <Label className="text-[10px] text-muted-foreground uppercase">Responsável</Label>
                                         <div className="relative">
-                                            <select
-                                                className="w-full h-8 bg-white/5 border border-white/10 rounded-md text-xs text-white px-2 appearance-none focus:outline-none focus:border-amber-500/50"
-                                                onChange={(e) => {
-                                                    const newLeads = parsedLeads.map(l => ({ ...l, owner_id: e.target.value }));
+                                            <Select
+                                                onValueChange={(value) => {
+                                                    const newLeads = parsedLeads.map(l => ({ ...l, owner_id: value }));
                                                     setParsedLeads(newLeads);
                                                 }}
                                             >
-                                                <option value="">Sem atribuição</option>
-                                                <option value="" disabled>──────────</option>
-                                                {availableUsers.map(u => (
-                                                    <option key={u.id} value={u.id}>{u.name} ({u.email})</option>
-                                                ))}
-                                            </select>
-                                            <ChevronDown className="absolute right-2 top-2.5 w-3 h-3 text-muted-foreground pointer-events-none" />
+                                                <SelectTrigger className="h-8 bg-white/5 border-white/10 text-xs text-white">
+                                                    <SelectValue placeholder="Sem atribuição" />
+                                                </SelectTrigger>
+                                                <SelectContent className="bg-[#181818] border-white/10 text-white">
+                                                    <SelectItem value="none">Sem atribuição</SelectItem>
+                                                    {availableUsers.map(u => (
+                                                        <SelectItem key={u.id} value={u.id}>{u.name} ({u.email})</SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
                                         </div>
                                     </div>
 
@@ -428,20 +437,23 @@ export function ImportWizard({ open, onOpenChange }: ImportWizardProps) {
                                     <div className="space-y-1">
                                         <Label className="text-[10px] text-muted-foreground uppercase">Etapa do Pipeline</Label>
                                         <div className="relative">
-                                            <select
-                                                className="w-full h-8 bg-white/5 border border-white/10 rounded-md text-xs text-white px-2 appearance-none focus:outline-none focus:border-amber-500/50"
-                                                onChange={(e) => {
-                                                    setGlobalStageId(e.target.value);
-                                                    const newLeads = parsedLeads.map(l => ({ ...l, stage_id: e.target.value }));
+                                            <Select
+                                                value={globalStageId}
+                                                onValueChange={(value) => {
+                                                    setGlobalStageId(value);
+                                                    const newLeads = parsedLeads.map(l => ({ ...l, stage_id: value }));
                                                     setParsedLeads(newLeads);
                                                 }}
-                                                value={globalStageId}
                                             >
-                                                {columns.map(col => (
-                                                    <option key={col.id} value={col.id}>{col.title}</option>
-                                                ))}
-                                            </select>
-                                            <ChevronDown className="absolute right-2 top-2.5 w-3 h-3 text-muted-foreground pointer-events-none" />
+                                                <SelectTrigger className="h-8 bg-white/5 border-white/10 text-xs text-white">
+                                                    <SelectValue placeholder="Selecione a etapa" />
+                                                </SelectTrigger>
+                                                <SelectContent className="bg-[#181818] border-white/10 text-white">
+                                                    {columns.map(col => (
+                                                        <SelectItem key={col.id} value={col.id}>{col.title}</SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
                                         </div>
                                     </div>
 
@@ -449,25 +461,25 @@ export function ImportWizard({ open, onOpenChange }: ImportWizardProps) {
                                     <div className="space-y-1">
                                         <Label className="text-[10px] text-muted-foreground uppercase">Fonte</Label>
                                         <div className="relative">
-                                            <select
-                                                className="w-full h-8 bg-white/5 border border-white/10 rounded-md text-xs text-white px-2 appearance-none focus:outline-none focus:border-amber-500/50"
-                                                onChange={(e) => {
-                                                    const newSource = e.target.value;
-                                                    setGlobalSource(newSource);
-                                                    // Also update all leads to reflect visually
-                                                    const newLeads = parsedLeads.map(l => ({ ...l, source: newSource }));
+                                            <Select
+                                                value={globalSource}
+                                                onValueChange={(value) => {
+                                                    setGlobalSource(value);
+                                                    const newLeads = parsedLeads.map(l => ({ ...l, source: value }));
                                                     setParsedLeads(newLeads);
                                                 }}
-                                                value={globalSource}
                                             >
-                                                <option value="">Selecione...</option>
-                                                <option value="Instagram">Instagram</option>
-                                                <option value="Google">Google</option>
-                                                <option value="Indicação">Indicação</option>
-                                                <option value="DWV">DWV</option>
-                                                <option value="Outros">Outros</option>
-                                            </select>
-                                            <ChevronDown className="absolute right-2 top-2.5 w-3 h-3 text-muted-foreground pointer-events-none" />
+                                                <SelectTrigger className="h-8 bg-white/5 border-white/10 text-xs text-white">
+                                                    <SelectValue placeholder="Selecione..." />
+                                                </SelectTrigger>
+                                                <SelectContent className="bg-[#181818] border-white/10 text-white">
+                                                    <SelectItem value="Instagram">Instagram</SelectItem>
+                                                    <SelectItem value="Google">Google</SelectItem>
+                                                    <SelectItem value="Indicação">Indicação</SelectItem>
+                                                    <SelectItem value="DWV">DWV</SelectItem>
+                                                    <SelectItem value="Outros">Outros</SelectItem>
+                                                </SelectContent>
+                                            </Select>
                                         </div>
                                     </div>
                                 </div>
