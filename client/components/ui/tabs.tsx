@@ -5,6 +5,12 @@ import * as TabsPrimitive from "@radix-ui/react-tabs"
 
 import { cn } from "@/lib/utils"
 
+/**
+ * Superdash Design System - Tabs
+ * - List: Glass background
+ * - Trigger: Neon glow when active
+ */
+
 function Tabs({
   className,
   ...props
@@ -12,7 +18,7 @@ function Tabs({
   return (
     <TabsPrimitive.Root
       data-slot="tabs"
-      className={cn("flex flex-col gap-2", className)}
+      className={cn("flex flex-col gap-4", className)}
       {...props}
     />
   )
@@ -26,7 +32,7 @@ function TabsList({
     <TabsPrimitive.List
       data-slot="tabs-list"
       className={cn(
-        "bg-muted text-muted-foreground inline-flex h-9 w-fit items-center justify-center rounded-lg p-[3px]",
+        "bg-zinc-900/60 backdrop-blur-sm text-zinc-500 inline-flex h-11 w-full sm:w-fit items-center justify-center rounded-xl p-1 border border-white/5",
         className
       )}
       {...props}
@@ -42,7 +48,18 @@ function TabsTrigger({
     <TabsPrimitive.Trigger
       data-slot="tabs-trigger"
       className={cn(
-        "data-[state=active]:bg-background dark:data-[state=active]:text-foreground focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:outline-ring dark:data-[state=active]:border-input dark:data-[state=active]:bg-input/30 text-foreground dark:text-muted-foreground inline-flex h-[calc(100%-1px)] flex-1 items-center justify-center gap-1.5 rounded-md border border-transparent px-2 py-1 text-sm font-medium whitespace-nowrap transition-[color,box-shadow] focus-visible:ring-[3px] focus-visible:outline-1 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+        // Base
+        "relative inline-flex h-full flex-1 items-center justify-center gap-2 rounded-lg px-6 py-2 text-sm font-medium whitespace-nowrap transition-all outline-none",
+        "hover:text-white",
+        // Active state
+        "data-[state=active]:bg-white/10 data-[state=active]:text-emerald-400 data-[state=active]:shadow-sm",
+        "data-[state=active]:after:absolute data-[state=active]:after:bottom-0 data-[state=active]:after:h-0.5 data-[state=active]:after:w-[30%] data-[state=active]:after:bg-emerald-500 data-[state=active]:after:rounded-full",
+        // Focus
+        "focus-visible:ring-2 focus-visible:ring-emerald-500/20",
+        // Disabled
+        "disabled:pointer-events-none disabled:opacity-50",
+        // SVG
+        "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
         className
       )}
       {...props}
@@ -57,7 +74,7 @@ function TabsContent({
   return (
     <TabsPrimitive.Content
       data-slot="tabs-content"
-      className={cn("flex-1 outline-none", className)}
+      className={cn("flex-1 outline-none mt-2", className)}
       {...props}
     />
   )

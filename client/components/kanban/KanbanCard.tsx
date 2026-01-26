@@ -2,7 +2,7 @@
 
 import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,10 +10,12 @@ import { Phone, Mail, MessageCircle, ExternalLink, User, Check, X, Pencil, Star 
 import { useState, useRef, useEffect } from "react";
 
 /**
- * Visualizen DS v3.1 Kanban Card
- * - Background: bg-elevated (#222222)
- * - Border: border-subtle (rgba 6%)
- * - Accent border-left: Champagne (#DECCA8)
+ * DS v2.0 Kanban Card
+ * - Background: bg-bg-elevated (#222222)
+ * - Border: border-border-subtle (rgba 5%)
+ * - Border-left: Score indicator (neon colors)
+ * - Radius: 8px (rounded-md)
+ * - Numbers: font-display (Space Grotesk)
  */
 
 interface Lead {
@@ -21,19 +23,18 @@ interface Lead {
     company_name: string;
     trade_name: string;
     cnpj: string;
-    // Deprecated fields kept for types but UI should prefer contacts
     phone?: string;
     email?: string;
     decision_maker?: string;
-
     status: string;
     uf?: string;
     score?: number;
     checklist?: any;
-    contacts?: any[]; // Prism Relation
-    last_contact_date?: string | Date; // NEW: Interaction tracking
+    contacts?: any[];
+    last_contact_date?: string | Date;
     owner?: string;
     is_starred?: boolean;
+    contract_value?: number | string;
 }
 
 interface KanbanCardProps {
@@ -44,9 +45,10 @@ interface KanbanCardProps {
     onApprove?: (id: string) => void;
     onQuickContact?: (id: string) => void;
     onToggleFavorite?: (id: string, isStarred: boolean) => void;
+    onDelete?: (id: string) => void;
 }
 
-export function KanbanCard({ lead, onEdit, onUpdateTitle, onDisqualify, onApprove, onQuickContact, onToggleFavorite }: KanbanCardProps) {
+export function KanbanCard({ lead, onEdit, onUpdateTitle, onDisqualify, onApprove, onQuickContact, onToggleFavorite, onDelete }: KanbanCardProps) {
     const { attributes, listeners, setNodeRef, transform } = useDraggable({
         id: lead.id,
     });
@@ -59,6 +61,8 @@ export function KanbanCard({ lead, onEdit, onUpdateTitle, onDisqualify, onApprov
     const primaryContact = lead.contacts?.[0];
     const displayName = primaryContact?.name || lead.decision_maker;
     const displayPhone = primaryContact?.phone || primaryContact?.whatsapp || lead.phone;
+    const phoneDigits = displayPhone?.replace(/\D/g, '') || '';
+    const maskedPhone = phoneDigits.length >= 4 ? `...${phoneDigits.slice(-4)}` : displayPhone;
     const displayEmail = primaryContact?.email || lead.email;
 
     useEffect(() => {
@@ -114,24 +118,23 @@ export function KanbanCard({ lead, onEdit, onUpdateTitle, onDisqualify, onApprov
         }
     };
 
+    // Score-based styling (DS v2.0)
     const score = lead.score || 0;
-    const isPremium = score >= 80;
-    const isMid = score >= 50 && score < 80;
+    const getScoreBorderClass = () => {
+        if (score >= 85) return "border-l-4 border-l-neon-green-soft";
+        if (score >= 60) return "border-l-4 border-l-neon-yellow-soft";
+        if (score > 0) return "border-l-4 border-l-neon-red-soft";
+        return "";
+    };
 
-    let borderStyle = "border-l-accent";
-    let glowStyle = "";
+    const getScoreBadgeClass = () => {
+        if (score >= 85) return "bg-neon-green-bg text-neon-green-soft border-neon-green/30";
+        if (score >= 70) return "bg-neon-cyan-bg text-neon-cyan-soft border-neon-cyan/30";
+        if (score >= 55) return "bg-neon-yellow-bg text-neon-yellow-soft border-neon-yellow/30";
+        return "bg-bg-surface text-text-muted border-border-subtle";
+    };
 
-    if (isPremium) {
-        borderStyle = "border-accent border-l-4";
-        glowStyle = "shadow-[0_0_20px_-5px_rgba(222,204,168,0.4)] border-accent/60";
-    } else if (isMid) {
-        borderStyle = "border-blue-500/50 border-l-4";
-        glowStyle = "shadow-[0_0_15px_-5px_rgba(59,130,246,0.3)] border-blue-500/40";
-    }
-
-    const hoverStyle = `hover:border-accent/50 ${isPremium ? 'hover:shadow-[0_0_25px_-5px_rgba(222,204,168,0.5)]' : 'hover:shadow-[0_0_15px_-3px_rgba(222,204,168,0.1)]'}`;
-
-    // Date formatting logic
+    // Last contact label
     const getLastContactLabel = () => {
         if (!lead.last_contact_date) return null;
         const date = new Date(lead.last_contact_date);
@@ -139,42 +142,53 @@ export function KanbanCard({ lead, onEdit, onUpdateTitle, onDisqualify, onApprov
         const diffTime = Math.abs(now.getTime() - date.getTime());
         const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
-        if (diffDays === 0) return { text: "Hoje", color: "text-emerald-400" };
-        if (diffDays === 1) return { text: "Ontem", color: "text-muted-foreground" };
-        if (diffDays < 7) return { text: `${diffDays}d atrás`, color: "text-muted-foreground" };
-        return { text: date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }), color: "text-muted-foreground" };
+        if (diffDays === 0) return { text: "Hoje", color: "text-neon-green-soft font-medium" };
+        if (diffDays === 1) return { text: "Ontem", color: "text-text-secondary" };
+        if (diffDays < 7) return { text: `${diffDays}d atrás`, color: "text-text-muted" };
+        return { text: date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }), color: "text-text-muted" };
     };
 
     const lastContact = getLastContactLabel();
 
+    // Owner badge color
+    const getOwnerColor = () => {
+        if (lead.owner === 'joao') return 'bg-amber-500/20 text-amber-400 border-amber-500/30';
+        if (lead.owner === 'vitor') return 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30';
+        return 'bg-bg-surface text-text-muted border-border-subtle';
+    };
+
     return (
-        <div ref={setNodeRef} style={style} {...listeners} {...attributes} className="mb-3 touch-none">
+        <div ref={setNodeRef} style={style} {...listeners} {...attributes} className="touch-none">
             <Card
-                className={`cursor-grab active:cursor-grabbing transition-all group relative overflow-hidden ${borderStyle} ${glowStyle} ${hoverStyle} bg-[#222222]`}
+                className={`
+                    cursor-grab active:cursor-grabbing 
+                    bg-bg-elevated border border-border-subtle rounded-md
+                    transition-all duration-150
+                    hover:border-border-default hover:translate-y-[-2px]
+                    ${getScoreBorderClass()}
+                    ${lead.is_starred ? 'shadow-glow-accent' : ''}
+                `}
                 onClick={() => !isEditingTitle && onEdit(lead)}
             >
-                {/* Visual indicator for Starred */}
-                {lead.is_starred && (
-                    <div className="absolute top-0 right-0 w-8 h-8 flex items-center justify-center translate-x-2 -translate-y-2 rotate-45 bg-accent z-0">
-                    </div>
-                )}
-                <CardHeader className="p-4 pb-2 space-y-1">
-                    <div className="flex justify-between items-start h-[24px]">
-                        {isEditingTitle ? (
-                            <div className="flex items-center gap-1 w-full" onPointerDown={e => e.stopPropagation()} onClick={e => e.stopPropagation()}>
-                                <Input
-                                    ref={inputRef}
-                                    value={titleValue}
-                                    onChange={e => setTitleValue(e.target.value)}
-                                    onKeyDown={handleKeyDown}
-                                    onBlur={() => handleTitleSubmit()}
-                                    className="h-6 text-xs py-0 px-1 bg-black/50 border-accent/50 text-white w-full"
-                                />
-                            </div>
-                        ) : (
-                            <div className="flex items-center gap-2 group/title w-full max-w-[170px]">
+                {/* Header Row */}
+                <CardHeader className="p-3 pb-2">
+                    <div className="flex justify-between items-start gap-2">
+                        {/* Title */}
+                        <div className="flex-1 min-w-0">
+                            {isEditingTitle ? (
+                                <div onPointerDown={e => e.stopPropagation()} onClick={e => e.stopPropagation()}>
+                                    <Input
+                                        ref={inputRef}
+                                        value={titleValue}
+                                        onChange={e => setTitleValue(e.target.value)}
+                                        onKeyDown={handleKeyDown}
+                                        onBlur={() => handleTitleSubmit()}
+                                        className="h-6 text-sm py-0 px-1 bg-bg-surface border-accent/50 text-white w-full"
+                                    />
+                                </div>
+                            ) : (
                                 <CardTitle
-                                    className="text-sm font-semibold truncate text-white cursor-pointer hover:text-accent/80 transition-colors"
+                                    className="text-sm font-medium text-white truncate cursor-pointer hover:text-accent transition-colors"
                                     title="Duplo clique para editar"
                                     onDoubleClick={(e) => {
                                         e.stopPropagation();
@@ -183,25 +197,32 @@ export function KanbanCard({ lead, onEdit, onUpdateTitle, onDisqualify, onApprov
                                 >
                                     {lead.trade_name || lead.company_name}
                                 </CardTitle>
-                                <Button
-                                    variant="ghost"
-                                    size="icon-sm"
-                                    className="h-4 w-4 opacity-0 group-hover/title:opacity-100 transition-opacity text-muted-foreground hover:text-white"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        setIsEditingTitle(true);
-                                    }}
-                                >
-                                    <Pencil className="w-2.5 h-2.5" />
-                                </Button>
-                            </div>
-                        )}
+                            )}
 
-                        <div className="flex gap-1 items-center" onPointerDown={e => e.stopPropagation()}>
+                            {/* Contact Name */}
+                            <div className="flex items-center gap-1 mt-1 text-xs">
+                                {displayName ? (
+                                    <span className="flex items-center gap-1 text-accent font-medium truncate">
+                                        <User className="w-3 h-3 shrink-0" />
+                                        {displayName}
+                                    </span>
+                                ) : displayPhone ? (
+                                    <span className="flex items-center gap-1 text-text-muted truncate">
+                                        <Phone className="w-3 h-3 shrink-0" />
+                                        {maskedPhone}
+                                    </span>
+                                ) : (
+                                    <span className="text-text-disabled italic">Sem contato</span>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Action Icons */}
+                        <div className="flex gap-0.5 shrink-0" onPointerDown={e => e.stopPropagation()}>
                             <Button
                                 variant="ghost"
                                 size="icon-sm"
-                                className={`h-6 w-6 transition-colors ${lead.is_starred ? 'text-accent' : 'text-muted-foreground hover:text-white'}`}
+                                className={`h-6 w-6 ${lead.is_starred ? 'text-accent' : 'text-text-muted hover:text-accent'}`}
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     onToggleFavorite?.(lead.id, !lead.is_starred);
@@ -215,21 +236,39 @@ export function KanbanCard({ lead, onEdit, onUpdateTitle, onDisqualify, onApprov
                                 <Button
                                     variant="ghost"
                                     size="icon-sm"
-                                    className="h-6 w-6 text-muted-foreground hover:text-emerald-400 hover:bg-emerald-500/10"
+                                    className="h-6 w-6 text-text-muted hover:text-neon-green-soft hover:bg-neon-green-bg"
                                     onClick={(e) => { e.stopPropagation(); onApprove(lead.id); }}
                                     title="Aprovar para Pipeline"
                                 >
                                     <Check className="w-3 h-3" />
                                 </Button>
                             )}
-                            <Button variant="ghost" size="icon-sm" className="h-6 w-6 text-muted-foreground hover:text-accent" onClick={handleSearch} title="Pesquisar no Google">
+
+                            <Button
+                                variant="ghost"
+                                size="icon-sm"
+                                className="h-6 w-6 text-text-muted hover:text-accent"
+                                onClick={handleSearch}
+                                title="Pesquisar no Google"
+                            >
                                 <ExternalLink className="w-3 h-3" />
                             </Button>
-                            {onDisqualify && (
+
+                            {lead.status === 'DISQUALIFIED' && onDelete ? (
                                 <Button
                                     variant="ghost"
                                     size="icon-sm"
-                                    className="h-6 w-6 text-muted-foreground hover:text-rose-400 hover:bg-rose-500/10"
+                                    className="h-6 w-6 text-text-muted hover:text-neon-red-soft hover:bg-neon-red-bg"
+                                    onClick={(e) => { e.stopPropagation(); onDelete(lead.id); }}
+                                    title="Mover para Lixeira"
+                                >
+                                    <X className="w-3 h-3" />
+                                </Button>
+                            ) : onDisqualify && (
+                                <Button
+                                    variant="ghost"
+                                    size="icon-sm"
+                                    className="h-6 w-6 text-text-muted hover:text-neon-red-soft hover:bg-neon-red-bg"
                                     onClick={(e) => { e.stopPropagation(); onDisqualify(lead.id); }}
                                     title="Descartar Lead"
                                 >
@@ -238,78 +277,76 @@ export function KanbanCard({ lead, onEdit, onUpdateTitle, onDisqualify, onApprov
                             )}
                         </div>
                     </div>
-                    <CardDescription className="text-xs truncate">
-                        {displayName ? (
-                            <span className="flex items-center gap-1 text-accent font-medium">
-                                <User className="w-3 h-3" /> {displayName}
-                            </span>
-                        ) : (
-                            <span className="text-[#6B6B6B] italic">Sem contato</span>
-                        )}
-                    </CardDescription>
-
                 </CardHeader>
-                <CardContent className="p-4 pt-0 pb-4">
-                    {/* Last Contact Indicator Row */}
-                    <div className="flex justify-between items-center mb-3">
-                        <div className="flex gap-2 text-xs text-muted-foreground items-center">
-                            {lead.score !== undefined && lead.score > 0 && (
-                                <Badge variant="outline" className={`text-[10px] h-5 px-2 border-white/10 ${lead.score >= 85 ? 'text-emerald-400 border-emerald-500/30 bg-emerald-500/5' :
-                                    lead.score >= 70 ? 'text-cyan-400 border-cyan-500/30 bg-cyan-500/5' :
-                                        lead.score >= 55 ? 'text-amber-400 border-amber-500/30 bg-amber-500/5' :
-                                            'text-gray-400 border-gray-500/30 bg-gray-500/5'
-                                    }`}>
-                                    {lead.score} pts
+
+                {/* Content */}
+                <CardContent className="p-3 pt-0">
+                    {/* Score + Quick Contact Row */}
+                    <div className="flex justify-between items-center mb-2">
+                        <div className="flex gap-2 items-center">
+                            {score > 0 && (
+                                <Badge
+                                    variant="outline"
+                                    className={`font-display text-[10px] h-5 px-2 font-bold ${getScoreBadgeClass()}`}
+                                >
+                                    {score} pts
                                 </Badge>
                             )}
-
+                            {/* Contract Value Badge */}
+                            {lead.contract_value && Number(lead.contract_value) > 0 && (
+                                <Badge
+                                    variant="outline"
+                                    className="font-display text-[10px] h-5 px-2 font-bold bg-neon-green-bg text-neon-green border-neon-green/30"
+                                >
+                                    R$ {Number(lead.contract_value).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                                </Badge>
+                            )}
                         </div>
 
-                        {/* Quick Contact Checkbox */}
                         {onQuickContact && (
                             <div
-                                className="flex items-center gap-1 cursor-pointer bg-white/5 hover:bg-white/10 px-2 py-1 rounded-full transition-colors"
+                                className="flex items-center gap-1.5 cursor-pointer bg-bg-surface hover:bg-bg-hover px-2 py-1 rounded-full transition-colors border border-border-subtle"
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     onQuickContact(lead.id);
                                 }}
                                 title="Marcar contato feito hoje"
                             >
-                                <div className={`w-3 h-3 rounded-full border ${lastContact?.text === 'Hoje' ? 'bg-emerald-500 border-emerald-500' : 'border-muted-foreground/50'}`}>
-                                    {lastContact?.text === 'Hoje' && <Check className="w-2 h-2 text-black" />}
+                                <div className={`w-3 h-3 rounded-full border flex items-center justify-center ${lastContact?.text === 'Hoje' ? 'bg-neon-green-soft border-neon-green-soft' : 'border-text-muted'}`}>
+                                    {lastContact?.text === 'Hoje' && <Check className="w-2 h-2 text-bg-void" />}
                                 </div>
-                                <span className="text-[10px] text-muted-foreground">{lastContact?.text === 'Hoje' ? 'Feito' : 'Hoje?'}</span>
+                                <span className="text-[10px] text-text-muted">{lastContact?.text === 'Hoje' ? 'Feito' : 'Hoje?'}</span>
                             </div>
                         )}
                     </div>
 
-                    <div className="flex gap-2 mt-2 items-center justify-between" onPointerDown={e => e.stopPropagation()}>
-
-                        {/* Owner Badge */}
-                        <div className="flex items-center gap-1.5">
-                            <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${lead.owner === 'joao' ? 'bg-amber-500/20 text-amber-500 border border-amber-500/30' :
-                                lead.owner === 'vitor' ? 'bg-cyan-500/20 text-cyan-500 border border-cyan-500/30' :
-                                    'bg-zinc-500/20 text-zinc-400 border border-zinc-500/30'
-                                }`} title={lead.owner === 'joao' ? 'João' : lead.owner === 'vitor' ? 'Vitor' : 'Sem dono'}>
+                    {/* Footer: Owner + Last Contact + Quick Actions */}
+                    <div className="flex items-center justify-between pt-2 border-t border-border-subtle" onPointerDown={e => e.stopPropagation()}>
+                        <div className="flex items-center gap-2">
+                            {/* Owner Badge */}
+                            <div
+                                className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold border ${getOwnerColor()}`}
+                                title={lead.owner === 'joao' ? 'João' : lead.owner === 'vitor' ? 'Vitor' : 'Sem dono'}
+                            >
                                 {lead.owner ? lead.owner.charAt(0).toUpperCase() : '?'}
                             </div>
 
-                            {/* Last Action Text */}
+                            {/* Last Activity */}
                             {lastContact ? (
                                 <span className={`text-[10px] ${lastContact.color}`}>
                                     {lastContact.text}
                                 </span>
                             ) : (
-                                <span className="text-[10px] text-zinc-600">Sem atividade</span>
+                                <span className="text-[10px] text-text-disabled">Sem atividade</span>
                             )}
                         </div>
 
-                        {/* Quick Actions (Compact) */}
+                        {/* Quick Contact Buttons */}
                         <div className="flex gap-1">
                             <Button
                                 variant="ghost"
                                 size="icon-sm"
-                                className={`h-6 w-6 rounded-full hover:bg-emerald-500/20 hover:text-emerald-400 ${!displayPhone ? 'opacity-30 pointer-events-none' : 'text-zinc-500'}`}
+                                className={`h-6 w-6 rounded-full ${!displayPhone ? 'opacity-30 pointer-events-none' : 'text-text-muted hover:text-neon-green-soft hover:bg-neon-green-bg'}`}
                                 onClick={handleWhatsApp}
                                 title="Abrir WhatsApp"
                             >
@@ -318,7 +355,7 @@ export function KanbanCard({ lead, onEdit, onUpdateTitle, onDisqualify, onApprov
                             <Button
                                 variant="ghost"
                                 size="icon-sm"
-                                className={`h-6 w-6 rounded-full hover:bg-cyan-500/20 hover:text-cyan-400 ${!displayEmail ? 'opacity-30 pointer-events-none' : 'text-zinc-500'}`}
+                                className={`h-6 w-6 rounded-full ${!displayEmail ? 'opacity-30 pointer-events-none' : 'text-text-muted hover:text-neon-cyan-soft hover:bg-neon-cyan-bg'}`}
                                 onClick={handleEmail}
                                 title="Enviar Email"
                             >
@@ -328,6 +365,6 @@ export function KanbanCard({ lead, onEdit, onUpdateTitle, onDisqualify, onApprov
                     </div>
                 </CardContent>
             </Card>
-        </div >
+        </div>
     );
 }

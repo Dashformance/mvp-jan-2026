@@ -22,21 +22,21 @@ interface FilterBarProps {
 }
 
 const SOURCE_OPTIONS = [
-    { id: 'DWV', label: 'DWV', color: 'text-blue-400' },
-    { id: 'Google', label: 'Google', color: 'text-amber-400' },
-    { id: 'Indicação', label: 'Indicação', color: 'text-emerald-400' },
-    { id: 'Manual', label: 'Manual', color: 'text-zinc-400' },
-    { id: 'Outros', label: 'Outros', color: 'text-purple-400' },
+    { id: 'DWV', label: 'DWV', color: 'text-neon-cyan-soft' },
+    { id: 'Google', label: 'Google', color: 'text-neon-yellow-soft' },
+    { id: 'Indicação', label: 'Indicação', color: 'text-neon-green-soft' },
+    { id: 'Manual', label: 'Manual', color: 'text-text-muted' },
+    { id: 'Outros', label: 'Outros', color: 'text-neon-purple-soft' },
 ];
 
 const STATUS_OPTIONS = [
-    { id: 'NEW', label: 'Novo', color: 'bg-blue-500/10 text-blue-400' },
-    { id: 'ATTEMPTED', label: 'Tentativa', color: 'bg-amber-500/10 text-amber-400' },
-    { id: 'CONTACTED', label: 'Contatado', color: 'bg-indigo-500/10 text-indigo-400' },
-    { id: 'MEETING', label: 'Reunião', color: 'bg-cyan-500/10 text-cyan-400' },
-    { id: 'WON', label: 'Ganho', color: 'bg-emerald-500/10 text-emerald-400' },
-    { id: 'LOST', label: 'Perdido', color: 'bg-rose-500/10 text-rose-400' },
-    { id: 'DISQUALIFIED', label: 'Desqualificado', color: 'bg-gray-500/10 text-gray-400' },
+    { id: 'NEW', label: 'Novo', color: 'bg-neon-cyan-bg text-neon-cyan' },
+    { id: 'ATTEMPTED', label: 'Tentativa', color: 'bg-neon-yellow-bg text-neon-yellow' },
+    { id: 'CONTACTED', label: 'Contatado', color: 'bg-neon-purple-bg text-neon-purple' },
+    { id: 'MEETING', label: 'Reunião', color: 'bg-neon-cyan-bg text-neon-cyan' },
+    { id: 'WON', label: 'Ganho', color: 'bg-neon-green-bg text-neon-green' },
+    { id: 'LOST', label: 'Perdido', color: 'bg-neon-red-bg text-neon-red' },
+    { id: 'DISQUALIFIED', label: 'Desqualificado', color: 'bg-bg-deep text-text-muted' },
 ];
 
 export function FilterBar({ onFilterChange, currentFilters }: FilterBarProps) {
@@ -115,32 +115,32 @@ export function FilterBar({ onFilterChange, currentFilters }: FilterBarProps) {
                 {/* Status Filter */}
                 <Popover>
                     <PopoverTrigger asChild>
-                        <Button variant="outline" className={`h-10 border-dashed ${selectedStatuses.length > 0 ? 'border-amber-500/50 bg-amber-500/5 text-amber-500' : 'border-subtle bg-elevated'}`}>
+                        <Button variant="outline" className={`h-10 border-dashed ${selectedStatuses.length > 0 ? 'border-accent/50 bg-accent-muted text-accent' : 'border-border-subtle bg-bg-elevated'}`}>
                             <Filter className="w-4 h-4 mr-2" />
                             Status
                             {selectedStatuses.length > 0 && (
-                                <Badge variant="secondary" className="ml-2 h-5 text-[10px] px-1.5 bg-amber-500/20 text-amber-300 pointer-events-none">
+                                <Badge variant="secondary" className="ml-2 h-5 text-[10px] px-1.5 bg-accent text-bg-void font-bold pointer-events-none">
                                     {selectedStatuses.length}
                                 </Badge>
                             )}
                         </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-[220px] p-2 bg-[#1A1A1A] border-[#333] shadow-xl" align="start">
+                    <PopoverContent className="w-[220px] p-2 bg-bg-surface border-border-default shadow-2xl" align="start">
                         <div className="space-y-1">
                             {STATUS_OPTIONS.map(status => {
                                 const isSelected = selectedStatuses.includes(status.id);
                                 return (
                                     <div
                                         key={status.id}
-                                        className={`flex items-center gap-3 p-2 rounded-md cursor-pointer transition-colors ${isSelected ? 'bg-white/10' : 'hover:bg-white/5'}`}
+                                        className={`flex items-center gap-3 p-2 rounded-md cursor-pointer transition-colors ${isSelected ? 'bg-glass-bg' : 'hover:bg-glass-bg/50'}`}
                                         onClick={() => toggleStatus(status.id)}
                                     >
-                                        <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${isSelected ? 'bg-amber-500 border-amber-500' : 'border-white/20 bg-transparent'
+                                        <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${isSelected ? 'bg-accent border-accent' : 'border-border-default bg-transparent'
                                             }`}>
-                                            {isSelected && <Check className="w-3 h-3 text-black" />}
+                                            {isSelected && <Check className="w-3 h-3 text-bg-void" />}
                                         </div>
 
-                                        <span className={`text-sm ${status.color.replace('bg-', 'text-').replace('/10', '')} font-medium`}>
+                                        <span className={`text-sm ${status.color.replace('bg-', 'text-').replace('-bg', '-soft')} font-medium`}>
                                             {status.label}
                                         </span>
                                     </div>
@@ -148,11 +148,11 @@ export function FilterBar({ onFilterChange, currentFilters }: FilterBarProps) {
                             })}
                         </div>
                         {selectedStatuses.length > 0 && (
-                            <div className="pt-2 mt-2 border-t border-white/10">
+                            <div className="pt-2 mt-2 border-t border-border-subtle/50">
                                 <Button
                                     variant="ghost"
                                     size="sm"
-                                    className="w-full h-7 text-xs text-muted-foreground hover:text-white"
+                                    className="w-full h-7 text-[10px] items-center text-text-muted hover:text-text-primary uppercase font-bold tracking-widest"
                                     onClick={() => setSelectedStatuses([])}
                                 >
                                     Limpar Filtros

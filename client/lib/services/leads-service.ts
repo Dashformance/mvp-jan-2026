@@ -22,8 +22,11 @@ function calculateScore(lead: any): number {
 
 export const LeadsService = {
     async create(data: any) {
+        // Extract contacts before sanitization (as sanitizer strips unknown fields)
+        const { contacts, ...leadData } = data;
+
         // Use strict sanitizer
-        const sanitized = LeadSanitizer.sanitizeForCreate(data);
+        const sanitized = LeadSanitizer.sanitizeForCreate(leadData);
 
         // Handle missing CNPJ for manual leads
         if (!sanitized.cnpj || sanitized.cnpj.trim() === '') {
@@ -33,8 +36,24 @@ export const LeadsService = {
         console.log('[LeadsService.create] Input data keys:', Object.keys(data));
         console.log('[LeadsService.create] Sanitized data:', JSON.stringify(sanitized, null, 2));
 
+        const createData: any = {
+            ...sanitized,
+            owner_id: data.owner_id || undefined, // Explicitly pass owner_id
+        };
+
+        // Handle nested contacts creation
+        if (Array.isArray(contacts) && contacts.length > 0) {
+            createData.contacts = {
+                create: contacts.map((contact: any) => {
+                    // Remove temporary ID and lead_id (Prisma handles relation)
+                    const { id, lead_id, ...contactFields } = contact;
+                    return contactFields;
+                })
+            };
+        }
+
         return prisma.lead.create({
-            data: sanitized,
+            data: createData,
         });
     },
 
@@ -56,6 +75,7 @@ export const LeadsService = {
         search?: string;
         status?: string[];
         owner?: string;
+        ownerId?: string; // Authenticated User ID
         source?: string[];
         city?: string;
         scoreMin?: number;
@@ -66,43 +86,53 @@ export const LeadsService = {
         console.log(`[LeadsService] findAll called with page=${page}, limit=${limit}, filters=`, filters);
         const skip = (page - 1) * limit;
 
-        const where: any = { deletedAt: null };
+        // Use AND array for safe filter composition
+        const AND: any[] = [{ deletedAt: null }];
 
-        if (filters?.owner && filters.owner !== 'all') {
-            where.owner = filters.owner;
+        if (filters?.ownerId) {
+            AND.push({
+                OR: [
+                    { owner_id: filters.ownerId },
+                    { owner_id: null }
+                ]
+            });
+        } else if (filters?.owner && filters.owner !== 'all') {
+            // Legacy support
+            AND.push({ owner: filters.owner });
         }
 
         if (filters?.status && filters.status.length > 0) {
-            where.status = { in: filters.status };
+            AND.push({ status: { in: filters.status } });
         }
 
         if (filters?.source && filters.source.length > 0) {
-            where.source = { in: filters.source };
+            AND.push({ source: { in: filters.source } });
         }
 
         if (filters?.city) {
-            where.city = { contains: filters.city, mode: 'insensitive' };
+            AND.push({ city: { contains: filters.city, mode: 'insensitive' } });
         }
 
         if (filters?.scoreMin !== undefined) {
-            where.score = { ...where.score, gte: filters.scoreMin };
+            AND.push({ score: { gte: filters.scoreMin } });
         }
 
         if (filters?.scoreMax !== undefined) {
-            where.score = { ...where.score, lte: filters.scoreMax };
+            AND.push({ score: { lte: filters.scoreMax } });
         }
 
         if (filters?.search) {
-            const searchLower = filters.search.toLowerCase();
-            where.OR = [
-                { company_name: { contains: filters.search, mode: 'insensitive' } },
-                { trade_name: { contains: filters.search, mode: 'insensitive' } },
-                { cnpj: { contains: filters.search } },
-                // Enable searching by contact name once Prisma relation is more mature or use raw query if needed. 
-                // For now, simple text fields on Lead:
-                { decision_maker: { contains: filters.search, mode: 'insensitive' } }
-            ];
+            AND.push({
+                OR: [
+                    { company_name: { contains: filters.search, mode: 'insensitive' } },
+                    { trade_name: { contains: filters.search, mode: 'insensitive' } },
+                    { cnpj: { contains: filters.search } },
+                    { decision_maker: { contains: filters.search, mode: 'insensitive' } }
+                ]
+            });
         }
+
+        const where = { AND };
 
         // Sorting Logic
         const orderBy: any = {};
@@ -323,85 +353,55 @@ export const LeadsService = {
         return { deletedCount: 0, ids: [] };
     },
 
-    async divideLeads(joaoCount: number, sourceOwner: 'unassigned' | 'joao' | 'vitor' | 'all' = 'unassigned') {
-        const where: any = { deletedAt: null };
-        if (sourceOwner === 'unassigned') {
-            where.OR = [{ owner: null }, { owner: '' }];
-        } else if (sourceOwner !== 'all') {
-            where.owner = sourceOwner;
+
+    async getStatsOverview(ownerId?: string) {
+        const baseWhere: any = { deletedAt: null };
+        if (ownerId) {
+            baseWhere.OR = [
+                { owner_id: ownerId },
+                { owner_id: null }
+            ];
         }
 
-        const leadsToDivide = await prisma.lead.findMany({
-            where,
-            select: { id: true },
-            orderBy: { date_added: 'asc' }
-        });
-
-        if (leadsToDivide.length === 0) {
-            return { joaoCount: 0, vitorCount: 0, total: 0 };
-        }
-
-        const ids = leadsToDivide.map((l: any) => l.id);
-        for (let i = ids.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [ids[i], ids[j]] = [ids[j], ids[i]];
-        }
-
-        const safeJoaoCount = Math.min(joaoCount, ids.length);
-        const joaoIds = ids.slice(0, safeJoaoCount);
-        const vitorIds = ids.slice(safeJoaoCount);
-
-        if (joaoIds.length > 0) {
-            await prisma.lead.updateMany({
-                where: { id: { in: joaoIds } },
-                data: { owner: 'joao' }
-            });
-        }
-
-        if (vitorIds.length > 0) {
-            await prisma.lead.updateMany({
-                where: { id: { in: vitorIds } },
-                data: { owner: 'vitor' }
-            });
-        }
-
-        return {
-            joaoCount: joaoIds.length,
-            vitorCount: vitorIds.length,
-            total: ids.length
-        };
-    },
-
-    async getStatsOverview() {
-        const [total, byStatus, byOwner, addedToday, addedThisWeek, addedThisMonth] = await Promise.all([
-            prisma.lead.count({ where: { deletedAt: null } }),
+        const [total, byStatus, byOwner, addedToday, addedThisWeek, addedThisMonth, revenueStats, pipelineStats] = await Promise.all([
+            prisma.lead.count({ where: baseWhere }),
             prisma.lead.groupBy({
                 by: ['status'],
-                where: { deletedAt: null },
+                where: baseWhere,
                 _count: { status: true }
             }),
             prisma.lead.groupBy({
                 by: ['owner'],
-                where: { deletedAt: null },
+                where: baseWhere,
                 _count: { owner: true }
             }),
             prisma.lead.count({
                 where: {
-                    deletedAt: null,
+                    ...baseWhere,
                     date_added: { gte: new Date(new Date().setHours(0, 0, 0, 0)) }
                 }
             }),
             prisma.lead.count({
                 where: {
-                    deletedAt: null,
+                    ...baseWhere,
                     date_added: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) }
                 }
             }),
             prisma.lead.count({
                 where: {
-                    deletedAt: null,
+                    ...baseWhere,
                     date_added: { gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) }
                 }
+            }),
+            // Revenue (SOLD)
+            prisma.lead.aggregate({
+                where: { ...baseWhere, status: 'SOLD' },
+                _sum: { contract_value: true }
+            }),
+            // Money on Table (Pipeline)
+            prisma.lead.aggregate({
+                where: { ...baseWhere, status: { in: ['NEW', 'ATTEMPTED', 'CONTACTED', 'MEETING', 'WON'] } },
+                _sum: { contract_value: true }
             })
         ]);
 
@@ -417,48 +417,105 @@ export const LeadsService = {
             byOwner: ownerCounts,
             addedToday,
             addedThisWeek,
-            addedThisMonth
+            addedThisMonth,
+            revenue: revenueStats._sum.contract_value ? Number(revenueStats._sum.contract_value.toString()) : 0,
+            pipelineValue: pipelineStats._sum.contract_value ? Number(pipelineStats._sum.contract_value.toString()) : 0
         };
     },
 
-    async getConversionFunnel() {
+    async getUpcomingMeetings(limit = 10) {
+        // Fetch leads with scheduled follow-ups (interpreted as meetings/tasks)
+        // Filter: next_followup_date >= NOW
+        const meetings = await prisma.lead.findMany({
+            where: {
+                deletedAt: null,
+                next_followup_date: {
+                    gte: new Date(new Date().setHours(0, 0, 0, 0)) // Start of TODAY
+                }
+            },
+            take: limit,
+            orderBy: {
+                next_followup_date: 'asc'
+            },
+            select: {
+                id: true,
+                company_name: true,
+                trade_name: true,
+                next_followup_date: true,
+                owner: true,
+                owner_id: true,
+                owner_user: {
+                    select: {
+                        name: true,
+                        avatar_url: true
+                    }
+                }
+            }
+        });
+
+        // Map to cleaner structure
+        return meetings.map(m => ({
+            id: m.id,
+            title: m.trade_name || m.company_name || 'Lead sem nome',
+            date: m.next_followup_date,
+            ownerName: m.owner_user?.name || m.owner || 'N/A',
+            ownerAvatar: m.owner_user?.avatar_url
+        }));
+    },
+
+    async getConversionFunnel(minDate?: Date) {
         const statuses = ['INBOX', 'NEW', 'ATTEMPTED', 'CONTACTED', 'MEETING', 'WON', 'LOST', 'DISQUALIFIED'];
 
-        // Group by status AND owner
-        const counts = await prisma.lead.groupBy({
-            by: ['status', 'owner'],
-            where: { deletedAt: null },
-            _count: { _all: true }
+        // Define our dashboard users
+        const users = [
+            { key: 'joao', name: 'João', ids: ['21d216a4-e8c9-464d-b486-0b4db827f5ba'], names: ['joao', 'João Vitor'] },
+            { key: 'bruno', name: 'Bruno', ids: ['0184fc53-a696-4ed6-b5e4-2391fd21b902'], names: ['bruno', 'Bruno'] },
+            { key: 'nitz', name: 'Nitz', ids: ['1e83c3b1-b8ed-4a59-a37b-4425947525ea'], names: ['nitz', 'Nitz'] }
+        ];
+
+        // Fetch all non-deleted leads with owner info AND minDate filter
+        const whereClause: any = { deletedAt: null };
+        if (minDate) {
+            whereClause.date_added = { gte: minDate };
+        }
+
+        const allLeads = await prisma.lead.findMany({
+            where: whereClause,
+            select: { status: true, owner: true, owner_id: true }
         });
 
-        // Structure: { [status]: { total: 0, joao: 0, vitor: 0 } }
-        const map: Record<string, { total: number, joao: number, vitor: number }> = {};
-
-        // Initialize defaults
+        // Initialize map
+        const map: Record<string, any> = {};
         statuses.forEach(s => {
-            map[s] = { total: 0, joao: 0, vitor: 0 };
+            map[s] = { total: 0, joao: 0, bruno: 0, nitz: 0 };
         });
 
-        counts.forEach((c: any) => {
-            const s = c.status;
-            const o = c.owner ? c.owner.toLowerCase() : 'unassigned';
-            const val = c._count._all;
+        const totalLeads = allLeads.length;
 
-            if (!map[s]) map[s] = { total: 0, joao: 0, vitor: 0 };
+        allLeads.forEach(lead => {
+            const s = lead.status;
+            if (!map[s]) map[s] = { total: 0, joao: 0, bruno: 0, nitz: 0 };
 
-            map[s].total += val;
-            if (o === 'joao') map[s].joao += val;
-            else if (o === 'vitor') map[s].vitor += val;
-            // 'unassigned' or others only add to total
+            map[s].total++;
+
+            // Check which user owns this lead
+            for (const user of users) {
+                const isOwner = (lead.owner_id && user.ids.includes(lead.owner_id)) ||
+                    (lead.owner && user.names.some(n => n.toLowerCase() === lead.owner?.toLowerCase()));
+
+                if (isOwner) {
+                    map[s][user.key]++;
+                    break; // Assume single owner
+                }
+            }
         });
-
-        const totalLeads = Object.values(map).reduce((acc, curr) => acc + curr.total, 0);
 
         return statuses.map(status => ({
             status,
             count: map[status].total,
             joao: map[status].joao,
-            vitor: map[status].vitor,
+            bruno: map[status].bruno,
+            nitz: map[status].nitz,
             percentage: totalLeads > 0 ? Math.round((map[status].total / totalLeads) * 100) : 0
         }));
     },
@@ -540,38 +597,52 @@ export const LeadsService = {
         return finalized.sort((a: any, b: any) => a.date.localeCompare(b.date));
     },
 
-    async getPerformanceByOwner() {
-        const [byOwnerStatus, totalByOwner] = await Promise.all([
-            prisma.lead.groupBy({
-                by: ['owner', 'status'],
-                where: { deletedAt: null },
-                _count: { id: true }
-            }),
-            prisma.lead.groupBy({
-                by: ['owner'],
-                where: { deletedAt: null },
-                _count: { id: true }
-            })
-        ]);
+    async getPerformanceByOwner(minDate?: Date) {
+        // Define users
+        const users = [
+            { key: 'joao', name: 'João', ids: ['21d216a4-e8c9-464d-b486-0b4db827f5ba'], names: ['joao', 'João Vitor'] },
+            { key: 'bruno', name: 'Bruno', ids: ['0184fc53-a696-4ed6-b5e4-2391fd21b902'], names: ['bruno', 'Bruno'] },
+            { key: 'nitz', name: 'Nitz', ids: ['1e83c3b1-b8ed-4a59-a37b-4425947525ea'], names: ['nitz', 'Nitz'] }
+        ];
 
-        const owners = ['joao', 'vitor'];
         const result: Record<string, any> = {};
 
-        owners.forEach((owner: string) => {
-            const ownerData = byOwnerStatus.filter((d: any) => d.owner === owner);
-            const total = totalByOwner.find((t: any) => t.owner === owner)?._count.id || 0;
-            const won = ownerData.find((d: any) => d.status === 'WON')?._count.id || 0;
-            const contacted = ownerData.find((d: any) => d.status === 'CONTACTED')?._count.id || 0;
-            const meeting = ownerData.find((d: any) => d.status === 'MEETING')?._count.id || 0;
+        // Parallel fetch for each user to ensure accuracy with complex OR conditions
+        await Promise.all(users.map(async (user) => {
+            const userWhere: any = {
+                OR: [
+                    { owner_id: { in: user.ids } },
+                    ...user.names.map(name => ({ owner: { equals: name, mode: 'insensitive' as const } }))
+                ],
+                deletedAt: null
+            };
 
-            result[owner] = {
+            // Apply date filter if provided (using date_added for general stats, or we could be specific per metric)
+            // For general 'Performance', it's best to filter by when the lead entered the system (for New Leads)
+            // But for 'Won', 'Contacted', etc. ideally we check the interaction date. 
+            // However, this method simplifies to "Leads added or modified in this period"? 
+            // To properly reset scores, we usually filter by "Actions happening after date".
+            // Since we don't have a robust interaction log for everything here, filtering by 'date_added' resets the "Pipeline".
+            if (minDate) {
+                userWhere.date_added = { gte: minDate };
+            }
+
+            const [total, won, contacted, meeting] = await Promise.all([
+                prisma.lead.count({ where: userWhere }),
+                prisma.lead.count({ where: { ...userWhere, status: 'WON' } }),
+                prisma.lead.count({ where: { ...userWhere, status: 'CONTACTED' } }),
+                prisma.lead.count({ where: { ...userWhere, status: 'MEETING' } })
+            ]);
+
+            result[user.key] = {
                 total,
                 won,
                 contacted,
                 meeting,
                 conversionRate: total > 0 ? Math.round((won / total) * 100) : 0
             };
-        });
+        }));
+
         return result;
     },
 
@@ -628,29 +699,42 @@ export const LeadsService = {
         startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
         const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-        const owners = ['joao', 'vitor'];
+        const users = [
+            { key: 'joao', name: 'João', ids: ['21d216a4-e8c9-464d-b486-0b4db827f5ba'], names: ['joao', 'João Vitor'] },
+            { key: 'bruno', name: 'Bruno', ids: ['0184fc53-a696-4ed6-b5e4-2391fd21b902'], names: ['bruno', 'Bruno'] },
+            { key: 'nitz', name: 'Nitz', ids: ['1e83c3b1-b8ed-4a59-a37b-4425947525ea'], names: ['nitz', 'Nitz'] }
+        ];
+
         const result: Record<string, any> = {};
 
-        for (const owner of owners) {
+        await Promise.all(users.map(async (user) => {
+            const userWhere = {
+                OR: [
+                    { owner_id: { in: user.ids } },
+                    ...user.names.map(name => ({ owner: { equals: name, mode: 'insensitive' as const } }))
+                ],
+                deletedAt: null
+            };
+
             const [
                 contactedToday, contactedWeek, contactedMonth,
                 meetingsToday, meetingsWeek, meetingsMonth,
                 wonToday, wonWeek, wonMonth,
                 totalActive
             ] = await Promise.all([
-                prisma.lead.count({ where: { owner, deletedAt: null, last_contact_date: { gte: startOfDay } } }),
-                prisma.lead.count({ where: { owner, deletedAt: null, last_contact_date: { gte: startOfWeek } } }),
-                prisma.lead.count({ where: { owner, deletedAt: null, last_contact_date: { gte: startOfMonth } } }),
-                prisma.lead.count({ where: { owner, deletedAt: null, status: 'MEETING', next_followup_date: { gte: startOfDay, lt: new Date(startOfDay.getTime() + 86400000) } } }),
-                prisma.lead.count({ where: { owner, deletedAt: null, status: 'MEETING' } }),
-                prisma.lead.count({ where: { owner, deletedAt: null, status: 'MEETING' } }),
-                prisma.lead.count({ where: { owner, deletedAt: null, status: 'WON', last_contact_date: { gte: startOfDay } } }),
-                prisma.lead.count({ where: { owner, deletedAt: null, status: 'WON', last_contact_date: { gte: startOfWeek } } }),
-                prisma.lead.count({ where: { owner, deletedAt: null, status: 'WON', last_contact_date: { gte: startOfMonth } } }),
-                prisma.lead.count({ where: { owner, deletedAt: null, status: { notIn: ['WON', 'LOST'] } } }),
+                prisma.lead.count({ where: { ...userWhere, last_contact_date: { gte: startOfDay } } }),
+                prisma.lead.count({ where: { ...userWhere, last_contact_date: { gte: startOfWeek } } }),
+                prisma.lead.count({ where: { ...userWhere, last_contact_date: { gte: startOfMonth } } }),
+                prisma.lead.count({ where: { ...userWhere, status: 'MEETING', next_followup_date: { gte: startOfDay, lt: new Date(startOfDay.getTime() + 86400000) } } }),
+                prisma.lead.count({ where: { ...userWhere, status: 'MEETING' } }), // Simplifying week/month meetings to total current in meeting for scoreboard clarity or actual scheduled? keeping as existing logic implies active status
+                prisma.lead.count({ where: { ...userWhere, status: 'MEETING' } }),
+                prisma.lead.count({ where: { ...userWhere, status: 'WON', last_contact_date: { gte: startOfDay } } }),
+                prisma.lead.count({ where: { ...userWhere, status: 'WON', last_contact_date: { gte: startOfWeek } } }),
+                prisma.lead.count({ where: { ...userWhere, status: 'WON', last_contact_date: { gte: startOfMonth } } }),
+                prisma.lead.count({ where: { ...userWhere, status: { notIn: ['WON', 'LOST'] } } }),
             ]);
 
-            result[owner] = {
+            result[user.key] = {
                 today: { contacted: contactedToday, meetings: meetingsToday, won: wonToday },
                 week: { contacted: contactedWeek, meetings: meetingsWeek, won: wonWeek },
                 month: { contacted: contactedMonth, meetings: meetingsMonth, won: wonMonth },
@@ -661,7 +745,8 @@ export const LeadsService = {
                     month: contactedMonth * 1 + meetingsMonth * 3 + wonMonth * 10,
                 }
             };
-        }
+        }));
+
         return result;
     }
 };

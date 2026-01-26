@@ -1,0 +1,149 @@
+"use client";
+
+import { motion } from "framer-motion";
+import { Trophy, Medal, Crown, TrendingUp, ChevronRight } from "lucide-react";
+
+/**
+ * Leaderboard - Ranking do time com medalhas
+ * DS v2.0: Top 3 destaque, medalhas 🥇🥈🥉, glow dourado para 1º
+ */
+
+interface LeaderboardPlayer {
+    id: string;
+    name: string;
+    role: string;
+    level: number;
+    xp: number;
+    sales: number;
+    avatar?: string;
+}
+
+interface LeaderboardProps {
+    players: LeaderboardPlayer[];
+    currentUserId?: string;
+    className?: string;
+}
+
+const MEDAL_STYLES = {
+    0: {
+        icon: '🥇',
+        bg: 'bg-gradient-to-r from-yellow-500/20 to-yellow-600/10',
+        border: 'border-yellow-500/50',
+        glow: 'shadow-[0_0_30px_rgba(255,215,0,0.4)]',
+        text: 'text-yellow-400'
+    },
+    1: {
+        icon: '🥈',
+        bg: 'bg-gradient-to-r from-zinc-400/20 to-zinc-500/10',
+        border: 'border-zinc-400/40',
+        glow: '',
+        text: 'text-zinc-300'
+    },
+    2: {
+        icon: '🥉',
+        bg: 'bg-gradient-to-r from-amber-600/20 to-amber-700/10',
+        border: 'border-amber-600/40',
+        glow: '',
+        text: 'text-amber-500'
+    }
+};
+
+export function Leaderboard({ players, currentUserId, className = "" }: LeaderboardProps) {
+    // Sort by XP descending
+    const sortedPlayers = [...players].sort((a, b) => b.xp - a.xp);
+
+    return (
+        <div className={`bg-bg-elevated border border-border-subtle rounded-xl overflow-hidden ${className}`}>
+            {/* Header */}
+            <div className="px-4 py-3 border-b border-border-subtle flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                    <Trophy className="w-4 h-4 text-accent" />
+                    <h3 className="text-sm font-semibold text-white">Ranking do Time</h3>
+                </div>
+                <span className="text-[10px] text-text-muted uppercase tracking-wider">
+                    {players.length} jogadores
+                </span>
+            </div>
+
+            {/* Leaderboard List */}
+            <div className="divide-y divide-border-subtle">
+                {sortedPlayers.map((player, index) => {
+                    const isTop3 = index < 3;
+                    const isCurrentUser = player.id === currentUserId;
+                    const medalStyle = isTop3 ? MEDAL_STYLES[index as 0 | 1 | 2] : null;
+
+                    return (
+                        <motion.div
+                            key={player.id}
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: index * 0.1 }}
+                            className={`
+                                px-4 py-3 flex items-center gap-3 transition-all
+                                ${isTop3 && medalStyle ? `${medalStyle.bg} ${medalStyle.glow}` : 'hover:bg-bg-hover'}
+                                ${isCurrentUser ? 'ring-1 ring-accent/50 ring-inset' : ''}
+                            `}
+                        >
+                            {/* Rank Number / Medal */}
+                            <div className="w-8 flex items-center justify-center">
+                                {isTop3 && medalStyle ? (
+                                    <span className="text-2xl">{medalStyle.icon}</span>
+                                ) : (
+                                    <span className="font-display text-lg font-bold text-text-muted">
+                                        {index + 1}
+                                    </span>
+                                )}
+                            </div>
+
+                            {/* Avatar */}
+                            <div className={`
+                                w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold
+                                ${isTop3 && medalStyle
+                                    ? `border-2 ${medalStyle.border} bg-bg-surface`
+                                    : 'border border-border-subtle bg-bg-surface'
+                                }
+                                ${isTop3 && index === 0 ? 'text-yellow-400' : 'text-white'}
+                            `}>
+                                {player.avatar || player.name.slice(0, 2).toUpperCase()}
+                            </div>
+
+                            {/* Name & Role */}
+                            <div className="flex-1 min-w-0">
+                                <p className={`text-sm font-medium truncate ${isTop3 && medalStyle ? medalStyle.text : 'text-white'
+                                    }`}>
+                                    {player.name}
+                                    {isCurrentUser && (
+                                        <span className="ml-2 text-[10px] text-accent">(você)</span>
+                                    )}
+                                </p>
+                                <p className="text-[10px] text-text-muted">
+                                    {player.role} • Nível {player.level}
+                                </p>
+                            </div>
+
+                            {/* Stats */}
+                            <div className="text-right">
+                                <p className="font-display text-sm font-bold text-neon-green-soft">
+                                    {player.xp.toLocaleString('pt-BR')} XP
+                                </p>
+                                <p className="text-[10px] text-text-muted flex items-center justify-end gap-1">
+                                    <TrendingUp className="w-3 h-3" />
+                                    {player.sales} vendas
+                                </p>
+                            </div>
+                        </motion.div>
+                    );
+                })}
+            </div>
+
+            {/* Footer */}
+            {players.length > 5 && (
+                <div className="px-4 py-2 border-t border-border-subtle bg-bg-surface/50 text-center">
+                    <button className="text-xs text-accent hover:underline">
+                        Ver ranking completo
+                    </button>
+                </div>
+            )}
+        </div>
+    );
+}

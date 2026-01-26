@@ -3,7 +3,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { API_URL } from "@/app/page";
+const API_URL = "/api";
 
 interface TrashSheetProps {
     onRestore: (id: string) => void;
@@ -36,23 +36,34 @@ export function TrashSheet({ onRestore, onDeleteForever }: TrashSheetProps) {
 
     const handleRestore = async (id: string) => {
         try {
-            await fetch(`${API_URL}/leads/${id}/restore`, { method: "POST" });
+            const res = await fetch(`${API_URL}/leads/${id}/restore`, { method: "POST" });
+            if (!res.ok) throw new Error("Falha na restauração");
+
             toast.success("Lead restaurado!");
             setTrashedLeads(prev => prev.filter(l => l.id !== id));
             onRestore(id);
-        } catch {
-            toast.error("Erro ao restaurar");
+        } catch (err) {
+            toast.error("Erro ao restaurar lead");
         }
     };
 
     const handleDeleteForever = async (id: string) => {
         try {
-            await fetch(`${API_URL}/leads/${id}/hard-delete`, { method: "DELETE" });
+            const res = await fetch(`${API_URL}/leads/${id}/hard-delete`, { method: "DELETE" });
+            const data = await res.json();
+
+            if (!res.ok) {
+                throw new Error(data.details || data.error || "Erro desconhecido");
+            }
+
             toast.success("Lead excluído permanentemente");
             setTrashedLeads(prev => prev.filter(l => l.id !== id));
             onDeleteForever(id);
-        } catch {
-            toast.error("Erro ao excluir permanentemente");
+        } catch (err: any) {
+            console.error(err);
+            toast.error("Erro ao excluir permanentemente", {
+                description: err.message === "Erro desconhecido" ? undefined : err.message
+            });
         }
     };
 

@@ -23,32 +23,35 @@ interface LeadCandidate {
 }
 
 interface ImportReviewDialogProps {
-    isOpen: boolean;
+    open: boolean;
     onOpenChange: (open: boolean) => void;
     candidates: LeadCandidate[];
     onConfirm: (selectedLeads: LeadCandidate[]) => void;
     onCancel: () => void;
-    isSaving: boolean;
+    isSaving?: boolean;
+    importing?: boolean; // Alias for backward compat or just use one
     onCandidatesChange?: (candidates: LeadCandidate[]) => void;
 }
 
 export function ImportReviewDialog({
-    isOpen,
+    open,
     onOpenChange,
     candidates,
     onConfirm,
     onCancel,
     isSaving,
+    importing,
     onCandidatesChange
 }: ImportReviewDialogProps) {
     const [selectedCnpjs, setSelectedCnpjs] = useState<Set<string>>(new Set());
+    const saving = isSaving || importing; // Handle alias
 
     useEffect(() => {
-        if (isOpen && candidates.length > 0) {
+        if (open && candidates.length > 0) {
             // Select all by default
             setSelectedCnpjs(new Set(candidates.map(c => c.cnpj)));
         }
-    }, [isOpen, candidates]);
+    }, [open, candidates]);
 
     const toggleLead = (cnpj: string) => {
         const newSet = new Set(selectedCnpjs);
@@ -94,7 +97,7 @@ export function ImportReviewDialog({
     };
 
     return (
-        <Dialog open={isOpen} onOpenChange={onOpenChange}>
+        <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-4xl h-[80vh] flex flex-col bg-[#141414] border-white/10 text-white p-0 gap-0">
                 <DialogHeader className="p-6 pb-2 border-b border-white/10">
                     <DialogTitle className="text-xl font-bold flex items-center gap-2">
@@ -175,15 +178,15 @@ export function ImportReviewDialog({
 
                 <DialogFooter className="p-6 border-t border-white/10 bg-[#181818]">
                     <div className="flex items-center gap-4 w-full justify-between">
-                        <Button variant="ghost" onClick={onCancel} disabled={isSaving}>
+                        <Button variant="ghost" onClick={onCancel} disabled={saving}>
                             Cancelar
                         </Button>
                         <Button
                             onClick={handleConfirm}
-                            disabled={selectedCnpjs.size === 0 || isSaving}
+                            disabled={selectedCnpjs.size === 0 || saving}
                             className="bg-emerald-600 hover:bg-emerald-700 text-white min-w-[150px]"
                         >
-                            {isSaving ? (
+                            {saving ? (
                                 <>
                                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                     Gerando Leads...

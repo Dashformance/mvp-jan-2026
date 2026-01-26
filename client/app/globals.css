@@ -2,132 +2,155 @@
 
 @theme {
   /* ============================================
-     VISUALIZEN DESIGN SYSTEM v3.1
-     Inter Display Edition — Dark Theme
+     DASHFORMANCE DESIGN SYSTEM v2.0
+     Theme: Dark Glassmorphism + Champagne
      ============================================ */
 
   /* Typography */
-  --font-display: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-mono: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
+  --font-sans: var(--font-sans), ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-display: var(--font-numbers), 'Space Grotesk', 'Inter', sans-serif;
+  --font-mono: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
-  /* === DARK THEME COLORS === */
+  /* === COLOR PALETTE: DARK GLASSMORPHISM === */
 
-  /* Backgrounds */
-  --color-background: #181818;
-  /* bg-base */
-  --color-foreground: #FFFFFF;
-  /* fg-primary */
+  /* Backgrounds: Depth Hierarchy */
+  --color-bg-void: #050505;
+  --color-bg-base: #0A0A0A;
+  --color-bg-deep: #0F0F0F;
+  --color-bg-primary: #181818;
+  --color-bg-elevated: #222222;
+  --color-bg-surface: #1C1C1C;
+  --color-bg-hover: #2A2A2A;
+  --color-bg-active: #333333;
 
-  --color-card: #222222;
-  /* bg-elevated */
-  --color-card-foreground: #FFFFFF;
+  /* Glass Effects */
+  --color-glass-bg: rgba(255, 255, 255, 0.03);
+  --color-glass-bg-hover: rgba(255, 255, 255, 0.06);
+  --color-glass-border: rgba(255, 255, 255, 0.08);
+  --glass-blur: 12px;
 
-  --color-popover: #222222;
-  --color-popover-foreground: #FFFFFF;
-
-  /* Primary Button: WHITE bg, BLACK text (per DS spec) */
-  --color-primary: #FFFFFF;
-  --color-primary-foreground: #181818;
-
-  /* Secondary: Transparent with border */
-  --color-secondary: transparent;
-  --color-secondary-foreground: #FFFFFF;
-
-  /* Muted */
-  --color-muted: #141414;
-  /* bg-muted */
-  --color-muted-foreground: #A3A3A3;
-  /* fg-muted */
-
-  /* Accent: Champagne (logo, landing CTAs only) */
+  /* Champagne Accents (Brand Identity) */
   --color-accent: #DECCA8;
-  --color-accent-foreground: #1A1814;
+  --color-accent-light: #E8DBC4;
+  --color-accent-dark: #B8A882;
+  --color-accent-muted: rgba(222, 204, 168, 0.15);
+  --color-accent-glow: rgba(222, 204, 168, 0.30);
 
-  /* Destructive */
-  --color-destructive: #F43F5E;
-  --color-destructive-foreground: #FFFFFF;
+  /* Functional Neons (Gamification) */
+  --color-neon-green: #00FF88;
+  --color-neon-green-soft: #22C55E;
+  --color-neon-green-bg: rgba(0, 255, 136, 0.10);
+  --color-neon-green-glow: rgba(0, 255, 136, 0.40);
 
-  /* Borders */
-  --color-border: rgba(255, 255, 255, 0.10);
-  /* border-default */
-  --color-input: #222222;
-  /* bg-elevated */
-  --color-ring: rgba(255, 255, 255, 0.24);
-  /* border-focus */
+  --color-neon-yellow: #FFE066;
+  --color-neon-yellow-soft: #F59E0B;
+  --color-neon-yellow-bg: rgba(255, 224, 102, 0.10);
+  --color-neon-yellow-glow: rgba(255, 224, 102, 0.40);
+
+  --color-neon-orange: #FF9F43;
+  --color-neon-orange-bg: rgba(255, 159, 67, 0.10);
+  --color-neon-orange-glow: rgba(255, 159, 67, 0.40);
+
+  --color-neon-red: #FF4757;
+  --color-neon-red-soft: #EF4444;
+  --color-neon-red-bg: rgba(255, 71, 87, 0.10);
+  --color-neon-red-glow: rgba(255, 71, 87, 0.40);
+
+  --color-neon-cyan: #00D4FF;
+  --color-neon-cyan-soft: #3B82F6;
+  --color-neon-cyan-bg: rgba(0, 212, 255, 0.10);
+  --color-neon-cyan-glow: rgba(0, 212, 255, 0.40);
+
+  --color-neon-purple: #A855F7;
+  --color-neon-purple-soft: #8B5CF6;
+  --color-neon-purple-bg: rgba(168, 85, 247, 0.10);
+  --color-neon-purple-glow: rgba(168, 85, 247, 0.40);
+
+  /* RPG Ranks */
+  --color-rank-bronze: #CD7F32;
+  --color-rank-bronze-bg: rgba(205, 127, 50, 0.15);
+  --color-rank-silver: #C0C0C0;
+  --color-rank-silver-bg: rgba(192, 192, 192, 0.15);
+  --color-rank-gold: #FFD700;
+  --color-rank-gold-bg: rgba(255, 215, 0, 0.15);
+  --color-rank-platinum: #E5E4E2;
+  --color-rank-platinum-bg: rgba(229, 228, 226, 0.15);
+  --color-rank-diamond: #B9F2FF;
+  --color-rank-diamond-bg: rgba(185, 242, 255, 0.15);
+  --color-rank-icon: #FF00FF;
+  --color-rank-icon-bg: rgba(255, 0, 255, 0.15);
+
+  /* Typography Scale */
+  --text-7xl: 4.5rem;
+  /* Level Up */
+  --text-5xl: 3rem;
+  /* KPIs */
+
+  /* Spacing */
+  --spacing-1: 0.25rem;
+  --spacing-2: 0.5rem;
+  --spacing-3: 0.75rem;
+  --spacing-4: 1rem;
+  --spacing-6: 1.5rem;
+  --spacing-8: 2rem;
 
   /* Radius */
-  --radius-sm: 6px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
-  --radius-2xl: 24px;
-  --radius: 16px;
-  /* Default for cards */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+  --radius-full: 9999px;
 
-  /* Shadows (Dark) */
-  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.3);
-  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
-  --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.6);
+  /* Layout Dimensions (DS v2.0) */
+  --sidebar-width: 240px;
+  --header-height: 64px;
+  --kanban-column-width: 320px;
+  --kanban-column-gap: 16px;
+  --kanban-card-gap: 12px;
+  --sheet-width: 540px;
+  --player-card-width: 280px;
+  --gauge-size-lg: 240px;
 
-  /* Transitions */
-  --duration-fast: 100ms;
-  --duration-normal: 150ms;
-  --duration-slow: 250ms;
-  --ease-default: cubic-bezier(0.4, 0, 0.2, 1);
+  /* Text Colors */
+  --color-text-primary: #FFFFFF;
+  --color-text-secondary: #B0B0B0;
+  --color-text-muted: #888888;
+  --color-text-disabled: #555555;
+  --color-text-inverse: #0F0F0F;
 
-  /* Semantic Colors */
-  --color-success: #4ADE80;
-  --color-warning: #FBBF24;
-  --color-error: #F43F5E;
-  --color-info: #44CCFF;
+  /* Border Colors */
+  --color-border-subtle: rgba(255, 255, 255, 0.05);
+  --color-border-default: rgba(255, 255, 255, 0.10);
+  --color-border-strong: rgba(255, 255, 255, 0.20);
+  --color-border-accent: rgba(222, 204, 168, 0.30);
+  --color-border-focus: rgba(222, 204, 168, 0.50);
 
-  /* DS Semantic Tokens */
-  --bg-base: #181818;
-  --bg-subtle: #1C1C1C;
-  --bg-muted: #141414;
-  --bg-elevated: #222222;
-  --bg-hover: #2A2A2A;
-  --bg-active: #333333;
+  /* Animations */
+  --animate-pulse: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 
-  --fg-primary: #FFFFFF;
-  --fg-secondary: #E5E5E5;
-  --fg-muted: #A3A3A3;
-  --fg-subtle: #8A8A8A;
-  --fg-disabled: #525252;
+  @keyframes pulse {
 
-  --border-subtle: rgba(255, 255, 255, 0.06);
-  --border-default: rgba(255, 255, 255, 0.10);
-  --border-strong: rgba(255, 255, 255, 0.16);
-  --border-focus: rgba(255, 255, 255, 0.24);
+    0%,
+    100% {
+      opacity: 1;
+    }
 
-  /* Accent Champagne */
-  --accent: #DECCA8;
-  --accent-hover: #E8D8B8;
-  --accent-muted: #B09878;
-  --accent-subtle: rgba(222, 204, 168, 0.12);
-  --gradient-accent: linear-gradient(135deg, #E8D8B8 0%, #C8AC8C 100%);
-
-  /* Green */
-  --green-light: #73BA7F;
-  --green-dark: #098545;
-  --gradient-green: linear-gradient(90deg, #098545 0%, #73BA7F 100%);
-
-  /* Semantic Subtle Backgrounds */
-  --success-subtle: rgba(74, 222, 128, 0.12);
-  --warning-subtle: rgba(251, 191, 36, 0.12);
-  --error-subtle: rgba(244, 63, 94, 0.12);
-  --info-subtle: rgba(68, 204, 255, 0.12);
+    50% {
+      opacity: 0.5;
+    }
+  }
 }
 
 /* Base Layer */
 @layer base {
   body {
-    @apply bg-background text-foreground antialiased;
+    @apply bg-bg-base text-white antialiased selection:bg-accent/30;
     font-family: var(--font-sans);
-    font-feature-settings: "ss01", "ss02", "cv01", "cv02";
+    background-image:
+      radial-gradient(circle at 50% 0%, rgba(222, 204, 168, 0.05) 0%, transparent 40%),
+      radial-gradient(circle at 10% 100%, rgba(0, 255, 136, 0.02) 0%, transparent 40%);
+    background-attachment: fixed;
   }
 
   /* Custom Scrollbar */
@@ -141,72 +164,96 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--color-glass-bg-hover);
     border-radius: 9999px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.2);
+    background: var(--color-glass-border);
   }
 }
 
-@utility custom-scrollbar {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
-}
+/* Custom Utilities */
+@layer utilities {
+  .glass {
+    background: var(--color-glass-bg);
+    backdrop-filter: blur(var(--glass-blur));
+    border: 1px solid var(--color-glass-border);
+  }
 
-/* DS Utilities */
-@utility rounded-pill {
-  border-radius: 9999px;
-}
+  .glass-hover:hover {
+    background: var(--color-glass-bg-hover);
+  }
 
-@utility text-display-1 {
-  font-family: var(--font-display);
-  font-size: 68px;
-  font-weight: 400;
-  letter-spacing: -0.03em;
-  line-height: 1.05;
-}
+  .text-gradient-accent {
+    background: linear-gradient(135deg, var(--color-accent), var(--color-accent-dark));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
 
-@utility text-display-2 {
-  font-family: var(--font-display);
-  font-size: 48px;
-  font-weight: 400;
-  letter-spacing: -0.02em;
-  line-height: 1.1;
-}
+  .glow-accent {
+    box-shadow: 0 0 20px var(--color-accent-glow);
+  }
 
-@utility text-display-3 {
-  font-family: var(--font-display);
-  font-size: 32px;
-  font-weight: 400;
-  letter-spacing: -0.02em;
-  line-height: 1.15;
-}
+  .glow-green {
+    box-shadow: 0 0 20px var(--color-neon-green-glow);
+  }
 
-@utility overline {
-  font-family: var(--font-sans);
-  font-size: 12px;
-  font-weight: 300;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--green-light);
-}
+  .glow-yellow {
+    box-shadow: 0 0 20px var(--color-neon-yellow-glow);
+  }
 
-@utility label {
-  font-family: var(--font-sans);
-  font-size: 12px;
-  font-weight: 300;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--fg-muted);
-}
+  .glow-orange {
+    box-shadow: 0 0 20px var(--color-neon-orange-glow);
+  }
 
-@utility caption {
-  font-family: var(--font-sans);
-  font-size: 11px;
-  font-weight: 300;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--fg-subtle);
+  .glow-red {
+    box-shadow: 0 0 20px var(--color-neon-red-glow);
+  }
+
+  .glow-cyan {
+    box-shadow: 0 0 20px var(--color-neon-cyan-glow);
+  }
+
+  .glow-purple {
+    box-shadow: 0 0 20px var(--color-neon-purple-glow);
+  }
+
+  /* Shorthand for shadow utilities */
+  .shadow-glow-accent {
+    box-shadow: 0 0 20px var(--color-accent-glow);
+  }
+
+  .shadow-neon-green-glow {
+    box-shadow: 0 0 20px var(--color-neon-green-glow);
+  }
+
+  .shadow-neon-cyan-glow {
+    box-shadow: 0 0 20px var(--color-neon-cyan-glow);
+  }
+
+  .shadow-neon-red-glow {
+    box-shadow: 0 0 20px var(--color-neon-red-glow);
+  }
+
+  .font-display {
+    font-family: var(--font-numbers), sans-serif;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
 }

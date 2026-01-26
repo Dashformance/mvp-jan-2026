@@ -1,1029 +1,1131 @@
-# VISUALIZEN DESIGN SYSTEM v3.1
-## Inter Display Edition — Dual Theme
+# Dashformance Design System v1.0
+
+> **CRM de Prospecção B2B para o Mercado Brasileiro**  
+> **Versão:** 1.0.0  
+> **Última Atualização:** Janeiro 2026  
+> **Stack:** Next.js 16 + React 19 + TailwindCSS v4 + Radix UI
 
 ---
 
-## Índice
+## Sumário
 
-1. [Filosofia](#1-filosofia)
-2. [Tipografia](#2-tipografia)
-3. [Cores](#3-cores)
-4. [Espaçamento](#4-espaçamento)
-5. [Border Radius](#5-border-radius)
-6. [Sombras](#6-sombras)
-7. [Transições](#7-transições)
-8. [Componentes](#8-componentes)
-9. [Layouts](#9-layouts)
-10. [Regras de Uso do Accent](#10-regras-de-uso-do-accent)
-11. [Responsividade](#11-responsividade)
-12. [Checklist de Implementação](#12-checklist-de-implementação)
+1. [Fundamentos](#1-fundamentos)
+2. [Paleta de Cores](#2-paleta-de-cores)
+3. [Tipografia](#3-tipografia)
+4. [Espaçamento & Grid](#4-espaçamento--grid)
+5. [Componentes Base](#5-componentes-base)
+6. [Componentes de Negócio](#6-componentes-de-negócio)
+7. [Padrões de Interação](#7-padrões-de-interação)
+8. [Estados & Feedback](#8-estados--feedback)
+9. [Acessibilidade](#9-acessibilidade)
+10. [Tokens CSS](#10-tokens-css)
 
 ---
 
-## 1. Filosofia
+## 1. Fundamentos
 
-### Conceito
-**"Contraste Sofisticado"** — Um sistema de design premium que combina minimalismo funcional com elegância visual. Inspirado em Cartesia Sonic (dark) e V7 Labs (light).
+### 1.1 Filosofia de Design
 
-### Princípios
+O Dashformance adota a estética **"Liquid Glass + Champagne"**, caracterizada por:
 
-| Princípio | Descrição |
+- **Profundidade visual** através de camadas com transparência
+- **Elegância minimalista** com tons escuros e acentos dourados
+- **Glassmorphism sutil** para elevação de elementos
+- **Microinterações fluidas** que guiam o usuário
+
+### 1.2 Princípios
+
+| Princípio | Aplicação |
 |-----------|-----------|
-| **Clareza** | Hierarquia visual clara com tipografia bem definida |
-| **Respiração** | Espaçamento generoso entre elementos |
-| **Contraste** | Botões brancos/pretos como destaque principal |
-| **Consistência** | Uma família tipográfica (Inter) em todo o sistema |
-| **Premium** | Visual sofisticado sem excessos decorativos |
+| **Clareza** | Informação hierarquizada, sem ruído visual |
+| **Eficiência** | Ações principais sempre acessíveis |
+| **Consistência** | Padrões repetidos em toda a aplicação |
+| **Feedback** | Toda ação tem resposta visual imediata |
 
-### Referências Visuais
-- **Dark Theme:** Cartesia.ai/sonic, Linear, Vercel
-- **Light Theme:** V7Labs.com/agents, Notion, Stripe
+### 1.3 Diretrizes Gerais
 
----
-
-## 2. Tipografia
-
-### Font Stack
-
-```css
-/* Display & UI */
---font-display: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
---font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-
-/* Código (apenas quando necessário) */
---font-mono: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
+```
+✓ Usar fundos escuros para reduzir fadiga visual
+✓ Reservar cor de destaque (champagne) para CTAs e métricas importantes
+✓ Manter contraste mínimo de 4.5:1 para texto
+✓ Bordas sutis (white/5 a white/10) para separação de elementos
+✗ Evitar gradientes coloridos em excesso
+✗ Evitar sombras pesadas (preferir bordas e glassmorphism)
 ```
 
-### Google Fonts Import
-
-```html
-<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
-```
-
-> **Nota:** Inter com `opsz` (optical sizing) ativado otimiza automaticamente para tamanhos grandes, funcionando como "Inter Display".
-
 ---
 
-### Escala Tipográfica
+## 2. Paleta de Cores
 
-| Token | Tamanho | Uso |
-|-------|---------|-----|
-| `--text-xs` | 11px | Captions, metadata |
-| `--text-sm` | 13px | Body principal (Cartesia) |
-| `--text-base` | 14px | UI elements |
-| `--text-md` | 15px | Body alternativo |
-| `--text-lg` | 16px | Subheadings |
-| `--text-xl` | 18px | Lead text |
-| `--text-2xl` | 24px | Headings pequenos |
-| `--text-3xl` | 32px | Section titles |
-| `--text-4xl` | 48px | H2 (Cartesia) |
-| `--text-5xl` | 56px | Display |
-| `--text-6xl` | 68px | H1 (Cartesia) |
-| `--text-7xl` | 80px | Hero display |
-
----
-
-### Pesos
-
-| Token | Valor | Uso |
-|-------|-------|-----|
-| `--weight-light` | 300 | Labels técnicos, overlines |
-| `--weight-regular` | 400 | Body, headlines display |
-| `--weight-medium` | 500 | Botões, links, nav |
-| `--weight-semibold` | 600 | Títulos de cards, emphasis |
-| `--weight-bold` | 700 | Logo highlight |
-
----
-
-### Letter Spacing
-
-| Token | Valor | Uso |
-|-------|-------|-----|
-| `--tracking-tighter` | -0.03em | Display 1 (68px+) |
-| `--tracking-tight` | -0.02em | Display 2-3, headings |
-| `--tracking-normal` | 0 | Body text |
-| `--tracking-wide` | 0.02em | UI elements |
-| `--tracking-wider` | 0.05em | Small labels |
-| `--tracking-widest` | 0.1em | Overlines, badges |
-
----
-
-### Estilos Tipográficos
-
-#### Display (Headlines)
+### 2.1 Cores Primárias
 
 ```css
-.display-1 {
-    font-family: var(--font-display);
-    font-size: 68px;
-    font-weight: 400;
-    letter-spacing: -0.03em;
-    line-height: 1.05;
+/* Fundos */
+--color-bg-base: #0F0F0F;           /* Fundo da aplicação */
+--color-bg-primary: #181818;        /* Fundo principal de seções */
+--color-bg-elevated: #222222;       /* Cards, modais, inputs */
+--color-bg-surface: #1C1C1C;        /* Superfícies intermediárias */
+--color-bg-hover: #2A2A2A;          /* Estado hover */
+--color-bg-active: #333333;         /* Estado active/pressed */
+
+/* Acento - Champagne */
+--color-accent: #DECCA8;            /* Cor principal de destaque */
+--color-accent-light: #E8DBC4;      /* Variação clara */
+--color-accent-dark: #B8A882;       /* Variação escura */
+--color-accent-muted: rgba(222, 204, 168, 0.15); /* Para fundos sutis */
+
+/* Texto */
+--color-text-primary: #FFFFFF;      /* Texto principal */
+--color-text-secondary: #B0B0B0;    /* Texto secundário */
+--color-text-muted: #888888;        /* Texto desabilitado/sutil */
+--color-text-inverse: #0F0F0F;      /* Texto sobre fundo claro */
+
+/* Bordas */
+--color-border-subtle: rgba(255, 255, 255, 0.05);  /* Divisórias sutis */
+--color-border-default: rgba(255, 255, 255, 0.10); /* Bordas padrão */
+--color-border-strong: rgba(255, 255, 255, 0.20);  /* Bordas de foco */
+--color-border-accent: rgba(222, 204, 168, 0.30);  /* Bordas de destaque */
+```
+
+### 2.2 Cores Semânticas
+
+```css
+/* Status do Pipeline */
+--color-status-inbox: #6B7280;      /* Lista Fria - Cinza */
+--color-status-new: #22C55E;        /* Qualificado - Verde */
+--color-status-attempted: #F59E0B;  /* Tentativa - Âmbar */
+--color-status-contacted: #3B82F6;  /* Contatado - Azul */
+--color-status-meeting: #8B5CF6;    /* Reunião - Roxo */
+--color-status-won: #10B981;        /* Ganho - Esmeralda */
+--color-status-lost: #EF4444;       /* Perdido - Vermelho */
+--color-status-disqualified: #6B7280; /* Desqualificado - Cinza */
+
+/* Feedback */
+--color-success: #22C55E;
+--color-success-bg: rgba(34, 197, 94, 0.15);
+--color-warning: #F59E0B;
+--color-warning-bg: rgba(245, 158, 11, 0.15);
+--color-error: #EF4444;
+--color-error-bg: rgba(239, 68, 68, 0.15);
+--color-info: #3B82F6;
+--color-info-bg: rgba(59, 130, 246, 0.15);
+
+/* Score de Lead */
+--color-score-high: #22C55E;        /* Score 8-10 */
+--color-score-medium: #F59E0B;      /* Score 4-7 */
+--color-score-low: #EF4444;         /* Score 0-3 */
+```
+
+### 2.3 Gradientes
+
+```css
+/* Gradiente principal (CTAs, destaques) */
+--gradient-accent: linear-gradient(135deg, #DECCA8 0%, #B8A882 100%);
+
+/* Gradiente de fundo (cards especiais) */
+--gradient-surface: linear-gradient(180deg, #222222 0%, #1C1C1C 100%);
+
+/* Glassmorphism */
+--gradient-glass: linear-gradient(
+  135deg,
+  rgba(255, 255, 255, 0.05) 0%,
+  rgba(255, 255, 255, 0.02) 100%
+);
+
+/* Glow effects */
+--glow-accent: 0 0 20px rgba(222, 204, 168, 0.3);
+--glow-success: 0 0 15px rgba(34, 197, 94, 0.25);
+--glow-warning: 0 0 15px rgba(245, 158, 11, 0.25);
+--glow-error: 0 0 15px rgba(239, 68, 68, 0.25);
+```
+
+### 2.4 Aplicação por Contexto
+
+| Contexto | Fundo | Texto | Borda | Acento |
+|----------|-------|-------|-------|--------|
+| **Página** | bg-base | text-primary | - | - |
+| **Card** | bg-elevated | text-primary | border-subtle | - |
+| **Input** | bg-elevated | text-primary | border-default | accent (focus) |
+| **Modal** | bg-surface | text-primary | border-default | - |
+| **Dropdown** | bg-elevated | text-secondary | border-subtle | bg-hover |
+
+---
+
+## 3. Tipografia
+
+### 3.1 Família Tipográfica
+
+```css
+--font-family-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+--font-family-mono: 'JetBrains Mono', 'Fira Code', monospace;
+```
+
+### 3.2 Escala Tipográfica
+
+```css
+--font-size-xs: 0.75rem;     /* 12px */
+--font-size-sm: 0.875rem;    /* 14px */
+--font-size-base: 1rem;      /* 16px */
+--font-size-lg: 1.125rem;    /* 18px */
+--font-size-xl: 1.25rem;     /* 20px */
+--font-size-2xl: 1.5rem;     /* 24px */
+--font-size-3xl: 1.875rem;   /* 30px */
+--font-size-4xl: 2.25rem;    /* 36px */
+
+--font-weight-normal: 400;
+--font-weight-medium: 500;
+--font-weight-semibold: 600;
+--font-weight-bold: 700;
+
+--line-height-tight: 1.25;
+--line-height-normal: 1.5;
+--line-height-relaxed: 1.75;
+```
+
+### 3.3 Estilos de Texto
+
+| Estilo | Tamanho | Peso | Uso |
+|--------|---------|------|-----|
+| **Display** | 4xl | Bold | KPIs, números de destaque |
+| **H1** | 2xl | Semibold | Títulos de página |
+| **H2** | xl | Semibold | Títulos de seção |
+| **H3** | lg | Medium | Subtítulos, cards |
+| **Body** | base | Normal | Texto corrido |
+| **Body Small** | sm | Normal | Descrições |
+| **Caption** | xs | Medium | Labels, metadados |
+| **Mono** | sm | Normal | CNPJs, códigos |
+
+---
+
+## 4. Espaçamento & Grid
+
+### 4.1 Sistema de Espaçamento
+
+```css
+--spacing-1: 0.25rem;   /* 4px */
+--spacing-2: 0.5rem;    /* 8px */
+--spacing-3: 0.75rem;   /* 12px */
+--spacing-4: 1rem;      /* 16px */
+--spacing-5: 1.25rem;   /* 20px */
+--spacing-6: 1.5rem;    /* 24px */
+--spacing-8: 2rem;      /* 32px */
+--spacing-10: 2.5rem;   /* 40px */
+--spacing-12: 3rem;     /* 48px */
+--spacing-16: 4rem;     /* 64px */
+```
+
+### 4.2 Grid do Layout
+
+```css
+--sidebar-width: 240px;
+--header-height: 64px;
+--content-max-width: 1440px;
+--kanban-column-width: 320px;
+--kanban-column-gap: 16px;
+--kanban-card-gap: 12px;
+```
+
+### 4.3 Breakpoints
+
+```css
+--breakpoint-sm: 640px;
+--breakpoint-md: 768px;
+--breakpoint-lg: 1024px;
+--breakpoint-xl: 1280px;
+--breakpoint-2xl: 1536px;
+```
+
+---
+
+## 5. Componentes Base
+
+### 5.1 Button
+
+**Variantes:**
+
+```tsx
+<Button variant="primary">Salvar Lead</Button>      // Fundo champagne
+<Button variant="secondary">Cancelar</Button>       // Fundo #222, borda
+<Button variant="ghost">Ver mais</Button>           // Transparente
+<Button variant="destructive">Excluir</Button>      // Vermelho sutil
+<Button variant="accent">Importar Leads</Button>    // Gradiente accent
+```
+
+**Especificação:**
+
+```css
+.button {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: 0.5rem;
+  transition: all 150ms ease;
 }
 
-.display-2 {
-    font-family: var(--font-display);
-    font-size: 48px;
-    font-weight: 400;
-    letter-spacing: -0.02em;
-    line-height: 1.1;
+.button-primary {
+  background: #DECCA8;
+  color: #0F0F0F;
+}
+.button-primary:hover {
+  background: #E8DBC4;
 }
 
-.display-3 {
-    font-family: var(--font-display);
-    font-size: 32px;
-    font-weight: 400;
-    letter-spacing: -0.02em;
-    line-height: 1.15;
-}
-```
-
-#### Headings
-
-```css
-.heading {
-    font-family: var(--font-sans);
-    font-size: 24px;
-    font-weight: 600;
-    letter-spacing: -0.01em;
+.button-secondary {
+  background: #222222;
+  color: #FFFFFF;
+  border: 1px solid rgba(255, 255, 255, 0.10);
 }
 
-.subheading {
-    font-family: var(--font-sans);
-    font-size: 18px;
-    font-weight: 500;
+.button-ghost {
+  background: transparent;
+  color: #B0B0B0;
 }
-```
-
-#### Body
-
-```css
-.body {
-    font-family: var(--font-sans);
-    font-size: 13px;
-    font-weight: 400;
-    line-height: 1.6;
+.button-ghost:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: #FFFFFF;
 }
 
-.body-lg {
-    font-family: var(--font-sans);
-    font-size: 15px;
-    font-weight: 400;
-    line-height: 1.7;
-}
-```
-
-#### Labels Técnicos (Inter Light — NÃO mono)
-
-```css
-.overline {
-    font-family: var(--font-sans);
-    font-size: 12px;
-    font-weight: 300;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--green-light);
-}
-
-.label {
-    font-family: var(--font-sans);
-    font-size: 12px;
-    font-weight: 300;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--fg-muted);
-}
-
-.caption {
-    font-family: var(--font-sans);
-    font-size: 11px;
-    font-weight: 300;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--fg-subtle);
-}
-```
-
-> ⚠️ **IMPORTANTE:** Labels e overlines usam **Inter Light (weight 300)**, não fonte monospace. Isso mantém elegância e consistência.
-
----
-
-## 3. Cores
-
-### Dark Theme (Default)
-Baseado em **Cartesia Sonic**
-
-#### Neutral Scale
-
-| Token | Hex | Uso |
-|-------|-----|-----|
-| `--neutral-0` | #000000 | Pure black |
-| `--neutral-1` | #0D0D0D | Darkest surfaces |
-| `--neutral-2` | #181818 | **Background principal** |
-| `--neutral-3` | #1C1C1C | Subtle background |
-| `--neutral-4` | #262626 | Elevated surfaces |
-| `--neutral-5` | #303030 | Hover states |
-| `--neutral-6` | #444444 | Disabled elements |
-| `--neutral-7` | #525252 | Borders strong |
-| `--neutral-8` | #6B6B6B | Muted text |
-| `--neutral-9` | #8A8A8A | Secondary text |
-| `--neutral-10` | #A8A8A8 | — |
-| `--neutral-11` | #D4D4D4 | Primary text alt |
-| `--neutral-12` | #FFFFFF | **Primary text** |
-
-#### Semantic Backgrounds
-
-```css
---bg-base: #181818;
---bg-subtle: #1C1C1C;
---bg-muted: #141414;
---bg-elevated: #222222;
---bg-hover: #2A2A2A;
---bg-active: #333333;
-```
-
-#### Semantic Foregrounds
-
-```css
---fg-primary: #FFFFFF;
---fg-secondary: #D4D4D4;
---fg-muted: #8A8A8A;
---fg-subtle: #6B6B6B;
---fg-disabled: #444444;
-```
-
-#### Borders
-
-```css
---border-subtle: rgba(255, 255, 255, 0.06);
---border-default: rgba(255, 255, 255, 0.10);
---border-strong: rgba(255, 255, 255, 0.16);
---border-focus: rgba(255, 255, 255, 0.24);
-```
-
----
-
-### Light Theme
-Baseado em **V7 Labs Agents**
-
-#### Neutral Scale
-
-| Token | Hex | Uso |
-|-------|-----|-----|
-| `--neutral-0` | #FFFFFF | Pure white |
-| `--neutral-1` | #FAFAFA | Subtle surfaces |
-| `--neutral-2` | #F7F6F5 | **Background principal** |
-| `--neutral-3` | #F2F0ED | Muted background |
-| `--neutral-4` | #E8E6E3 | Hover states |
-| `--neutral-5` | #D9D7D4 | Borders |
-| `--neutral-6` | #C4C2BF | Disabled |
-| `--neutral-7` | #A8A6A3 | — |
-| `--neutral-8` | #8A8886 | Muted text |
-| `--neutral-9` | #6B6968 | Secondary text |
-| `--neutral-10` | #525150 | — |
-| `--neutral-11` | #333332 | Primary text alt |
-| `--neutral-12` | #292929 | **Primary text** |
-
-#### Semantic (Light)
-
-```css
---bg-base: #F7F6F5;
---bg-subtle: #FAFAFA;
---bg-muted: #F2F0ED;
---bg-elevated: #FFFFFF;
---bg-hover: #E8E6E3;
---bg-active: #D9D7D4;
-
---fg-primary: #292929;
---fg-secondary: #525150;
---fg-muted: #6B6968;
---fg-subtle: #8A8886;
---fg-disabled: #C4C2BF;
-
---border-subtle: rgba(0, 0, 0, 0.04);
---border-default: rgba(0, 0, 0, 0.08);
---border-strong: rgba(0, 0, 0, 0.14);
---border-focus: rgba(0, 0, 0, 0.24);
-```
-
----
-
-### Accent: Champagne
-
-| Token | Hex | Uso |
-|-------|-----|-----|
-| `--champagne-7` | #B09878 | Muted |
-| `--champagne-8` | #C8AC8C | — |
-| `--champagne-9` | #DECCA8 | **Primary accent** |
-| `--champagne-10` | #E8D8B8 | Hover |
-| `--champagne-11` | #F2E8D4 | Light |
-| `--champagne-12` | #FCF8F0 | Lightest |
-
-```css
---accent: #DECCA8;
---accent-hover: #E8D8B8;
---accent-muted: #B09878;
---accent-subtle: rgba(222, 204, 168, 0.12);
---gradient-accent: linear-gradient(135deg, #E8D8B8 0%, #C8AC8C 100%);
-```
-
----
-
-### Accent: Green (Cartesia Style)
-
-```css
---green-light: rgb(115, 186, 127);  /* #73BA7F */
---green-dark: rgb(9, 133, 69);      /* #098545 */
---gradient-green: linear-gradient(90deg, #098545 0%, #73BA7F 100%);
-```
-
-**Uso:** Overlines, banners promocionais, badges de status, ícones de check.
-
----
-
-### Accent: Blue (Links)
-
-```css
---blue-link: #44CCFF;
---blue-primary: #0099FF;
-```
-
-**Uso:** Links em texto, estados de informação.
-
----
-
-### Cores Semânticas
-
-| Token | Hex | Subtle | Uso |
-|-------|-----|--------|-----|
-| `--success` | #4ADE80 | rgba(74,222,128,0.12) | Sucesso, ativo |
-| `--warning` | #FBBF24 | rgba(251,191,36,0.12) | Aviso, pendente |
-| `--error` | #F43F5E | rgba(244,63,94,0.12) | Erro, perigo |
-| `--info` | #44CCFF | rgba(68,204,255,0.12) | Informação |
-
----
-
-### Multi-Color (V7 Labs Style)
-
-Para categorias e badges coloridos:
-
-```css
---color-orange: #FF683D;
---color-orange-burnt: #EC580A;
---color-green-v7: #16A34A;
---color-blue-v7: #2663EB;
---color-purple: #7C3AED;
---color-gold: #CE8C04;
---color-pink: #DB2777;
---color-teal: #0D9488;
-```
-
----
-
-## 4. Espaçamento
-
-Base: **12px** (Cartesia)
-
-| Token | Valor | Uso |
-|-------|-------|-----|
-| `--space-1` | 4px | Gaps mínimos |
-| `--space-2` | 8px | Padding interno pequeno |
-| `--space-3` | 12px | **Base** |
-| `--space-4` | 16px | Padding padrão |
-| `--space-5` | 20px | — |
-| `--space-6` | 24px | Sections internas |
-| `--space-8` | 32px | Cards padding |
-| `--space-10` | 40px | — |
-| `--space-12` | 48px | — |
-| `--space-16` | 64px | Sections médias |
-| `--space-20` | 80px | — |
-| `--space-24` | 96px | **Sections grandes** |
-
----
-
-## 5. Border Radius
-
-| Token | Valor | Uso |
-|-------|-------|-----|
-| `--radius-none` | 0px | Sem radius |
-| `--radius-sm` | 6px | Badges, tags |
-| `--radius-md` | 8px | Inputs pequenos |
-| `--radius-lg` | 12px | Cards, inputs |
-| `--radius-xl` | 16px | Cards grandes |
-| `--radius-2xl` | 24px | Modais, containers |
-| `--radius-full` | 9999px | **Botões (pills)**, avatares |
-
-> ⚠️ **Botões são sempre pills** (`border-radius: 9999px`)
-
----
-
-## 6. Sombras
-
-### Dark Theme
-
-```css
---shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.3);
---shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.3);
---shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
---shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
---shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.6);
-```
-
-### Light Theme
-
-```css
---shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
---shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.06);
---shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
---shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.10);
---shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.12);
-```
-
----
-
-## 7. Transições
-
-```css
---duration-fast: 100ms;
---duration-normal: 150ms;
---duration-slow: 250ms;
-
---ease-default: cubic-bezier(0.4, 0, 0.2, 1);
---ease-out: cubic-bezier(0, 0, 0.2, 1);
---ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
-```
-
----
-
-## 8. Componentes
-
-### Buttons
-
-#### Especificações Base
-
-```css
-.btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    padding: 14px 28px;
-    min-height: 52px;
-    border-radius: 9999px;  /* SEMPRE pill */
-    font-family: var(--font-sans);
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 150ms ease;
-    border: none;
+.button-destructive {
+  background: rgba(239, 68, 68, 0.15);
+  color: #EF4444;
 }
 ```
 
-#### Variantes
+**Tamanhos:**
 
-| Variante | Background | Color | Border | Uso |
-|----------|------------|-------|--------|-----|
-| **Primary** | `--fg-primary` (white) | `--bg-base` (black) | — | CTAs principais |
-| **Secondary** | transparent | `--fg-primary` | `--border-strong` | CTAs secundários |
-| **Ghost** | transparent | `--fg-muted` | — | Ações terciárias |
-| **Accent** | `--gradient-accent` | #1A1814 | — | **Landing page only** |
-| **Green** | `--gradient-green` | white | — | Banners, promos |
-| **Danger** | transparent | `--error` | error 30% | Ações destrutivas |
+| Tamanho | Padding | Font Size |
+|---------|---------|-----------|
+| sm | 6px 12px | 12px |
+| md | 8px 16px | 14px |
+| lg | 12px 24px | 16px |
 
-#### Tamanhos
-
-| Size | Padding | Min Height | Font Size |
-|------|---------|------------|-----------|
-| Small | 10px 20px | 40px | 13px |
-| Medium | 14px 28px | 52px | 14px |
-| Large | 18px 36px | 60px | 15px |
-
-#### Estados
-
-```css
-/* Hover */
-.btn-primary:hover {
-    opacity: 0.9;
-    transform: translateY(-1px);
-}
-
-/* Active */
-.btn:active {
-    transform: scale(0.98);
-}
-
-/* Disabled */
-.btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-```
-
----
-
-### Inputs
+### 5.2 Input
 
 ```css
 .input {
-    width: 100%;
-    padding: 14px 18px;
-    min-height: 52px;
-    background: var(--bg-elevated);
-    border: 1px solid var(--border-default);
-    border-radius: 9999px;  /* Pill */
-    font-family: var(--font-sans);
-    font-size: 14px;
-    color: var(--fg-primary);
-    transition: all 150ms ease;
+  width: 100%;
+  padding: 0.625rem 0.875rem;
+  background: #222222;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 0.5rem;
+  color: #FFFFFF;
+  font-size: 0.875rem;
 }
 
 .input::placeholder {
-    color: var(--fg-subtle);
-}
-
-.input:hover {
-    border-color: var(--border-strong);
+  color: #888888;
 }
 
 .input:focus {
-    outline: none;
-    background: var(--bg-muted);
-    border-color: var(--border-focus);
+  border-color: #DECCA8;
+  box-shadow: 0 0 0 3px rgba(222, 204, 168, 0.15);
+}
+
+.input-error {
+  border-color: #EF4444;
 }
 ```
 
-> **Nota:** Input focus usa `border-focus` (neutro), **NÃO** accent.
-
----
-
-### Badges
+### 5.3 Badge
 
 ```css
 .badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    padding: 6px 14px;
-    border-radius: 9999px;
-    font-family: var(--font-sans);
-    font-size: 11px;
-    font-weight: 300;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
+  padding: 0.125rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border-radius: 9999px;
 }
+
+.badge-success { background: rgba(34, 197, 94, 0.15); color: #22C55E; }
+.badge-warning { background: rgba(245, 158, 11, 0.15); color: #F59E0B; }
+.badge-error { background: rgba(239, 68, 68, 0.15); color: #EF4444; }
+.badge-info { background: rgba(59, 130, 246, 0.15); color: #3B82F6; }
+.badge-neutral { background: rgba(255, 255, 255, 0.10); color: #888888; }
 ```
 
-#### Variantes
-
-| Variante | Background | Color | Uso |
-|----------|------------|-------|-----|
-| Default | `--border-default` | `--fg-muted` | Rascunho |
-| Accent | `--accent-subtle` | `--accent` | **Publicado** |
-| Green | rgba(115,186,127,0.15) | `--green-light` | Novo |
-| Success | `--success-subtle` | `--success` | Ativo |
-| Warning | `--warning-subtle` | `--warning` | Pendente |
-| Error | `--error-subtle` | `--error` | Erro |
-
----
-
-### Cards
+### 5.4 Card
 
 ```css
 .card {
-    background: var(--bg-elevated);
-    border: 1px solid var(--border-subtle);
-    border-radius: 16px;
-    overflow: hidden;
-    transition: all 250ms ease;
+  background: #222222;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 0.75rem;
 }
 
-.card:hover {
-    border-color: var(--border-default);
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-lg);
+.card-header { padding: 1.25rem 1.5rem 0; }
+.card-content { padding: 1.25rem 1.5rem; }
+.card-footer {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
 ```
 
-#### Project Card
-
-```
-┌─────────────────────────────┐
-│ ┌─────────────────────────┐ │
-│ │      Thumbnail          │ │  160px height
-│ │           [BADGE]       │ │  Badge: top-right
-│ └─────────────────────────┘ │
-│                             │
-│  Card Title                 │  18px, semibold
-│  METADATA                   │  11px, light, uppercase
-│                             │
-└─────────────────────────────┘
-```
-
-#### Create Card
+### 5.5 Dialog / Modal
 
 ```css
-.card-create {
-    background: transparent;
-    border: 1.5px dashed var(--border-default);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: 240px;
-    cursor: pointer;
+.dialog-overlay {
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(4px);
 }
 
-.card-create:hover {
-    border-color: var(--border-strong);
-    background: var(--border-subtle);
+.dialog-content {
+  background: #1C1C1C;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  max-width: 500px;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+}
+```
+
+### 5.6 Sheet (Painel Lateral)
+
+```css
+.sheet-content {
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100%;
+  width: 100%;
+  max-width: 540px;
+  background: #1C1C1C;
+  border-left: 1px solid rgba(255, 255, 255, 0.10);
+  padding: 1.5rem;
+  box-shadow: -10px 0 40px rgba(0, 0, 0, 0.3);
+}
+```
+
+### 5.7 Table
+
+```css
+.table-header {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.table-head {
+  padding: 0.75rem 1rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #888888;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.table-row {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.table-row:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.table-cell {
+  padding: 1rem;
+  font-size: 0.875rem;
+  color: #FFFFFF;
+}
+```
+
+### 5.8 Tabs
+
+```css
+.tabs-list {
+  background: #181818;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 0.5rem;
+  padding: 0.25rem;
+}
+
+.tabs-trigger {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #888888;
+  border-radius: 0.375rem;
+}
+
+.tabs-trigger[data-state="active"] {
+  background: #222222;
+  color: #FFFFFF;
+}
+```
+
+### 5.9 Toast
+
+```css
+.toast {
+  background: #222222;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+}
+
+.toast-success { border-left: 3px solid #22C55E; }
+.toast-error { border-left: 3px solid #EF4444; }
+.toast-info { border-left: 3px solid #3B82F6; }
+```
+
+---
+
+## 6. Componentes de Negócio
+
+### 6.1 KanbanBoard
+
+```css
+.kanban-board {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 64px);
+}
+
+.kanban-header {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  display: flex;
+  justify-content: space-between;
+}
+
+.kanban-columns {
+  display: flex;
+  gap: 1rem;
+  padding: 1.5rem;
+  overflow-x: auto;
+  flex: 1;
+}
+```
+
+### 6.2 KanbanColumn
+
+```css
+.kanban-column {
+  flex-shrink: 0;
+  width: 320px;
+  background: #181818;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  max-height: 100%;
+}
+
+.kanban-column-header {
+  padding: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.kanban-column-content {
+  padding: 0.75rem;
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.kanban-column.drag-over {
+  background: rgba(222, 204, 168, 0.05);
+  border-color: rgba(222, 204, 168, 0.20);
+}
+```
+
+### 6.3 KanbanCard
+
+```css
+.kanban-card {
+  background: #222222;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 0.5rem;
+  padding: 0.875rem;
+  cursor: grab;
+  transition: all 150ms ease;
+}
+
+.kanban-card:hover {
+  border-color: rgba(255, 255, 255, 0.10);
+  transform: translateY(-1px);
+}
+
+/* Borda por score */
+.kanban-card.score-high { border-left: 3px solid #22C55E; }
+.kanban-card.score-medium { border-left: 3px solid #F59E0B; }
+.kanban-card.score-low { border-left: 3px solid #EF4444; }
+
+/* Glow para favoritos */
+.kanban-card.starred {
+  box-shadow: 0 0 20px rgba(222, 204, 168, 0.15);
+}
+
+.kanban-card-title {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #FFFFFF;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.kanban-card-meta {
+  font-family: var(--font-family-mono);
+  font-size: 0.75rem;
+  color: #888888;
+}
+```
+
+### 6.4 LeadSheet
+
+```css
+.lead-sheet {
+  max-width: 600px;
+}
+
+.lead-sheet-header {
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.lead-info-form {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.lead-info-row {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+.lead-info-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #888888;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+```
+
+### 6.5 QualificationForm
+
+```css
+.qualification-form {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 0.5rem;
+  padding: 1.25rem;
+}
+
+.qualification-form h4 {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #FFFFFF;
+  margin-bottom: 1rem;
+}
+
+.qualification-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.qualification-actions button {
+  flex: 1;
+}
+```
+
+### 6.6 KPI Card
+
+```css
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+}
+
+.kpi-card {
+  background: #222222;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+}
+
+.kpi-card-title {
+  font-size: 0.875rem;
+  color: #888888;
+}
+
+.kpi-card-value {
+  font-size: 2.25rem;
+  font-weight: 700;
+  color: #FFFFFF;
+}
+
+.kpi-card-change.positive { color: #22C55E; }
+.kpi-card-change.negative { color: #EF4444; }
+
+/* Variantes de ícone */
+.kpi-card.variant-success .kpi-card-icon {
+  background: rgba(34, 197, 94, 0.15);
+  color: #22C55E;
+}
+
+.kpi-card.variant-accent .kpi-card-icon {
+  background: rgba(222, 204, 168, 0.15);
+  color: #DECCA8;
+}
+```
+
+### 6.7 Charts Theme (Recharts)
+
+```tsx
+const chartTheme = {
+  background: 'transparent',
+  textColor: '#888888',
+  gridColor: 'rgba(255, 255, 255, 0.05)',
+  tooltipBg: '#222222',
+  tooltipBorder: 'rgba(255, 255, 255, 0.10)',
+};
+
+const statusColors = {
+  INBOX: '#6B7280',
+  NEW: '#22C55E',
+  ATTEMPTED: '#F59E0B',
+  CONTACTED: '#3B82F6',
+  MEETING: '#8B5CF6',
+  WON: '#10B981',
+  LOST: '#EF4444',
+};
+
+const userColors = {
+  João: '#DECCA8',
+  Vitor: '#3B82F6',
+};
+```
+
+### 6.8 ActivityTimeline
+
+```css
+.activity-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.activity-item {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.activity-icon {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.05);
+  color: #888888;
+}
+
+.activity-icon.type-call { background: rgba(59, 130, 246, 0.15); color: #3B82F6; }
+.activity-icon.type-email { background: rgba(139, 92, 246, 0.15); color: #8B5CF6; }
+.activity-icon.type-whatsapp { background: rgba(34, 197, 94, 0.15); color: #22C55E; }
+.activity-icon.type-meeting { background: rgba(222, 204, 168, 0.15); color: #DECCA8; }
+
+.activity-time {
+  font-size: 0.75rem;
+  color: #888888;
 }
 ```
 
 ---
 
-### Navigation
+## 7. Padrões de Interação
 
-#### Sidebar
+### 7.1 Drag and Drop
 
 ```css
-.nav-sidebar {
-    width: 260px;
-    background: var(--bg-muted);
-    border: 1px solid var(--border-subtle);
-    border-radius: 16px;
-    padding: 24px 20px;
+/* Card sendo arrastado */
+.kanban-card.is-dragging { opacity: 0.3; }
+
+/* Preview (DragOverlay) */
+.dragging-preview {
+  transform: rotate(3deg);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+  cursor: grabbing;
+}
+
+/* Coluna recebendo item */
+.kanban-column.drag-over {
+  background: rgba(222, 204, 168, 0.05);
+  border-color: rgba(222, 204, 168, 0.20);
+}
+
+/* Placeholder */
+.drop-placeholder {
+  height: 100px;
+  border: 2px dashed rgba(222, 204, 168, 0.30);
+  border-radius: 0.5rem;
+  background: rgba(222, 204, 168, 0.05);
 }
 ```
 
-#### Nav Item
+### 7.2 Seleção Múltipla
 
 ```css
-.nav-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 14px 16px;
-    border-radius: 12px;
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--fg-muted);
-    cursor: pointer;
-    transition: all 150ms ease;
+.bulk-actions-bar {
+  position: fixed;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 1.5rem;
+  background: #222222;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 0.75rem;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+  z-index: 50;
+}
+```
+
+### 7.3 Atalhos de Teclado
+
+| Atalho | Ação |
+|--------|------|
+| `Esc` | Fechar modal/sheet |
+| `Ctrl/Cmd + K` | Abrir busca |
+| `Ctrl/Cmd + N` | Novo lead |
+| `Delete` | Excluir selecionados |
+| `Enter` | Abrir lead |
+| `Space` | Selecionar/deselecionar |
+
+### 7.4 Hover & Focus States
+
+```css
+/* Hover */
+.button:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
 }
 
-.nav-item:hover {
-    background: var(--border-subtle);
-    color: var(--fg-secondary);
+.kanban-card:hover {
+  border-color: rgba(255, 255, 255, 0.15);
+  transform: translateY(-2px);
 }
 
-.nav-item.active {
-    background: var(--bg-elevated);
-    color: var(--fg-primary);
+/* Focus */
+*:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(222, 204, 168, 0.50);
 }
 
-/* Ícone ativo usa accent */
-.nav-item.active .nav-icon {
-    color: var(--accent);
-    opacity: 1;
+input:focus {
+  border-color: #DECCA8;
+  box-shadow: 0 0 0 3px rgba(222, 204, 168, 0.15);
 }
 ```
 
 ---
 
-### Tabs
+## 8. Estados & Feedback
+
+### 8.1 Loading States
 
 ```css
-.tabs {
-    display: flex;
-    gap: 2px;
-    padding: 4px;
-    background: var(--border-subtle);
-    border-radius: 9999px;
-    width: fit-content;
+/* Skeleton */
+.skeleton-line {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.05) 25%,
+    rgba(255, 255, 255, 0.10) 50%,
+    rgba(255, 255, 255, 0.05) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s infinite;
+  border-radius: 0.25rem;
 }
 
-.tab {
-    padding: 12px 24px;
-    border-radius: 9999px;
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--fg-muted);
-    cursor: pointer;
-    transition: all 150ms ease;
-    border: none;
-    background: transparent;
+@keyframes skeleton-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
 
-.tab:hover {
-    color: var(--fg-secondary);
+/* Spinner */
+.spinner {
+  width: 1.5rem;
+  height: 1.5rem;
+  border: 2px solid rgba(255, 255, 255, 0.10);
+  border-top-color: #DECCA8;
+  border-radius: 9999px;
+  animation: spin 0.8s linear infinite;
 }
 
-.tab.active {
-    background: var(--bg-elevated);
-    color: var(--fg-primary);
-    box-shadow: var(--shadow-sm);
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 ```
 
-> **Nota:** Tab ativo usa fundo `bg-elevated` (neutro), **NÃO** accent.
-
----
-
-### Logo
+### 8.2 Empty States
 
 ```css
-.logo {
-    font-family: var(--font-sans);
-    font-size: 14px;
-    font-weight: 500;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--fg-muted);
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 4rem 2rem;
+  color: #888888;
 }
 
-.logo span {
-    font-weight: 700;
-    background: var(--gradient-accent);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+.empty-state-icon {
+  width: 3rem;
+  height: 3rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+.empty-state h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #FFFFFF;
+  margin-bottom: 0.5rem;
 }
 ```
 
-**Resultado:** VISUALI**ZEN** (ZEN em gradient champagne)
-
----
-
-## 9. Layouts
-
-### Container
+### 8.3 Error States
 
 ```css
-.container {
-    max-width: 1168px;
-    margin: 0 auto;
-    padding: 0 24px;
+.error-state-icon {
+  width: 3rem;
+  height: 3rem;
+  color: #EF4444;
 }
 
-.container-narrow {
-    max-width: 800px;
+.error-message {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.75rem;
+  color: #EF4444;
 }
 ```
 
-### Section
+### 8.4 Animações
 
 ```css
-.section {
-    padding: 96px 0;
+--duration-fast: 150ms;
+--duration-normal: 250ms;
+--duration-slow: 400ms;
+
+--easing-default: cubic-bezier(0.4, 0, 0.2, 1);
+--easing-out: cubic-bezier(0, 0, 0.2, 1);
+--easing-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+/* Modal enter */
+@keyframes modal-enter {
+  from { opacity: 0; transform: translate(-50%, -50%) scale(0.95); }
+  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
 }
 
-.section-header {
-    text-align: center;
-    margin-bottom: 64px;
-}
-```
-
-### Dashboard Layout
-
-```
-┌──────────────────────────────────────────────────┐
-│ ┌────────┐ ┌──────────────────────────────────┐  │
-│ │        │ │ Header                      [CTA]│  │
-│ │  Side  │ ├──────────────────────────────────┤  │
-│ │  bar   │ │ Tabs                             │  │
-│ │        │ ├──────────────────────────────────┤  │
-│ │ 260px  │ │                                  │  │
-│ │        │ │     Content Grid                 │  │
-│ │        │ │                                  │  │
-│ └────────┘ └──────────────────────────────────┘  │
-└──────────────────────────────────────────────────┘
-```
-
----
-
-## 10. Regras de Uso do Accent
-
-### ✅ Permitido
-
-| Contexto | Elemento | Accent |
-|----------|----------|--------|
-| **Todos** | Logo "ZEN" | Gradient champagne |
-| **Todos** | Overlines (seções) | Verde |
-| **Dashboard** | Nav icon ativo | Cor champagne |
-| **Dashboard** | Badge "Publicado" | Champagne |
-| **Landing** | Palavra destaque no hero | Gradient champagne |
-| **Landing** | CTA buttons | Gradient champagne |
-| **Landing** | Feature icons | Champagne subtle bg |
-| **Landing** | Badge "Recomendado" | Champagne |
-
-### ❌ Proibido
-
-| Contexto | Elemento | Usar |
-|----------|----------|------|
-| **Dashboard** | Botão "Novo Projeto" | Primary (branco) |
-| **Dashboard** | Input focus | Border neutro |
-| **Dashboard** | Tab ativo | Background neutro |
-| **Dashboard** | Card hover | Border neutro |
-| **Dashboard** | Links | Cor neutra |
-| **Viewer** | **Tudo** | 100% neutro (whitelabel) |
-
----
-
-## 11. Responsividade
-
-### Breakpoints
-
-```css
-/* Mobile */
-@media (max-width: 640px) { }
-
-/* Tablet */
-@media (max-width: 900px) { }
-
-/* Desktop */
-@media (min-width: 901px) { }
-```
-
-### Comportamentos
-
-| Elemento | Desktop | Mobile |
-|----------|---------|--------|
-| Container | 1168px max | 100% - 48px padding |
-| Nav links | Visíveis | Hamburger menu |
-| Grids 3 col | 3 colunas | 1 coluna |
-| Grids 2 col | 2 colunas | 1 coluna |
-| Display 1 | 68px | 40px (clamp) |
-| Buttons | Inline | Full width |
-| Sidebar | 260px fixed | 100% stacked |
-
-### Clamp Typography
-
-```css
-.display-1 {
-    font-size: clamp(40px, 6vw, 68px);
+/* Sheet enter */
+@keyframes sheet-enter {
+  from { opacity: 0; transform: translateX(100%); }
+  to { opacity: 1; transform: translateX(0); }
 }
 
-.display-2 {
-    font-size: clamp(32px, 4vw, 48px);
-}
-
-.display-3 {
-    font-size: clamp(24px, 3vw, 32px);
+/* Toast enter */
+@keyframes toast-enter {
+  from { opacity: 0; transform: translateY(100%); }
+  to { opacity: 1; transform: translateY(0); }
 }
 ```
 
 ---
 
-## 12. Checklist de Implementação
+## 9. Acessibilidade
 
-### Tipografia
-- [ ] Inter carregada com optical sizing (opsz)
-- [ ] Display headlines weight 400 (não bold)
-- [ ] Labels usando Inter Light (300), não mono
-- [ ] Letter-spacing negativo em headlines grandes
-- [ ] Letter-spacing positivo em overlines/labels
+### 9.1 Contraste
 
-### Cores
-- [ ] Dark theme: bg #181818, fg #FFFFFF
-- [ ] Light theme: bg #F7F6F5, fg #292929
-- [ ] Accent champagne apenas onde permitido
-- [ ] Verde para overlines e status positivo
-- [ ] Borders usando rgba (não hex sólido)
+| Combinação | Ratio | Status |
+|------------|-------|--------|
+| #FFFFFF / #0F0F0F | 19.6:1 | ✅ AAA |
+| #FFFFFF / #181818 | 14.5:1 | ✅ AAA |
+| #FFFFFF / #222222 | 11.5:1 | ✅ AAA |
+| #B0B0B0 / #181818 | 8.1:1 | ✅ AAA |
+| #888888 / #181818 | 4.6:1 | ✅ AA |
+| #DECCA8 / #0F0F0F | 9.8:1 | ✅ AAA |
 
-### Componentes
-- [ ] Botões são pills (radius 9999px)
-- [ ] Botão primary é branco no dark / preto no light
-- [ ] Inputs são pills com foco neutro
-- [ ] Cards com hover: border + translateY
-- [ ] Tabs com background neutro no ativo
+### 9.2 Focus & ARIA
 
-### Layout
-- [ ] Container max 1168px
-- [ ] Sections com 96px de padding vertical
-- [ ] Espaçamento generoso entre elementos
-- [ ] Responsivo mobile-first
+```tsx
+// Skip link
+<a href="#main" className="skip-link">Pular para o conteúdo</a>
 
-### Micro-interações
-- [ ] Transitions 150ms ease
-- [ ] Hover translateY(-1px) em botões
-- [ ] Active scale(0.98) em botões
-- [ ] Smooth scroll em links âncora
+// Kanban ARIA
+<div role="region" aria-label="Pipeline de vendas">
+  <div role="list" aria-label="Coluna Qualificado">
+    <div role="listitem" aria-label="Lead: Empresa XYZ" tabIndex={0} />
+  </div>
+</div>
+
+// Screen reader only
+<span className="sr-only">Status: Qualificado</span>
+```
+
+### 9.3 Reduced Motion
+
+```css
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+```
 
 ---
 
-## Tokens CSS Completos
+## 10. Tokens CSS
+
+### 10.1 Variáveis Globais
 
 ```css
 :root {
-    /* Typography */
-    --font-display: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    --font-mono: 'JetBrains Mono', monospace;
+  /* Cores */
+  --color-bg-base: #0F0F0F;
+  --color-bg-primary: #181818;
+  --color-bg-elevated: #222222;
+  --color-bg-surface: #1C1C1C;
+  --color-bg-hover: #2A2A2A;
+  --color-accent: #DECCA8;
+  --color-accent-light: #E8DBC4;
+  --color-accent-dark: #B8A882;
+  --color-text-primary: #FFFFFF;
+  --color-text-secondary: #B0B0B0;
+  --color-text-muted: #888888;
+  --color-border-subtle: rgba(255, 255, 255, 0.05);
+  --color-border-default: rgba(255, 255, 255, 0.10);
+  --color-success: #22C55E;
+  --color-warning: #F59E0B;
+  --color-error: #EF4444;
+  --color-info: #3B82F6;
 
-    --text-xs: 11px;
-    --text-sm: 13px;
-    --text-base: 14px;
-    --text-md: 15px;
-    --text-lg: 16px;
-    --text-xl: 18px;
-    --text-2xl: 24px;
-    --text-3xl: 32px;
-    --text-4xl: 48px;
-    --text-5xl: 56px;
-    --text-6xl: 68px;
+  /* Tipografia */
+  --font-family-sans: 'Inter', sans-serif;
+  --font-family-mono: 'JetBrains Mono', monospace;
 
-    --weight-light: 300;
-    --weight-regular: 400;
-    --weight-medium: 500;
-    --weight-semibold: 600;
-    --weight-bold: 700;
+  /* Espaçamento */
+  --spacing-1: 0.25rem;
+  --spacing-2: 0.5rem;
+  --spacing-3: 0.75rem;
+  --spacing-4: 1rem;
+  --spacing-6: 1.5rem;
+  --spacing-8: 2rem;
 
-    --tracking-tighter: -0.03em;
-    --tracking-tight: -0.02em;
-    --tracking-normal: 0;
-    --tracking-wide: 0.02em;
-    --tracking-wider: 0.05em;
-    --tracking-widest: 0.1em;
+  /* Layout */
+  --header-height: 64px;
+  --kanban-column-width: 320px;
 
-    /* Dark Theme Colors */
-    --bg-base: #181818;
-    --bg-subtle: #1C1C1C;
-    --bg-muted: #141414;
-    --bg-elevated: #222222;
-    --bg-hover: #2A2A2A;
+  /* Bordas */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
 
-    --fg-primary: #FFFFFF;
-    --fg-secondary: #D4D4D4;
-    --fg-muted: #8A8A8A;
-    --fg-subtle: #6B6B6B;
-    --fg-disabled: #444444;
+  /* Sombras */
+  --glow-accent: 0 0 20px rgba(222, 204, 168, 0.3);
 
-    --border-subtle: rgba(255, 255, 255, 0.06);
-    --border-default: rgba(255, 255, 255, 0.10);
-    --border-strong: rgba(255, 255, 255, 0.16);
-    --border-focus: rgba(255, 255, 255, 0.24);
+  /* Animações */
+  --duration-fast: 150ms;
+  --duration-normal: 250ms;
+  --easing-default: cubic-bezier(0.4, 0, 0.2, 1);
 
-    /* Accent */
-    --accent: #DECCA8;
-    --accent-hover: #E8D8B8;
-    --accent-muted: #B09878;
-    --accent-subtle: rgba(222, 204, 168, 0.12);
-    --gradient-accent: linear-gradient(135deg, #E8D8B8 0%, #C8AC8C 100%);
+  /* Z-index */
+  --z-dropdown: 50;
+  --z-modal: 200;
+  --z-toast: 300;
+}
+```
 
-    /* Green */
-    --green-light: rgb(115, 186, 127);
-    --green-dark: rgb(9, 133, 69);
-    --gradient-green: linear-gradient(90deg, #098545 0%, #73BA7F 100%);
+### 10.2 Utilitários Tailwind
 
-    /* Semantic */
-    --success: #4ADE80;
-    --success-subtle: rgba(74, 222, 128, 0.12);
-    --warning: #FBBF24;
-    --warning-subtle: rgba(251, 191, 36, 0.12);
-    --error: #F43F5E;
-    --error-subtle: rgba(244, 63, 94, 0.12);
-    --info: #44CCFF;
-    --info-subtle: rgba(68, 204, 255, 0.12);
+```css
+@layer utilities {
+  .glass {
+    background: linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
+    backdrop-filter: blur(10px);
+  }
 
-    /* Spacing */
-    --space-1: 4px;
-    --space-2: 8px;
-    --space-3: 12px;
-    --space-4: 16px;
-    --space-5: 20px;
-    --space-6: 24px;
-    --space-8: 32px;
-    --space-10: 40px;
-    --space-12: 48px;
-    --space-16: 64px;
-    --space-20: 80px;
-    --space-24: 96px;
+  .scrollbar-thin::-webkit-scrollbar { width: 6px; }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+  }
 
-    /* Radius */
-    --radius-sm: 6px;
-    --radius-md: 8px;
-    --radius-lg: 12px;
-    --radius-xl: 16px;
-    --radius-2xl: 24px;
-    --radius-full: 9999px;
+  .text-gradient-accent {
+    background: linear-gradient(135deg, #DECCA8, #B8A882);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
 
-    /* Shadows */
-    --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.3);
-    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.3);
-    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
-    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
-    --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.6);
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
 
-    /* Transitions */
-    --duration-fast: 100ms;
-    --duration-normal: 150ms;
-    --duration-slow: 250ms;
-    --ease-default: cubic-bezier(0.4, 0, 0.2, 1);
-    --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    border: 0;
+  }
 }
 ```
 
 ---
 
-**Visualizen Design System v3.1**
-*Inter Display Edition — Dual Theme*
-*Última atualização: Janeiro 2026*
+## Apêndice: Mapeamento de Status
+
+| Status | ID | Cor | Ícone |
+|--------|-----|-----|-------|
+| Lista Fria | INBOX | #6B7280 | Inbox |
+| Qualificado | NEW | #22C55E | CheckCircle |
+| Tentativa | ATTEMPTED | #F59E0B | PhoneOutgoing |
+| Contatado | CONTACTED | #3B82F6 | MessageCircle |
+| Reunião | MEETING | #8B5CF6 | Calendar |
+| Ganho | WON | #10B981 | Trophy |
+| Perdido | LOST | #EF4444 | XCircle |
+| Desqualificado | DISQUALIFIED | #6B7280 | Ban |
+
+---
+
+## Checklist de Implementação
+
+**Componentes Base:**
+- [ ] Button (todas variantes)
+- [ ] Input, Select, Checkbox, RadioGroup, Slider
+- [ ] Badge, Card, Dialog, Sheet
+- [ ] Table, Tabs, Toast
+
+**Componentes de Negócio:**
+- [ ] KanbanBoard, Column, Card
+- [ ] LeadSheet, QualificationForm
+- [ ] KPICard, Charts
+- [ ] ActivityTimeline
+
+**Estados:**
+- [ ] Skeleton loaders, Spinners
+- [ ] Empty states, Error states
+
+**Acessibilidade:**
+- [ ] Focus states, ARIA labels
+- [ ] Keyboard navigation
+- [ ] Reduced motion
+
+---
+
+**Versão:** 1.0.0 | **Data:** Janeiro 2026  
+**Mantido por:** Equipe Dashformance

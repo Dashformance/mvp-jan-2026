@@ -6,6 +6,11 @@ import { CheckIcon } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 
+/**
+ * Superdash Design System - Checkbox
+ * - Unchecked: Dark glass border
+ * - Checked: Neon green fill
+ */
 function Checkbox({
   className,
   ...props
@@ -14,16 +19,26 @@ function Checkbox({
     <CheckboxPrimitive.Root
       data-slot="checkbox"
       className={cn(
-        "peer border-input dark:bg-input/30 data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground dark:data-[state=checked]:bg-primary data-[state=checked]:border-primary focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive size-4 shrink-0 rounded-[4px] border shadow-xs transition-shadow outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50",
+        // Base
+        "peer size-5 shrink-0 rounded-md",
+        "bg-zinc-900/60 border border-white/15",
+        "transition-all duration-200 outline-none",
+        // Checked state - neon green
+        "data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500",
+        "data-[state=checked]:shadow-[0_0_10px_rgba(16,185,129,0.4)]",
+        // Focus
+        "focus-visible:ring-2 focus-visible:ring-emerald-500/30",
+        // Disabled
+        "disabled:cursor-not-allowed disabled:opacity-50",
         className
       )}
       {...props}
     >
       <CheckboxPrimitive.Indicator
         data-slot="checkbox-indicator"
-        className="grid place-content-center text-current transition-none"
+        className="grid place-content-center text-black"
       >
-        <CheckIcon className="size-3.5" />
+        <CheckIcon className="size-3.5 stroke-[3]" />
       </CheckboxPrimitive.Indicator>
     </CheckboxPrimitive.Root>
   )

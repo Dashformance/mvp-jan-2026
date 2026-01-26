@@ -3,12 +3,11 @@ import * as React from "react"
 import { cn } from "@/lib/utils"
 
 /**
- * Visualizen DS v3.1 Input
- * - Background: bg-elevated (#222222)
- * - Border: border-default (rgba 10%)
- * - Focus: border-focus (rgba 24%) + bg-muted
- * - Radius: Pill (9999px)
- * - Height: 52px
+ * Superdash Design System - Input
+ * - Background: Translucent dark with blur
+ * - Border: Subtle white
+ * - Focus: Neon green ring
+ * - Radius: rounded-xl
  */
 function Input({ className, type, ...props }: React.ComponentProps<"input">) {
   return (
@@ -17,19 +16,7 @@ function Input({ className, type, ...props }: React.ComponentProps<"input">) {
       data-slot="input"
       className={cn(
         // Base styles
-        "w-full min-w-0 h-[52px] px-[18px] py-3.5",
-        "bg-[#222222] text-white placeholder:text-[#6B6B6B]",
-        "border border-[rgba(255,255,255,0.10)] rounded-full",
-        "text-sm font-normal",
-        "transition-all duration-150 ease-out outline-none",
-        // Hover
-        "hover:border-[rgba(255,255,255,0.16)]",
-        // Focus
-        "focus:bg-[#141414] focus:border-[rgba(255,255,255,0.24)]",
-        // Disabled
-        "disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed",
-        // File input
-        "file:text-foreground file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium",
+        "flex h-10 w-full rounded-md border border-border-default bg-bg-elevated px-3 py-2 text-base ring-offset-bg-base file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-text-primary placeholder:text-text-muted focus-visible:outline-none focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-accent/20 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm transition-all duration-200",
         className
       )}
       {...props}

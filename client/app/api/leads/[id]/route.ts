@@ -32,7 +32,13 @@ export const PATCH = withApiErrorHandling(async (req: NextRequest, { params }: {
 });
 
 export const DELETE = withApiErrorHandling(async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
-    const { id } = await params;
-    await LeadsService.remove(id);
-    return NextResponse.json({ success: true });
+    try {
+        const { id } = await params;
+        console.log(`[API] Soft deleting lead ${id}`);
+        await LeadsService.remove(id);
+        return NextResponse.json({ success: true });
+    } catch (error: any) {
+        console.error(`[API] Soft delete failed:`, error);
+        throw error;
+    }
 });

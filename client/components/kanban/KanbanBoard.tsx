@@ -1,10 +1,11 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, MouseSensor, TouchSensor, useSensor, useSensors } from "@dnd-kit/core";
+import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, MouseSensor, TouchSensor, useSensor, useSensors, closestCorners } from "@dnd-kit/core";
 import { KanbanColumn } from "./KanbanColumn";
 import { KanbanCard } from "./KanbanCard";
 import { createPortal } from "react-dom";
+import { useKanbanDnD } from "./hooks/use-kanban-dnd";
 
 // Column definitions for different views
 export const TRIAGEM_COLUMNS = [
@@ -18,7 +19,8 @@ export const PIPELINE_COLUMNS = [
     { id: "ATTEMPTED", title: "📞 Tentativa", color: "bg-amber-500/10 text-amber-400 border-amber-500/20" },
     { id: "CONTACTED", title: "💬 Contatado", color: "bg-indigo-500/10 text-indigo-400 border-indigo-500/20" },
     { id: "MEETING", title: "📅 Reunião", color: "bg-cyan-500/10 text-cyan-400 border-cyan-500/20" },
-    { id: "WON", title: "💰 Fechamento", color: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" },
+    { id: "WON", title: "💰 Em Fechamento", color: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" }, // Rename existing WON
+    { id: "SOLD", title: "🥂 Negócio Fechado!", color: "bg-emerald-600/20 text-emerald-300 border-emerald-500/30" }, // New Success Column
     { id: "LOST", title: "🔻 Perdido", color: "bg-rose-500/10 text-rose-400 border-rose-500/20" },
     { id: "DISQUALIFIED", title: "🚫 Desqualificado", color: "bg-gray-500/10 text-gray-500 border-gray-500/20" },
 ];
@@ -45,6 +47,7 @@ interface KanbanBoardProps {
     onAddLead?: (status: string) => void;
     onRenameColumn?: (id: string, newTitle: string) => void;
     onToggleFavorite?: (id: string, isStarred: boolean) => void;
+    onDelete?: (id: string) => void;
 }
 
 export function KanbanBoard({
@@ -58,25 +61,16 @@ export function KanbanBoard({
     onQuickContact,
     onAddLead,
     onRenameColumn,
-    onToggleFavorite
+    onToggleFavorite,
+    onDelete
 }: KanbanBoardProps) {
-    const [activeLead, setActiveLead] = useState<any | null>(null);
     const [isAddingColumn, setIsAddingColumn] = useState(false);
     const [newColumnName, setNewColumnName] = useState("");
 
-    const sensors = useSensors(
-        useSensor(MouseSensor, {
-            activationConstraint: {
-                distance: 10,
-            },
-        }),
-        useSensor(TouchSensor, {
-            activationConstraint: {
-                delay: 250,
-                tolerance: 5,
-            },
-        })
-    );
+    const { sensors, activeLead, handleDragStart, handleDragEnd } = useKanbanDnD({
+        leads,
+        onLeadUpdate
+    });
 
     // Group leads by status using provided column definitions
     const columns = useMemo(() => {
@@ -86,26 +80,6 @@ export function KanbanBoard({
         }));
         return grouped;
     }, [leads, columnDefs]);
-
-    const handleDragStart = (event: DragStartEvent) => {
-        const lead = leads.find(l => l.id === event.active.id);
-        if (lead) setActiveLead(lead);
-    };
-
-    const handleDragEnd = (event: DragEndEvent) => {
-        const { active, over } = event;
-        setActiveLead(null);
-
-        if (!over) return;
-
-        const leadId = active.id as string;
-        const newStatus = over.id as string;
-
-        const lead = leads.find(l => l.id === leadId);
-        if (lead && lead.status !== newStatus) {
-            onLeadUpdate(leadId, newStatus);
-        }
-    };
 
     const handleAddColumnSubmit = () => {
         if (newColumnName.trim()) {
@@ -119,10 +93,11 @@ export function KanbanBoard({
     return (
         <DndContext
             sensors={sensors}
+            collisionDetection={closestCorners}
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
         >
-            <div className="flex h-full min-h-0 gap-4 overflow-x-auto pb-4 custom-scrollbar">
+            <div className="flex h-full min-h-0 gap-4 overflow-x-auto pb-4 bg-bg-deep custom-scrollbar">
                 {columns.map((col) => (
                     <KanbanColumn
                         key={col.id}
@@ -138,14 +113,15 @@ export function KanbanBoard({
                         onAddLead={onAddLead}
                         onRenameColumn={onRenameColumn}
                         onToggleFavorite={onToggleFavorite}
+                        onDelete={onDelete}
                     />
                 ))}
 
                 {/* Add New Column Button / input */}
-                <div className="min-w-[50px] flex items-center justify-center">
+                <div className="min-w-[60px] flex items-center justify-center shrink-0">
                     {isAddingColumn ? (
-                        <div className="flex flex-col gap-2 w-[280px] bg-muted rounded-xl border border-white/5 p-4 animate-in fade-in zoom-in-95 duration-200">
-                            <span className="text-xs text-muted-foreground font-medium">Nome da nova coluna</span>
+                        <div className="flex flex-col gap-2 w-[320px] bg-bg-primary rounded-lg border border-border-subtle p-4 animate-in fade-in zoom-in-95 duration-200">
+                            <span className="text-xs text-text-muted font-medium">Nome da nova coluna</span>
                             <Input
                                 autoFocus
                                 value={newColumnName}
@@ -154,14 +130,14 @@ export function KanbanBoard({
                                     if (e.key === 'Enter') handleAddColumnSubmit();
                                     if (e.key === 'Escape') setIsAddingColumn(false);
                                 }}
-                                className="h-9 bg-black/20 border-white/10"
+                                className="h-9 bg-bg-elevated border-border-default"
                                 placeholder="Ex: Negociação"
                             />
                             <div className="flex justify-end gap-2 mt-2">
-                                <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => setIsAddingColumn(false)}>
+                                <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-text-muted hover:text-white" onClick={() => setIsAddingColumn(false)}>
                                     <X className="w-4 h-4" />
                                 </Button>
-                                <Button size="sm" className="h-7 w-7 p-0 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20" onClick={handleAddColumnSubmit}>
+                                <Button size="sm" className="h-7 w-7 p-0 bg-neon-green-bg text-neon-green-soft hover:bg-neon-green-bg/70" onClick={handleAddColumnSubmit}>
                                     <Check className="w-4 h-4" />
                                 </Button>
                             </div>
@@ -169,10 +145,10 @@ export function KanbanBoard({
                     ) : (
                         <button
                             onClick={() => setIsAddingColumn(true)}
-                            className="h-full max-h-[500px] w-12 rounded-xl border border-dashed border-white/10 hover:border-white/30 hover:bg-white/5 flex items-center justify-center transition-all group"
+                            className="h-full max-h-[500px] w-12 rounded-lg border border-dashed border-border-subtle hover:border-accent hover:bg-accent-muted flex items-center justify-center transition-all group"
                             title="Adicionar nova coluna"
                         >
-                            <span className="text-2xl text-muted-foreground group-hover:text-white">+</span>
+                            <span className="text-2xl text-text-muted group-hover:text-accent">+</span>
                         </button>
                     )}
                 </div>
@@ -181,7 +157,7 @@ export function KanbanBoard({
             {typeof document !== 'undefined' && createPortal(
                 <DragOverlay>
                     {activeLead ? (
-                        <div className="w-[260px] opacity-80 rotate-2">
+                        <div className="w-[300px] opacity-90 rotate-2 shadow-2xl">
                             <KanbanCard
                                 lead={activeLead}
                                 onEdit={() => { }}

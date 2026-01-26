@@ -20,12 +20,12 @@ const ICONS = {
 };
 
 const COLORS: any = {
-    CALL: "bg-blue-500/10 text-blue-400 border-blue-500/20",
-    EMAIL: "bg-amber-500/10 text-amber-400 border-amber-500/20",
-    WHATSAPP: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
-    MEETING: "bg-purple-500/10 text-purple-400 border-purple-500/20",
-    NOTE: "bg-slate-500/10 text-slate-400 border-slate-500/20",
-    STATUS_CHANGE: "bg-cyan-500/10 text-cyan-400 border-cyan-500/20"
+    CALL: "bg-neon-cyan-bg text-neon-cyan border-neon-cyan/20",
+    EMAIL: "bg-neon-yellow-bg text-neon-yellow border-neon-yellow/20",
+    WHATSAPP: "bg-neon-green-bg text-neon-green border-neon-green/20",
+    MEETING: "bg-neon-purple-bg text-neon-purple border-neon-purple/20",
+    NOTE: "bg-bg-elevated text-text-muted border-border-subtle",
+    STATUS_CHANGE: "bg-accent-muted text-accent border-accent/20"
 };
 
 const LABELS: any = {

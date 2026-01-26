@@ -23,11 +23,12 @@ interface Contact {
 interface ContactFormProps {
     leadId: string;
     contact?: Contact | null;
-    onSuccess: () => void;
+    onSuccess: (data?: any) => void;
     onCancel: () => void;
+    onSubmit?: (data: any) => Promise<void>; // New prop for manual handling
 }
 
-export function ContactForm({ leadId, contact, onSuccess, onCancel }: ContactFormProps) {
+export function ContactForm({ leadId, contact, onSuccess, onCancel, onSubmit }: ContactFormProps) {
     const [formData, setFormData] = useState({
         name: "",
         role: "",
@@ -75,6 +76,21 @@ export function ContactForm({ leadId, contact, onSuccess, onCancel }: ContactFor
             return;
         }
         setSaving(true);
+
+        // If manual submit handler is provided (Draft Mode)
+        if (onSubmit) {
+            try {
+                // Ensure ID exists for draft tracking
+                const draftData = { ...formData, id: contact?.id || `temp-${Date.now()}` };
+                await onSubmit(draftData);
+                onSuccess(draftData);
+            } catch (err) {
+                toast.error("Erro ao salvar contato.");
+            } finally {
+                setSaving(false);
+            }
+            return;
+        }
 
         try {
             const url = contact ? `/api/contacts/${contact.id}` : `/api/contacts`;

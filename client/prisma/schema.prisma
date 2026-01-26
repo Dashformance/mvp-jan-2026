@@ -12,8 +12,12 @@ model User {
   id            String   @id @default(uuid())
   name          String
   email         String   @unique
-  password_hash String
+  password_hash String?
   created_at    DateTime @default(now())
+  avatar_url    String?
+  role          String   @default("seller")
+  supabase_uid  String   @unique
+  leads         Lead[]   @relation("OwnerRelation")
 }
 
 model Segment {
@@ -50,10 +54,13 @@ model Lead {
   instagram_url      String?
   render_quality     String?
   website_url        String?
-  is_starred         Boolean       @default(false)
   updated_at         DateTime      @default(now()) @updatedAt
+  is_starred         Boolean       @default(false)
+  contract_value     Decimal?      @default(0)
+  owner_id           String?
   contacts           Contact[]
   interactions       Interaction[]
+  owner_user         User?         @relation("OwnerRelation", fields: [owner_id], references: [id])
   segment            Segment?      @relation(fields: [segment_id], references: [id])
 
   @@map("leads")

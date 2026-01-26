@@ -5,45 +5,48 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 /**
- * Visualizen DS v3.1 Button Variants
- * - Primary: White bg, Black text (main CTAs)
- * - Secondary: Transparent with border
+ * Superdash Design System - Button Variants
+ * - Primary (neon): Green glow, dark text
+ * - Glass: Translucent with subtle border
  * - Ghost: Transparent, muted text
- * - Accent: Champagne gradient (Landing page ONLY)
- * - Destructive: Error color with subtle border
+ * - Secondary: Dark bg with border
+ * - Destructive: Red glow
  */
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full text-sm font-medium transition-all duration-150 ease-out disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-[rgba(255,255,255,0.24)] active:scale-[0.98]",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium transition-all duration-200 ease-out disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-accent/30 active:scale-[0.98]",
   {
     variants: {
       variant: {
-        // DS v3.1: Primary = White bg, Black text
+        // Design System v2.0: Primary = Champagne
         default:
-          "bg-white text-[#181818] hover:opacity-90 hover:-translate-y-px shadow-md",
-        // DS v3.1: Secondary = Transparent with border
+          "bg-accent text-bg-void font-semibold hover:bg-accent-light hover:-translate-y-0.5 shadow-sm",
+        primary:
+          "bg-accent text-bg-void font-semibold hover:bg-accent-light hover:-translate-y-0.5 shadow-sm",
+        // Design System v2.0: Secondary = Elevated bg
         secondary:
-          "bg-transparent text-white border border-[rgba(255,255,255,0.16)] hover:bg-[rgba(255,255,255,0.06)]",
-        // DS v3.1: Ghost = No border, muted text
+          "bg-bg-elevated text-white border border-border-default hover:bg-bg-hover hover:border-border-strong",
+        // Design System v2.0: Ghost = Muted to Highlight
         ghost:
-          "bg-transparent text-[#8A8A8A] hover:text-white hover:bg-[rgba(255,255,255,0.06)]",
-        // DS v3.1: Accent = Champagne gradient (Landing page ONLY)
-        accent:
-          "bg-gradient-to-br from-[#E8D8B8] to-[#C8AC8C] text-[#1A1814] hover:opacity-90 hover:-translate-y-px shadow-md",
-        // DS v3.1: Destructive = Error color
+          "bg-transparent text-text-muted hover:text-white hover:bg-glass-bg",
+        // Design System v2.0: Destructive = Red Neon
         destructive:
-          "bg-transparent text-[#F43F5E] border border-[rgba(244,63,94,0.3)] hover:bg-[rgba(244,63,94,0.12)]",
-        // Outline (alias for secondary)
+          "bg-neon-red-bg text-neon-red border border-neon-red/20 hover:bg-neon-red/20 hover:shadow-[0_0_15px_rgba(255,71,87,0.3)]",
+        // Design System v2.0: XP = Green Neon Glow
+        xp:
+          "bg-neon-green-bg text-neon-green border border-neon-green/30 hover:bg-neon-green/20 hover:shadow-[0_0_15px_rgba(0,255,136,0.3)]",
+        // Design System v2.0: Glass = Pure Glassmorphism
+        glass:
+          "glass glass-hover text-white",
         outline:
-          "bg-transparent text-white border border-[rgba(255,255,255,0.16)] hover:bg-[rgba(255,255,255,0.06)]",
-        link: "text-[#44CCFF] underline-offset-4 hover:underline",
+          "bg-transparent text-white border border-border-strong hover:bg-glass-bg hover:border-accent/40",
+        link: "text-accent underline-offset-4 hover:underline",
       },
       size: {
-        // DS v3.1: Medium = 52px, Small = 40px, Large = 60px
-        default: "h-[52px] px-7 py-3.5 min-w-[120px]",
-        sm: "h-10 px-5 text-[13px]",
-        lg: "h-[60px] px-9 text-[15px]",
-        icon: "size-[52px]",
-        "icon-sm": "size-10",
+        default: "h-11 px-6 py-2.5",
+        sm: "h-9 px-4 text-[13px]",
+        lg: "h-12 px-8 text-[15px]",
+        icon: "size-11",
+        "icon-sm": "size-9",
       },
     },
     defaultVariants: {

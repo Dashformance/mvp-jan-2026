@@ -629,6 +629,7 @@ export default function DashboardPage() {
                 {/* Capitalize first letter */}
                 <div className="date">{dateString.charAt(0).toUpperCase() + dateString.slice(1)}</div>
 
+<<<<<<< Updated upstream
                 {/* Faturamento */}
                 <div className="faturamento">
                     <div className="faturamento-label">
@@ -640,6 +641,434 @@ export default function DashboardPage() {
                     </div>
                     {/* Placeholder for now as per design */}
                     <div className="faturamento-value">R$ 0</div>
+=======
+            {/* KPI Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                {kpiCards.map((kpi, idx) => (
+                    <Card key={idx} className="bg-[#1C1C1C] border-white/5 hover:border-white/10 transition-all">
+                        <CardContent className="pt-6">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-sm text-muted-foreground">{kpi.title}</p>
+                                    <p className="text-3xl font-bold mt-1">{kpi.value.toLocaleString()}</p>
+                                    <div className="flex items-center gap-1 mt-2">
+                                        <ArrowUpRight className="w-3 h-3 text-emerald-400" />
+                                        <span className="text-xs text-emerald-400">{kpi.change}</span>
+                                        <span className="text-xs text-muted-foreground ml-1">{kpi.changeLabel}</span>
+                                    </div>
+                                </div>
+                                <div className={`w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center ${kpi.color}`}>
+                                    <kpi.icon className="w-6 h-6" />
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                ))}
+            </div>
+
+            {/* Charts Row */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                {/* Timeline Chart */}
+                <Card className="bg-[#1C1C1C] border-white/5 lg:col-span-2">
+                    <CardHeader>
+                        <CardTitle className="flex items-center justify-between gap-2 text-lg">
+                            <div className="flex items-center gap-2">
+                                <Activity className="w-5 h-5 text-cyan-400" />
+                                Leads & Atividades
+                            </div>
+                            <div className="flex flex-wrap gap-1.5">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => toggleMetric('added')}
+                                    className={`h-7 text-[10px] px-2 border-dashed ${activeMetrics.includes('added') ? 'bg-cyan-500/10 text-cyan-400 border-cyan-500/30' : 'text-muted-foreground border-white/10'}`}
+                                >
+                                    <div className={`w-1.5 h-1.5 rounded-full mr-1.5 ${activeMetrics.includes('added') ? 'bg-cyan-400' : 'bg-slate-500'}`} />
+                                    Leads
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => toggleMetric('contacted')}
+                                    className={`h-7 text-[10px] px-2 border-dashed ${activeMetrics.includes('contacted') ? 'bg-blue-500/10 text-blue-400 border-blue-500/30' : 'text-muted-foreground border-white/10'}`}
+                                >
+                                    <div className={`w-1.5 h-1.5 rounded-full mr-1.5 ${activeMetrics.includes('contacted') ? 'bg-blue-400' : 'bg-slate-500'}`} />
+                                    Contatos
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => toggleMetric('scheduled')}
+                                    className={`h-7 text-[10px] px-2 border-dashed ${activeMetrics.includes('scheduled') ? 'bg-purple-500/10 text-purple-400 border-purple-500/30' : 'text-muted-foreground border-white/10'}`}
+                                >
+                                    <div className={`w-1.5 h-1.5 rounded-full mr-1.5 ${activeMetrics.includes('scheduled') ? 'bg-purple-400' : 'bg-slate-500'}`} />
+                                    Reuniões
+                                </Button>
+
+                                {/* Dynamic Active Metrics */}
+                                {activeMetrics
+                                    .filter(m => !['added', 'contacted', 'scheduled'].includes(m))
+                                    .map(metric => (
+                                        <div key={metric} className="flex items-center gap-0.5 animate-in fade-in zoom-in duration-200">
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => toggleMetric(metric)}
+                                                className="h-7 text-[10px] px-2 pr-1 border-dashed bg-white/5 text-white border-white/20 hover:bg-white/10 flex items-center gap-1.5 rounded-r-none border-r-0"
+                                            >
+                                                <div className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+                                                {STATUS_LABELS[metric] || metric}
+                                            </Button>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => toggleMetric(metric)}
+                                                className="h-7 w-6 p-0 border-dashed bg-white/5 text-white/40 border-white/20 hover:bg-white/10 hover:text-red-400 rounded-l-none"
+                                            >
+                                                <X className="w-3 h-3" />
+                                            </Button>
+                                        </div>
+                                    ))
+                                }
+
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0 hover:bg-white/5 text-cyan-400">
+                                            <Plus className="w-4 h-4" />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end" className="bg-[#1C1C1C] border-white/10 w-48">
+                                        <div className="px-2 py-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                                            Monitorar Movimentação
+                                        </div>
+                                        {Object.entries(STATUS_LABELS).map(([key, label]) => {
+                                            const isActive = activeMetrics.includes(key);
+                                            return (
+                                                <DropdownMenuItem
+                                                    key={key}
+                                                    onSelect={(e) => {
+                                                        e.preventDefault();
+                                                        toggleMetric(key);
+                                                    }}
+                                                    className="text-xs text-white hover:bg-white/10 cursor-pointer flex justify-between py-2"
+                                                >
+                                                    {label}
+                                                    {isActive && <Check className="w-3 h-3 text-cyan-400 ml-2" />}
+                                                </DropdownMenuItem>
+                                            )
+                                        })}
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            </div>
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="h-[300px]">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <AreaChart data={timeline}>
+                                    <defs>
+                                        <linearGradient id="colorAdded" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#22d3ee" stopOpacity={0.3} />
+                                            <stop offset="95%" stopColor="#22d3ee" stopOpacity={0} />
+                                        </linearGradient>
+                                        <linearGradient id="colorContacted" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
+                                            <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                                        </linearGradient>
+                                        <linearGradient id="colorScheduled" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#a855f7" stopOpacity={0.3} />
+                                            <stop offset="95%" stopColor="#a855f7" stopOpacity={0} />
+                                        </linearGradient>
+                                        <linearGradient id="colorGeneric" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#94a3b8" stopOpacity={0.3} />
+                                            <stop offset="95%" stopColor="#94a3b8" stopOpacity={0} />
+                                        </linearGradient>
+                                        <linearGradient id="colorGeneric" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#94a3b8" stopOpacity={0.3} />
+                                            <stop offset="95%" stopColor="#94a3b8" stopOpacity={0} />
+                                        </linearGradient>
+                                    </defs>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                                    <XAxis
+                                        dataKey="date"
+                                        stroke="#666"
+                                        tickFormatter={(date) => new Date(date + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
+                                        tick={{ fontSize: 11 }}
+                                    />
+                                    <YAxis stroke="#666" tick={{ fontSize: 11 }} />
+                                    <Tooltip
+                                        contentStyle={{ backgroundColor: '#1C1C1C', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }}
+                                        labelFormatter={(date) => new Date(date + 'T12:00:00').toLocaleDateString('pt-BR')}
+                                    />
+                                    {activeMetrics.includes('added') && (
+                                        <Area
+                                            type="monotone"
+                                            dataKey="added"
+                                            stroke="#22d3ee"
+                                            fill="url(#colorAdded)"
+                                            strokeWidth={2}
+                                            name="Leads Adicionados"
+                                        />
+                                    )}
+                                    {activeMetrics.includes('contacted') && (
+                                        <Area
+                                            type="monotone"
+                                            dataKey="contacted"
+                                            stroke="#3b82f6"
+                                            fill="url(#colorContacted)"
+                                            strokeWidth={2}
+                                            name="Contatos Feitos"
+                                        />
+                                    )}
+                                    {activeMetrics.includes('scheduled') && (
+                                        <Area
+                                            type="monotone"
+                                            dataKey="scheduled"
+                                            stroke="#a855f7"
+                                            fill="url(#colorScheduled)"
+                                            strokeWidth={2}
+                                            name="Reuniões Realizadas"
+                                        />
+                                    )}
+
+                                    {/* Dynamic Areas for status movements */}
+                                    {activeMetrics
+                                        .filter(m => !['added', 'contacted', 'scheduled'].includes(m))
+                                        .map(metric => (
+                                            <Area
+                                                key={metric}
+                                                type="monotone"
+                                                dataKey={metric}
+                                                stroke="#94a3b8"
+                                                fill="url(#colorGeneric)"
+                                                strokeWidth={2}
+                                                name={`Movidos para ${STATUS_LABELS[metric] || metric}`}
+                                                connectNulls
+                                            />
+                                        ))
+                                    }
+                                </AreaChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {/* Funnel Chart */}
+                <Card className="bg-[#1C1C1C] border-white/5">
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2 text-lg">
+                            <BarChart3 className="w-5 h-5 text-[#DECCA8]" />
+                            Funil de Vendas
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="relative pt-2 pb-6 px-4">
+                            {(() => {
+                                const FUNNEL_STAGES = [
+                                    { id: 'INBOX', label: '1. Lista Fria', color: '#94a3b8' },
+                                    { id: 'NEW', label: '2. Qualificados', color: '#22d3ee' },
+                                    { id: 'CONTACTED', label: '3. Contatados', color: '#818cf8' },
+                                    { id: 'MEETING', label: '4. Reuniões Marcadas', color: '#c084fc' },
+                                    { id: 'WON', label: '5. Fechamentos', color: '#4ade80' }
+                                ];
+
+                                const USERS_CONFIG = [
+                                    { key: 'joao', label: 'João', color: 'bg-cyan-500', text: 'text-cyan-400' },
+                                    { key: 'bruno', label: 'Bruno', color: 'bg-purple-500', text: 'text-purple-400' },
+                                    { key: 'nitz', label: 'Nitz', color: 'bg-emerald-500', text: 'text-emerald-400' }
+                                ];
+
+                                // Create map for O(1) lookup
+                                const funnelMap = new Map(funnel.map(f => [f.status, f]));
+
+                                // Calculate max value for bar scaling (across all users and stages)
+                                const maxVal = Math.max(
+                                    ...funnel.map(f => Math.max(f.joao || 0, f.bruno || 0, f.nitz || 0)),
+                                    10
+                                );
+
+                                return (
+                                    <div className="flex flex-col gap-6">
+                                        {/* Legend */}
+                                        <div className="flex justify-end items-center gap-4 text-xs px-2">
+                                            {USERS_CONFIG.map(user => (
+                                                <div key={user.key} className="flex items-center gap-2">
+                                                    <div className={`w-2 h-2 rounded-full ${user.color}`}></div>
+                                                    <span className="text-muted-foreground">{user.label}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+
+                                        {FUNNEL_STAGES.map((stage) => {
+                                            const dataItem = funnelMap.get(stage.id) || { count: 0, joao: 0, bruno: 0, nitz: 0 };
+
+                                            return (
+                                                <div key={stage.id} className="space-y-2">
+                                                    <div className="flex justify-between items-center text-xs px-1">
+                                                        <span className="text-muted-foreground font-medium">{stage.label}</span>
+                                                        <span className="text-white font-mono bg-white/5 px-2 py-0.5 rounded">{dataItem.count} total</span>
+                                                    </div>
+
+                                                    <div className="grid grid-cols-1 gap-1 p-2 bg-white/5 rounded-lg border border-white/5">
+                                                        {USERS_CONFIG.map((user) => {
+                                                            const val = dataItem[user.key] || 0;
+                                                            const percent = (val / maxVal) * 100;
+
+                                                            return (
+                                                                <div key={user.key} className="flex items-center gap-3 h-5">
+                                                                    <div className="w-8 text-[10px] text-muted-foreground text-right shrink-0">{user.label}</div>
+                                                                    <div className="flex-1 h-full bg-black/20 rounded-sm overflow-hidden flex items-center">
+                                                                        <div
+                                                                            className={`h-full ${user.color} transition-all duration-700 ease-out opacity-80 hover:opacity-100`}
+                                                                            style={{ width: `${percent}%` }}
+                                                                        />
+                                                                        {val > 0 && (
+                                                                            <span className="ml-2 text-[10px] text-white/70 font-mono">{val}</span>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                );
+                            })()}
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
+
+            {/* Sales Force Section - This is the key competitive metric */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                {/* Sales Force Scoreboard */}
+                <Card className="bg-[#1C1C1C] border-white/5 lg:col-span-2">
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2 text-lg">
+                            <Zap className="w-5 h-5 text-amber-400" />
+                            Força de Vendas - Placar do Dia
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        {salesForce && (
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                                {Object.entries(salesForce).map(([owner, data]: [string, any]) => (
+                                    <div key={owner} className="space-y-4">
+                                        {/* Owner Header with Score */}
+                                        <div className="flex items-center justify-between p-4 rounded-xl bg-gradient-to-r from-white/5 to-transparent">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-cyan-500 to-[#DECCA8] flex items-center justify-center text-black text-xl font-bold">
+                                                    {owner.charAt(0).toUpperCase()}
+                                                </div>
+                                                <div>
+                                                    <p className="text-xl font-bold capitalize">{owner}</p>
+                                                    <p className="text-xs text-muted-foreground">{data.totalActive} leads ativos</p>
+                                                </div>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="text-3xl font-bold text-[#DECCA8]">{data.score.today}</p>
+                                                <p className="text-xs text-muted-foreground">pontos hoje</p>
+                                            </div>
+                                        </div>
+
+                                        {/* Period Stats */}
+                                        <div className="grid grid-cols-3 gap-3">
+                                            {/* Today */}
+                                            <div className="p-3 rounded-lg bg-white/5 text-center">
+                                                <p className="text-xs text-muted-foreground mb-2 uppercase">Hoje</p>
+                                                <div className="space-y-1">
+                                                    <div className="flex justify-between text-xs">
+                                                        <span className="text-muted-foreground">Contatos</span>
+                                                        <span className="font-medium text-cyan-400">{data.today.contacted}</span>
+                                                    </div>
+                                                    <div className="flex justify-between text-xs">
+                                                        <span className="text-muted-foreground">Reuniões</span>
+                                                        <span className="font-medium text-purple-400">{data.today.meetings}</span>
+                                                    </div>
+                                                    <div className="flex justify-between text-xs">
+                                                        <span className="text-muted-foreground">Ganhos</span>
+                                                        <span className="font-medium text-emerald-400">{data.today.won}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Week */}
+                                            <div className="p-3 rounded-lg bg-white/5 text-center">
+                                                <p className="text-xs text-muted-foreground mb-2 uppercase">Semana</p>
+                                                <div className="space-y-1">
+                                                    <div className="flex justify-between text-xs">
+                                                        <span className="text-muted-foreground">Contatos</span>
+                                                        <span className="font-medium text-cyan-400">{data.week.contacted}</span>
+                                                    </div>
+                                                    <div className="flex justify-between text-xs">
+                                                        <span className="text-muted-foreground">Reuniões</span>
+                                                        <span className="font-medium text-purple-400">{data.week.meetings}</span>
+                                                    </div>
+                                                    <div className="flex justify-between text-xs">
+                                                        <span className="text-muted-foreground">Ganhos</span>
+                                                        <span className="font-medium text-emerald-400">{data.week.won}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Month */}
+                                            <div className="p-3 rounded-lg bg-white/5 text-center">
+                                                <p className="text-xs text-muted-foreground mb-2 uppercase">Mês</p>
+                                                <div className="space-y-1">
+                                                    <div className="flex justify-between text-xs">
+                                                        <span className="text-muted-foreground">Contatos</span>
+                                                        <span className="font-medium text-cyan-400">{data.month.contacted}</span>
+                                                    </div>
+                                                    <div className="flex justify-between text-xs">
+                                                        <span className="text-muted-foreground">Reuniões</span>
+                                                        <span className="font-medium text-purple-400">{data.month.meetings}</span>
+                                                    </div>
+                                                    <div className="flex justify-between text-xs">
+                                                        <span className="text-muted-foreground">Ganhos</span>
+                                                        <span className="font-medium text-emerald-400">{data.month.won}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Score Bar */}
+                                        <div className="space-y-1">
+                                            <div className="flex justify-between text-xs">
+                                                <span className="text-muted-foreground">Pontuação Mensal</span>
+                                                <span className="font-medium">{data.score.month} pts</span>
+                                            </div>
+                                            <div className="h-2 bg-white/5 rounded-full overflow-hidden">
+                                                <div
+                                                    className="h-full rounded-full bg-gradient-to-r from-cyan-500 to-[#DECCA8] transition-all duration-500"
+                                                    style={{ width: `${Math.min((data.score.month / 100) * 100, 100)}%` }}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {/* Score Legend */}
+                        <div className="mt-6 pt-4 border-t border-white/5">
+                            <p className="text-xs text-muted-foreground">
+                                📌 Pontuação: <span className="text-cyan-400">Contato = 1pt</span> •
+                                <span className="text-purple-400 ml-2">Reunião = 3pts</span> •
+                                <span className="text-emerald-400 ml-2">Ganho = 10pts</span>
+                            </p>
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
+
+            {/* Geographic Distribution Row - Simplified */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                {/* Region Distribution - 3D Globe */}
+                <div className="h-full min-h-[450px]">
+                    <RegionDistribution data={geoData.byRegion} />
+>>>>>>> Stashed changes
                 </div>
 
                 {/* KPI Row */}

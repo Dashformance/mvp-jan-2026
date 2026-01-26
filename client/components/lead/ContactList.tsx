@@ -21,15 +21,22 @@ interface Contact {
 
 interface ContactListProps {
     leadId: string;
+    initialContacts?: Contact[];
+    onChange?: (contacts: Contact[]) => void;
 }
 
-export function ContactList({ leadId }: ContactListProps) {
+export function ContactList({ leadId, initialContacts, onChange }: ContactListProps) {
     const [contacts, setContacts] = useState<Contact[]>([]);
     const [loading, setLoading] = useState(true);
     const [editingContact, setEditingContact] = useState<Contact | null>(null);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
 
     const fetchContacts = async () => {
+        if (!leadId || leadId === 'new') {
+            if (initialContacts) setContacts(initialContacts);
+            setLoading(false);
+            return;
+        }
         try {
             setLoading(true);
             // Fetch directly from API
@@ -50,6 +57,15 @@ export function ContactList({ leadId }: ContactListProps) {
 
     const handleDelete = async (id: string) => {
         if (!confirm("Tem certeza que deseja remover este contato?")) return;
+
+        if (!leadId || leadId === 'new') {
+            const newContacts = contacts.filter(c => c.id !== id);
+            setContacts(newContacts);
+            onChange?.(newContacts);
+            toast.success("Contato removido (draft).");
+            return;
+        }
+
         try {
             const res = await fetch(`/api/contacts/${id}`, { method: "DELETE" });
             if (!res.ok) throw new Error();
@@ -62,6 +78,18 @@ export function ContactList({ leadId }: ContactListProps) {
 
     const handleTogglePrimary = async (contact: Contact) => {
         if (contact.is_primary) return; // Already primary
+
+        if (!leadId || leadId === 'new') {
+            const newContacts = contacts.map(c => ({
+                ...c,
+                is_primary: c.id === contact.id
+            }));
+            setContacts(newContacts);
+            onChange?.(newContacts);
+            toast.success("Contato principal atualizado (draft).");
+            return;
+        }
+
         try {
             const res = await fetch(`/api/contacts/${contact.id}`, {
                 method: "PUT",
@@ -76,9 +104,27 @@ export function ContactList({ leadId }: ContactListProps) {
         }
     };
 
-    const handleCreateOrUpdate = async () => {
+    const handleCreateOrUpdate = async (contactData?: any) => {
         setIsDialogOpen(false);
         setEditingContact(null);
+
+        if ((!leadId || leadId === 'new') && contactData) {
+            // Handle local update/create
+            let newContacts = [...contacts];
+            if (contactData.id && contacts.find(c => c.id === contactData.id)) {
+                newContacts = newContacts.map(c => c.id === contactData.id ? contactData : c);
+            } else {
+                newContacts.push({ ...contactData, id: `temp-${Date.now()}` });
+            }
+
+            // If this is the first contact, make it primary automatically
+            if (newContacts.length === 1) newContacts[0].is_primary = true;
+
+            setContacts(newContacts);
+            onChange?.(newContacts);
+            return;
+        }
+
         fetchContacts();
     };
 

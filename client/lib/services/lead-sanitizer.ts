@@ -23,6 +23,7 @@ const ALLOWED_LEAD_FIELDS = new Set([
     'owner',
     'uf',
     'city',
+    'contract_value',
 ]);
 
 /**
@@ -207,6 +208,11 @@ export class LeadSanitizer {
         if (sanitized.source !== undefined) sanitized.source = this.toNullIfEmpty(sanitized.source);
         if (sanitized.uf !== undefined) sanitized.uf = this.toNullIfEmpty(sanitized.uf);
         if (sanitized.city !== undefined) sanitized.city = this.toNullIfEmpty(sanitized.city);
+        if (sanitized.contract_value !== undefined) {
+            // Ensure it's a number or null
+            const val = parseFloat(sanitized.contract_value);
+            sanitized.contract_value = isNaN(val) ? null : val;
+        }
 
         // Trim string fields
         if (typeof sanitized.company_name === 'string') sanitized.company_name = sanitized.company_name.trim();

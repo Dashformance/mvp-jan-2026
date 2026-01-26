@@ -55,10 +55,10 @@ export function QualificationForm({ data, onChange, leadData }: QualificationFor
     };
 
     const getScoreColor = (s: number) => {
-        if (s >= 85) return "text-emerald-400";
-        if (s >= 70) return "text-cyan-400";
-        if (s >= 55) return "text-amber-400";
-        return "text-gray-400";
+        if (s >= 85) return "text-neon-green-soft";
+        if (s >= 70) return "text-neon-cyan-soft";
+        if (s >= 55) return "text-neon-yellow-soft";
+        return "text-text-muted";
     };
 
     const getScoreLabel = (s: number) => {
@@ -71,14 +71,14 @@ export function QualificationForm({ data, onChange, leadData }: QualificationFor
     return (
         <div className="space-y-6">
             {/* Score Header */}
-            <div className="flex items-center justify-between p-4 bg-black/40 border border-white/5 rounded-xl">
+            <div className="flex items-center justify-between p-4 bg-bg-deep border border-border-subtle rounded-xl shadow-inner">
                 <div className="flex items-center gap-3">
-                    <div className={cn("text-3xl font-bold", data.absoluteStar ? "text-amber-400" : getScoreColor(score))}>
+                    <div className={cn("text-3xl font-display font-bold", data.absoluteStar ? "text-accent" : getScoreColor(score))}>
                         {data.absoluteStar ? 100 : score}
                     </div>
                     <div className="flex flex-col">
-                        <span className="text-xs text-muted-foreground uppercase tracking-widest font-semibold">V-Score</span>
-                        <span className={cn("text-sm font-medium", data.absoluteStar ? "text-amber-400" : getScoreColor(score))}>
+                        <span className="text-[10px] text-text-muted uppercase font-bold tracking-[0.2em]">V-Score</span>
+                        <span className={cn("text-sm font-semibold", data.absoluteStar ? "text-accent" : getScoreColor(score))}>
                             {data.absoluteStar ? "Estrela Absoluta 🌟" : getScoreLabel(score)}
                         </span>
                     </div>
@@ -89,8 +89,8 @@ export function QualificationForm({ data, onChange, leadData }: QualificationFor
                     className={cn(
                         "rounded-full transition-all duration-300",
                         data.absoluteStar
-                            ? "text-amber-400 bg-amber-400/10 hover:bg-amber-400/20 hover:text-amber-300 shadow-[0_0_15px_rgba(251,191,36,0.3)]"
-                            : "text-muted-foreground hover:text-amber-400 hover:bg-amber-400/5"
+                            ? "text-accent bg-accent-muted hover:bg-accent-glow hover:text-accent shadow-glow-accent"
+                            : "text-text-muted hover:text-accent hover:bg-accent-muted"
                     )}
                     onClick={() => {
                         const newData = { ...data, absoluteStar: !data.absoluteStar };
@@ -104,34 +104,34 @@ export function QualificationForm({ data, onChange, leadData }: QualificationFor
             <Accordion type="single" collapsible className="w-full space-y-2" defaultValue="item-1">
 
                 {/* 1. Uso comprovado de visualização (25 pts) */}
-                <AccordionItem value="item-1" className="border border-white/5 rounded-lg bg-white/2 px-3">
-                    <AccordionTrigger className="hover:no-underline py-3">
-                        <div className="flex items-center gap-2 text-sm font-medium">
-                            <MonitorPlay className="w-4 h-4 text-purple-400" />
+                <AccordionItem value="item-1" className="border border-border-subtle rounded-lg bg-bg-elevated/40 px-3">
+                    <AccordionTrigger className="hover:no-underline py-3 text-text-primary text-xs font-bold uppercase tracking-widest">
+                        <div className="flex items-center gap-2">
+                            <MonitorPlay className="w-4 h-4 text-neon-purple-soft" />
                             Visualização (Max 25 pts)
                         </div>
                     </AccordionTrigger>
                     <AccordionContent className="pb-3 pt-1 space-y-3">
                         <div className="flex items-center space-x-2">
                             <Checkbox id="usesRender" checked={visualization.usesRender} onCheckedChange={(c) => updateLayer('visualization', 'usesRender', c)} />
-                            <Label htmlFor="usesRender" className="text-sm font-normal text-muted-foreground">Usa Renders (Site/Insta) (+10)</Label>
+                            <Label htmlFor="usesRender" className="text-sm font-normal text-text-muted">Usa Renders (Site/Insta) (+10)</Label>
                         </div>
                         <div className="flex items-center space-x-2">
                             <Checkbox id="usesVideo360" checked={visualization.usesVideo360} onCheckedChange={(c) => updateLayer('visualization', 'usesVideo360', c)} />
-                            <Label htmlFor="usesVideo360" className="text-sm font-normal text-muted-foreground">Usa Vídeo/Animação/360º (+8)</Label>
+                            <Label htmlFor="usesVideo360" className="text-sm font-normal text-text-muted">Usa Vídeo/Animação/360º (+8)</Label>
                         </div>
                         <div className="flex items-center space-x-2">
                             <Checkbox id="usesSalesImg" checked={visualization.usesSalesImg} onCheckedChange={(c) => updateLayer('visualization', 'usesSalesImg', c)} />
-                            <Label htmlFor="usesSalesImg" className="text-sm font-normal text-muted-foreground">Usa Imagem como Argumento (+7)</Label>
+                            <Label htmlFor="usesSalesImg" className="text-sm font-normal text-text-muted">Usa Imagem como Argumento (+7)</Label>
                         </div>
                     </AccordionContent>
                 </AccordionItem>
 
                 {/* 2. Maturidade Digital (20 pts) */}
-                <AccordionItem value="item-2" className="border border-white/5 rounded-lg bg-white/2 px-3">
-                    <AccordionTrigger className="hover:no-underline py-3">
-                        <div className="flex items-center gap-2 text-sm font-medium">
-                            <SearchCheck className="w-4 h-4 text-emerald-400" />
+                <AccordionItem value="item-2" className="border border-border-subtle rounded-lg bg-bg-elevated/40 px-3">
+                    <AccordionTrigger className="hover:no-underline py-3 text-text-primary text-xs font-bold uppercase tracking-widest">
+                        <div className="flex items-center gap-2">
+                            <SearchCheck className="w-4 h-4 text-neon-green-soft" />
                             Maturidade Digital (Max 20 pts)
                         </div>
                     </AccordionTrigger>
@@ -142,24 +142,24 @@ export function QualificationForm({ data, onChange, leadData }: QualificationFor
                                 checked={maturity.hasWebsite || !!leadData.website_url}
                                 onCheckedChange={(c) => updateLayer('maturity', 'hasWebsite', c)}
                             />
-                            <Label htmlFor="hasWebsite" className="text-sm font-normal text-muted-foreground">Site Próprio Ativo (+6)</Label>
+                            <Label htmlFor="hasWebsite" className="text-sm font-normal text-text-muted">Site Próprio Ativo (+6)</Label>
                         </div>
                         <div className="flex items-center space-x-2">
                             <Checkbox id="hasLPs" checked={maturity.hasLPs} onCheckedChange={(c) => updateLayer('maturity', 'hasLPs', c)} />
-                            <Label htmlFor="hasLPs" className="text-sm font-normal text-muted-foreground">LPs por Empreendimento (+7)</Label>
+                            <Label htmlFor="hasLPs" className="text-sm font-normal text-text-muted">LPs por Empreendimento (+7)</Label>
                         </div>
                         <div className="flex items-center space-x-2">
                             <Checkbox id="hasDigitalMats" checked={maturity.hasDigitalMats} onCheckedChange={(c) => updateLayer('maturity', 'hasDigitalMats', c)} />
-                            <Label htmlFor="hasDigitalMats" className="text-sm font-normal text-muted-foreground">Materiais Digitais (PDF/Catálogo) (+7)</Label>
+                            <Label htmlFor="hasDigitalMats" className="text-sm font-normal text-text-muted">Materiais Digitais (PDF/Catálogo) (+7)</Label>
                         </div>
                     </AccordionContent>
                 </AccordionItem>
 
                 {/* 3. Estrutura Empresarial (15 pts) */}
-                <AccordionItem value="item-3" className="border border-white/5 rounded-lg bg-white/2 px-3">
-                    <AccordionTrigger className="hover:no-underline py-3">
-                        <div className="flex items-center gap-2 text-sm font-medium">
-                            <Building2 className="w-4 h-4 text-blue-400" />
+                <AccordionItem value="item-3" className="border border-border-subtle rounded-lg bg-bg-elevated/40 px-3">
+                    <AccordionTrigger className="hover:no-underline py-3 text-text-primary text-xs font-bold uppercase tracking-widest">
+                        <div className="flex items-center gap-2">
+                            <Building2 className="w-4 h-4 text-neon-cyan-soft" />
                             Estrutura (Max 15 pts)
                         </div>
                     </AccordionTrigger>

@@ -6,7 +6,11 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
         const { id } = await params;
         await LeadsService.hardDelete(id);
         return NextResponse.json({ success: true });
-    } catch (error) {
-        return NextResponse.json({ error: 'Failed to hard delete lead' }, { status: 500 });
+    } catch (error: any) {
+        console.error(`[API] Hard delete failed for lead ${await params.then(p => p.id)}:`, error);
+        return NextResponse.json({
+            error: 'Failed to hard delete lead',
+            details: error.message
+        }, { status: 500 });
     }
 }

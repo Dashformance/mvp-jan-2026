@@ -45,16 +45,18 @@ interface Lead {
     score?: number;
     checklist?: any;
     extra_info?: any;
+    contacts?: any[];
+    contract_value?: number | string;
 }
 
 interface LeadSheetProps {
     lead: Lead | null;
-    isOpen: boolean;
-    onClose: () => void;
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
     onSave: (updatedLead: any) => Promise<void>;
 }
 
-export function LeadSheet({ lead, isOpen, onClose, onSave }: LeadSheetProps) {
+export function LeadSheet({ lead, open, onOpenChange, onSave }: LeadSheetProps) {
     const [formData, setFormData] = useState<Partial<Lead>>({});
     const [saving, setSaving] = useState(false);
 
@@ -106,7 +108,7 @@ export function LeadSheet({ lead, isOpen, onClose, onSave }: LeadSheetProps) {
 
         await onSave(cleanedData);
         setSaving(false);
-        onClose();
+        onOpenChange(false);
     };
 
     const googleSearch = (term: string) => {
@@ -116,16 +118,16 @@ export function LeadSheet({ lead, isOpen, onClose, onSave }: LeadSheetProps) {
     if (!lead) return null;
 
     return (
-        <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
-            <SheetContent className="w-[500px] sm:max-w-[600px] overflow-y-auto bg-background border-l border-border p-8">
+        <Sheet open={open} onOpenChange={onOpenChange}>
+            <SheetContent className="w-[500px] sm:max-w-[600px] overflow-y-auto bg-bg-surface border-l border-border-default p-8 shadow-2xl">
                 <SheetHeader className="mb-4">
-                    <SheetTitle className="text-xl text-foreground">{formData.trade_name || formData.company_name || "Novo Lead"}</SheetTitle>
+                    <SheetTitle className="text-xl text-text-primary tracking-tight">{formData.trade_name || formData.company_name || "Novo Lead"}</SheetTitle>
                     <SheetDescription className="flex items-center gap-2 flex-wrap mt-2">
-                        {formData.cnpj && <span className="font-mono bg-muted text-muted-foreground px-2 py-0.5 rounded-md text-xs">{formData.cnpj}</span>}
-                        {formData.uf && <span className="bg-accent/10 text-accent px-2 py-0.5 rounded-md text-xs font-medium">{formData.uf}</span>}
+                        {formData.cnpj && <span className="font-mono bg-bg-deep text-text-muted px-2 py-0.5 rounded-md text-xs">{formData.cnpj}</span>}
+                        {formData.uf && <span className="bg-neon-cyan-bg text-neon-cyan px-2 py-0.5 rounded-md text-xs font-medium border border-neon-cyan/20">{formData.uf}</span>}
                         {/* Owner Badge */}
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium uppercase tracking-wide ${formData.owner === 'vitor' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-accent/10 text-accent'}`}>
-                            {formData.owner === 'vitor' ? 'Vitor Nitz' : 'João'}
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${formData.owner === 'vitor' ? 'bg-neon-green-bg text-neon-green-soft border border-neon-green/20' : 'bg-accent-muted text-accent border border-accent/20'}`}>
+                            {formData.owner === 'vitor' ? 'Vitz' : 'João'}
                         </span>
                     </SheetDescription>
                 </SheetHeader>
@@ -133,32 +135,32 @@ export function LeadSheet({ lead, isOpen, onClose, onSave }: LeadSheetProps) {
                 {/* Quick Owner Switch */}
                 <div className="absolute top-4 right-12">
                     <select
-                        className="bg-muted text-xs text-muted-foreground border border-border rounded-full px-3 py-1.5 outline-none cursor-pointer hover:border-white/20 focus:border-white/30"
+                        className="bg-bg-elevated/80 text-[10px] uppercase font-bold text-text-muted border border-border-subtle rounded-full px-3 py-1 outline-none cursor-pointer hover:border-accent/40 focus:border-accent transition-all"
                         value={formData.owner || 'joao'}
                         onChange={(e) => handleChange('owner', e.target.value)}
                     >
-                        <option value="joao">Responsável: João</option>
-                        <option value="vitor">Responsável: Vitor Nitz</option>
+                        <option value="joao">Owner: João</option>
+                        <option value="vitor">Owner: Vitz</option>
                     </select>
                 </div>
 
                 <Tabs defaultValue="details" className="w-full">
-                    <TabsList className="grid w-full grid-cols-3 bg-muted p-1 h-11 rounded-xl">
+                    <TabsList className="grid w-full grid-cols-3 bg-bg-deep p-1 h-11 rounded-xl border border-border-subtle">
                         <TabsTrigger
                             value="details"
-                            className="rounded-lg data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm text-muted-foreground h-9 text-xs"
+                            className="rounded-lg data-[state=active]:bg-bg-primary data-[state=active]:text-accent data-[state=active]:shadow-sm text-text-muted h-9 text-xs font-semibold uppercase tracking-wide"
                         >
                             Dados
                         </TabsTrigger>
                         <TabsTrigger
                             value="qualification"
-                            className="rounded-lg data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm text-muted-foreground h-9 text-xs"
+                            className="rounded-lg data-[state=active]:bg-bg-primary data-[state=active]:text-accent data-[state=active]:shadow-sm text-text-muted h-9 text-xs font-semibold uppercase tracking-wide"
                         >
                             Qualificação
                         </TabsTrigger>
                         <TabsTrigger
                             value="history"
-                            className="rounded-lg data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm text-muted-foreground h-9 text-xs"
+                            className="rounded-lg data-[state=active]:bg-bg-primary data-[state=active]:text-accent data-[state=active]:shadow-sm text-text-muted h-9 text-xs font-semibold uppercase tracking-wide"
                         >
                             Histórico
                         </TabsTrigger>
@@ -189,7 +191,11 @@ export function LeadSheet({ lead, isOpen, onClose, onSave }: LeadSheetProps) {
 
                             {/* Contatos - Multiplos */}
                             <div className="space-y-1.5 pt-2">
-                                <ContactList leadId={lead.id} />
+                                <ContactList
+                                    leadId={lead.id}
+                                    initialContacts={formData.contacts}
+                                    onChange={(newContacts) => handleChange('contacts', newContacts as any)}
+                                />
                             </div>
 
                             <div className="grid grid-cols-2 gap-3 pt-2 border-t border-border">
@@ -308,6 +314,48 @@ export function LeadSheet({ lead, isOpen, onClose, onSave }: LeadSheetProps) {
                                         placeholder="00.000.000/0000-00"
                                     />
                                 </div>
+
+                                {/* Valor do Contrato */}
+                                <div className="space-y-1.5 pt-2 border-t border-border mt-2">
+                                    <Label className="text-xs text-accent font-semibold flex items-center gap-1">
+                                        💰 Valor do Contrato
+                                    </Label>
+                                    <div className="relative">
+                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted text-sm">R$</span>
+                                        <Input
+                                            type="text"
+                                            value={formData.contract_value ? formData.contract_value.toString() : ''}
+                                            onChange={(e) => {
+                                                // Allow only numbers and one dot/comma
+                                                let val = e.target.value;
+
+                                                // Basic masking logic: allow digits and one comma/dot
+                                                if (/^[\d.,]*$/.test(val)) {
+                                                    handleChange('contract_value', val);
+                                                }
+                                            }}
+                                            onBlur={(e) => {
+                                                // Format on blur
+                                                let val = e.target.value.replace(/\./g, '').replace(',', '.');
+                                                const hasComma = e.target.value.includes(',');
+
+                                                // If user typed "1000", treat as 1000.00
+                                                // If user typed "1000,50", treat as 1000.50
+                                                const num = parseFloat(val);
+                                                if (!isNaN(num)) {
+                                                    // Store formatted string or keep raw? 
+                                                    // Prisma expects Decimal (number/string).
+                                                    // Let's store raw formatting for UI consistency if needed, 
+                                                    // but LeadSanitizer will parse it to float.
+                                                    // Better: Format to beautiful string.
+                                                    handleChange('contract_value', num.toFixed(2));
+                                                }
+                                            }}
+                                            className="h-10 pl-10 font-display text-lg text-neon-green-soft bg-neon-green-bg/30 border-neon-green/30 focus:border-neon-green"
+                                            placeholder="0.00"
+                                        />
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -350,7 +398,7 @@ export function LeadSheet({ lead, isOpen, onClose, onSave }: LeadSheetProps) {
                         Desqualificar
                     </Button>
                     <div className="flex gap-3">
-                        <Button variant="secondary" onClick={onClose} disabled={saving}>Cancelar</Button>
+                        <Button variant="secondary" onClick={() => onOpenChange(false)} disabled={saving}>Cancelar</Button>
                         <Button onClick={handleSave} disabled={saving}>
                             {saving ? "Salvando..." : "Salvar Alterações"}
                         </Button>

@@ -609,7 +609,15 @@ npx prisma studio
 - [ ] Adicionar testes (Jest/Vitest)
 - [ ] Error boundaries e loading skeletons
 
+
+#### Observações Recentes (Prioridade Imediata)
+- [ ] **Kanban Card:** Mostrar últimos 4 dígitos do telefone.
+- [ ] **Kanban Card:** Mostrar data da última interação.
+- [ ] **Reatividade:** Card menor deve atualizar imediatamente ao alterar dados no LeadSheet (score, contato principal).
+- [ ] **UX/Bug:** Corrigir erro ao adicionar contato em lead ainda não criado (implementar salvamento em lote ou draft).
+
 ---
+
 
 ## Contato
 

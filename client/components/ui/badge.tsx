@@ -4,19 +4,46 @@ import { cva, type VariantProps } from "class-variance-authority"
 
 import { cn } from "@/lib/utils"
 
+/**
+ * Superdash Design System - Badge
+ * - Default: Neon green
+ * - Secondary: Dark glass
+ * - Destructive: Red glow
+ * - Outline: Subtle border
+ * - Gold/Silver/Bronze: Gamification tiers
+ */
 const badgeVariants = cva(
-  "inline-flex items-center justify-center rounded-full border px-2 py-0.5 text-xs font-medium w-fit whitespace-nowrap shrink-0 [&>svg]:size-3 gap-1 [&>svg]:pointer-events-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive transition-[color,box-shadow] overflow-hidden",
+  "inline-flex items-center justify-center rounded-lg border px-2.5 py-0.5 text-xs font-medium w-fit whitespace-nowrap shrink-0 [&>svg]:size-3 gap-1.5 [&>svg]:pointer-events-none transition-all duration-200 overflow-hidden",
   {
     variants: {
       variant: {
+        // Design System v2.0: Status Neon
         default:
-          "border-transparent bg-primary text-primary-foreground [a&]:hover:bg-primary/90",
+          "border-neon-green/30 bg-neon-green-bg text-neon-green-soft",
         secondary:
-          "border-transparent bg-secondary text-secondary-foreground [a&]:hover:bg-secondary/90",
+          "border-border-default bg-bg-elevated text-text-secondary",
         destructive:
-          "border-transparent bg-destructive text-white [a&]:hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
+          "border-neon-red/30 bg-neon-red-bg text-neon-red-soft",
         outline:
-          "text-foreground [a&]:hover:bg-accent [a&]:hover:text-accent-foreground",
+          "border-border-strong bg-transparent text-text-muted",
+        warning:
+          "border-neon-yellow/30 bg-neon-yellow-bg text-neon-yellow-soft",
+        info:
+          "border-neon-cyan/30 bg-neon-cyan-bg text-neon-cyan-soft",
+        // Design System v2.0: RPG Ranks
+        bronze:
+          "border-rank-bronze/30 bg-rank-bronze-bg text-rank-bronze",
+        silver:
+          "border-rank-silver/30 bg-rank-silver-bg text-rank-silver",
+        gold:
+          "border-rank-gold/30 bg-rank-gold-bg text-rank-gold shadow-[0_0_8px_var(--color-rank-gold-bg)]",
+        platinum:
+          "border-rank-platinum/30 bg-rank-platinum-bg text-rank-platinum shadow-[0_0_8px_var(--color-rank-platinum-bg)]",
+        diamond:
+          "border-rank-diamond/30 bg-rank-diamond-bg text-rank-diamond shadow-[0_0_8px_var(--color-rank-diamond-bg)]",
+        // Design System v2.0: XP Badge
+        xp:
+          "font-display border-neon-green/30 bg-neon-green-bg text-neon-green px-1.5 py-0",
       },
     },
     defaultVariants: {
