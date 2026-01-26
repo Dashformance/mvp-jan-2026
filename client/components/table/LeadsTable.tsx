@@ -338,13 +338,18 @@ export function LeadsTable({
 
             {/* Bulk Action Bar */}
             {selectedLeads && selectedLeads.size > 0 && (
-                <div className="sticky bottom-4 left-0 right-0 z-50 flex justify-center animate-in fade-in slide-in-from-bottom-4 duration-300">
-                    <div className="bg-bg-elevated border border-accent/30 shadow-[0_8px_32px_rgba(0,0,0,0.5)] rounded-2xl px-6 py-4 flex items-center gap-6 backdrop-blur-md">
-                        <div className="flex items-center gap-3 pr-6 border-r border-white/10">
-                            <div className="h-8 w-8 rounded-full bg-accent/20 flex items-center justify-center text-accent font-bold text-sm">
-                                {selectedLeads.size}
+                <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[100] flex justify-center animate-in fade-in slide-in-from-bottom-8 duration-500">
+                    <div className="bg-bg-elevated/95 border border-accent/40 shadow-[0_20px_50px_rgba(0,0,0,0.6)] rounded-3xl px-8 py-5 flex items-center gap-8 backdrop-blur-xl">
+                        <div className="flex flex-col pr-8 border-r border-white/10">
+                            <div className="flex items-center gap-3">
+                                <div className="h-10 w-10 rounded-2xl bg-accent/20 border border-accent/30 flex items-center justify-center text-accent font-black text-lg shadow-inner">
+                                    {selectedLeads.size}
+                                </div>
+                                <div className="flex flex-col">
+                                    <span className="text-sm font-bold text-white tracking-tight">Leads Selecionados</span>
+                                    <span className="text-[10px] text-accent font-bold uppercase tracking-widest opacity-70">Ações em Massa</span>
+                                </div>
                             </div>
-                            <span className="text-sm font-medium text-white">Leads Selecionados</span>
                         </div>
 
                         <div className="flex items-center gap-3">

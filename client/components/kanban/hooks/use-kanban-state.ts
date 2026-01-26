@@ -220,7 +220,11 @@ export function useKanbanState() {
 
     // Sync leads when params change
     useEffect(() => {
-        fetchLeads(page);
+        setPage(1);
+    }, [filterBarState, sortBy]);
+
+    useEffect(() => {
+        fetchLeads(page, page > 1);
     }, [filterBarState, sortBy, page]);
 
 
