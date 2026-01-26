@@ -29,7 +29,7 @@ export default function LoginPage() {
             const { error } = await signInWithEmail(email, password)
             if (error) {
                 toast.error("Erro ao entrar", {
-                    description: "Verifique suas credenciais e tente novamente."
+                    description: error.message || "Verifique suas credenciais e tente novamente."
                 })
             } else {
                 toast.success("Login realizado com sucesso!")
