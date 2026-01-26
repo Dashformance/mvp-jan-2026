@@ -743,5 +743,72 @@ export const LeadsService = {
         }));
 
         return result;
+    },
+
+    async getRecentActivity(limit = 15) {
+        const interactions = await prisma.interaction.findMany({
+            take: limit,
+            orderBy: { date: 'desc' },
+            include: { lead: true }
+        });
+
+        // Define users map for resolution (Shared logic)
+        const users = [
+            { key: 'joao', name: 'João', ids: ['21d216a4-e8c9-464d-b486-0b4db827f5ba'], names: ['joao', 'João Vitor'] },
+            { key: 'bruno', name: 'Bruno', ids: ['0184fc53-a696-4ed6-b5e4-2391fd21b902'], names: ['bruno', 'Bruno'] },
+            { key: 'nitz', name: 'Nitz', ids: ['1e83c3b1-b8ed-4a59-a37b-4425947525ea'], names: ['nitz', 'Nitz'] }
+        ];
+
+        return interactions.map((interaction: any) => {
+            let type: 'conversion' | 'task' | 'streak' | 'lead' = 'task';
+            let message = '';
+            let xp = 0;
+
+            // Resolve User Name
+            let userName = 'Alguém';
+            const user = users.find(u => u.ids.includes(interaction.user_id) || u.names.some(n => n.toLowerCase() === (interaction.user_id || '').toLowerCase()));
+            if (user) userName = user.name;
+            else if (interaction.user_id) userName = interaction.user_id; // Fallback
+
+            // Determine type and XP based on interaction
+            if (interaction.type === 'STATUS_CHANGE') {
+                if (interaction.content.includes('WON') || interaction.content.includes('Venda')) {
+                    type = 'conversion';
+                    message = `${userName} fechou uma venda!`;
+                    xp = 1000;
+                } else {
+                    type = 'lead';
+                    message = `${userName} moveu um lead`;
+                    xp = 25;
+                }
+            } else if (interaction.type === 'MEETING') {
+                type = 'task';
+                message = `${userName} agendou uma reunião`;
+                xp = 300;
+            } else if (['CALL', 'WHATSAPP', 'EMAIL'].includes(interaction.type)) {
+                type = 'lead';
+                message = `${userName} realizou um contato`;
+                xp = 50;
+            } else if (interaction.type === 'NOTE') {
+                // Ignore standard notes or treat as low XP?
+                type = 'lead';
+                message = `${userName} adicionou uma nota`;
+                xp = 10;
+            }
+
+            // Fallback for custom content
+            if (!message && interaction.content) {
+                message = interaction.content;
+            }
+
+            return {
+                id: interaction.id,
+                message,
+                xp,
+                timestamp: interaction.date,
+                type,
+                userName
+            };
+        });
     }
 };

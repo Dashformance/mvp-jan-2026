@@ -38,6 +38,9 @@ export default function RootLayout({
       <body
         className={`${inter.variable} ${jetbrainsMono.variable} ${spaceGrotesk.variable} antialiased bg-[#050505] text-white`}
       >
+        {/* Google Cast SDK */}
+        <script src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1" defer></script>
+
         <AuthProvider>
           {children}
           <Toaster position="top-right" theme="dark" richColors closeButton />

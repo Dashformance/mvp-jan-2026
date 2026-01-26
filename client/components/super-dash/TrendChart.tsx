@@ -68,7 +68,7 @@ export const TrendChart: React.FC<TrendChartProps> = ({ data, className }) => {
                             content={({ active, payload, label }) => {
                                 if (active && payload && payload.length) {
                                     return (
-                                        <div className="bg-[#1C1C1C]/80 backdrop-blur-md border border-white/10 p-3 rounded-xl shadow-2xl">
+                                        <div className="bg-bg-card border border-border-subtle p-3 rounded-lg">
                                             <p className="text-white text-xs font-bold mb-2">{label}</p>
                                             <div className="flex flex-col gap-1">
                                                 {payload.map((entry: any, index: number) => (

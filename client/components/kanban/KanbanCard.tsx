@@ -162,11 +162,10 @@ export function KanbanCard({ lead, onEdit, onUpdateTitle, onDisqualify, onApprov
             <Card
                 className={`
                     cursor-grab active:cursor-grabbing 
-                    bg-bg-elevated border border-border-subtle rounded-md
+                    bg-bg-elevated rounded-sm shadow-sm
                     transition-all duration-150
-                    hover:border-border-default hover:translate-y-[-2px]
+                    hover:bg-bg-hover hover:translate-y-[-2px]
                     ${getScoreBorderClass()}
-                    ${lead.is_starred ? 'shadow-glow-accent' : ''}
                 `}
                 onClick={() => !isEditingTitle && onEdit(lead)}
             >

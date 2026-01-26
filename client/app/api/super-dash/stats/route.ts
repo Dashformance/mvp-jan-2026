@@ -54,8 +54,10 @@ export async function GET() {
             const xp = (sStats.won * 1000) + (sStats.meeting * 300) + (sStats.contacted * 50);
 
             // Level formula (Seasonal)
-            let level = Math.floor(Math.sqrt(xp / 100));
-            if (level < 1) level = 1;
+            // Forced to Level 1 as per request
+            let level = 1;
+            // let level = Math.floor(Math.sqrt(xp / 100));
+            // if (level < 1) level = 1;
 
             const nextLevelXp = Math.pow(level + 1, 2) * 100;
 
@@ -134,11 +136,15 @@ export async function GET() {
             { name: 'Sex', sales: 0, meetings: 0 },
         ];
 
+        // 5. Fetch Activity Feed (Real)
+        const feed = await LeadsService.getRecentActivity(20);
+
         return NextResponse.json({
             overview,
             collaborators: collaborators.sort((a, b) => b.score - a.score),
             timeData,
-            calendar
+            calendar,
+            feed
         });
 
     } catch (error) {

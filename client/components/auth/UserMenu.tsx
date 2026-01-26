@@ -47,17 +47,13 @@ export function UserMenu() {
                     Minha Conta
                 </DropdownMenuLabel>
 
-                {isAdmin && (
-                    <>
-                        <Link href="/super-dash">
-                            <DropdownMenuItem className="cursor-pointer focus:bg-accent/10 focus:text-accent">
-                                <BarChart3 className="w-4 h-4 mr-2" />
-                                SUPER DASH
-                            </DropdownMenuItem>
-                        </Link>
-                        <DropdownMenuSeparator className="bg-white/5" />
-                    </>
-                )}
+                <Link href="/super-dash">
+                    <DropdownMenuItem className="cursor-pointer focus:bg-accent/10 focus:text-accent">
+                        <BarChart3 className="w-4 h-4 mr-2" />
+                        SUPER DASH
+                    </DropdownMenuItem>
+                </Link>
+                <DropdownMenuSeparator className="bg-white/5" />
 
                 <DropdownMenuItem className="text-sm opacity-70">
                     {user.email}

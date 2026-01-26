@@ -28,38 +28,36 @@ export default function Home() {
           <PageHeader />
 
           {/* Superdash Access Button - Prominent */}
-          {isAdmin && (
-            <Link href="/super-dash">
-              <div className="group relative overflow-hidden bg-linear-to-r from-accent/20 via-accent/10 to-transparent border border-accent/30 rounded-xl p-4 cursor-pointer hover:border-accent/50 transition-all hover:shadow-[0_0_40px_rgba(222,204,168,0.2)]">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-accent/20 border border-accent/30 flex items-center justify-center group-hover:scale-110 transition-transform">
-                      <Gauge className="w-6 h-6 text-accent" />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h3 className="text-lg font-bold text-white">SUPERDASH</h3>
-                        <span className="px-2 py-0.5 rounded-full bg-neon-green-bg text-neon-green-soft text-[10px] font-bold uppercase">Live</span>
-                      </div>
-                      <p className="text-sm text-text-muted">Performance Cockpit • Visão completa da equipe em tempo real</p>
-                    </div>
+          <Link href="/super-dash">
+            <div className="group relative overflow-hidden bg-linear-to-r from-accent/20 via-accent/10 to-transparent border border-accent/30 rounded-xl p-4 cursor-pointer hover:border-accent/50 transition-all hover:shadow-[0_0_40px_rgba(222,204,168,0.2)]">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-accent/20 border border-accent/30 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <Gauge className="w-6 h-6 text-accent" />
                   </div>
-                  <div className="flex items-center gap-3">
-                    <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-bg-elevated border border-border-subtle">
-                      <TrendingUp className="w-4 h-4 text-neon-green-soft" />
-                      <span className="text-xs text-text-secondary font-medium">Pace: Excelente</span>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-lg font-bold text-white">SUPERDASH</h3>
+                      <span className="px-2 py-0.5 rounded-full bg-neon-green-bg text-neon-green-soft text-[10px] font-bold uppercase">Live</span>
                     </div>
-                    <Button className="bg-accent text-bg-void hover:bg-accent-light font-bold group-hover:scale-105 transition-transform">
-                      <Zap className="w-4 h-4 mr-2" />
-                      Acessar
-                    </Button>
+                    <p className="text-sm text-text-muted">Performance Cockpit • Visão completa da equipe em tempo real</p>
                   </div>
                 </div>
-                {/* Animated gradient line */}
-                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-linear-to-r from-transparent via-accent to-transparent opacity-50 group-hover:opacity-100 transition-opacity" />
+                <div className="flex items-center gap-3">
+                  <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-bg-elevated border border-border-subtle">
+                    <TrendingUp className="w-4 h-4 text-neon-green-soft" />
+                    <span className="text-xs text-text-secondary font-medium">Pace: Excelente</span>
+                  </div>
+                  <Button className="bg-accent text-bg-void hover:bg-accent-light font-bold group-hover:scale-105 transition-transform">
+                    <Zap className="w-4 h-4 mr-2" />
+                    Acessar
+                  </Button>
+                </div>
               </div>
-            </Link>
-          )}
+              {/* Animated gradient line */}
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-linear-to-r from-transparent via-accent to-transparent opacity-50 group-hover:opacity-100 transition-opacity" />
+            </div>
+          </Link>
         </div>
 
         {/* Tier 3: Work Area (The Pipeline) */}

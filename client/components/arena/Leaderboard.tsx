@@ -27,24 +27,24 @@ interface LeaderboardProps {
 const MEDAL_STYLES = {
     0: {
         icon: '🥇',
-        bg: 'bg-gradient-to-r from-yellow-500/20 to-yellow-600/10',
-        border: 'border-yellow-500/50',
-        glow: 'shadow-[0_0_30px_rgba(255,215,0,0.4)]',
-        text: 'text-yellow-400'
+        bg: 'bg-accent/10',
+        border: 'border-accent/40',
+        glow: '',
+        text: 'text-accent'
     },
     1: {
         icon: '🥈',
-        bg: 'bg-gradient-to-r from-zinc-400/20 to-zinc-500/10',
-        border: 'border-zinc-400/40',
+        bg: 'bg-bg-surface',
+        border: 'border-white/10',
         glow: '',
         text: 'text-zinc-300'
     },
     2: {
         icon: '🥉',
-        bg: 'bg-gradient-to-r from-amber-600/20 to-amber-700/10',
-        border: 'border-amber-600/40',
+        bg: 'bg-bg-surface',
+        border: 'border-amber-600/20',
         glow: '',
-        text: 'text-amber-500'
+        text: 'text-amber-600'
     }
 };
 

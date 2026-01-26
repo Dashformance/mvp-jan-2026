@@ -27,6 +27,7 @@ import { Sparkline } from "@/components/super-dash/Sparkline";
 import { PlayerCard } from "@/components/super-dash/PlayerCard";
 import { LevelUpModal } from "@/components/super-dash/LevelUpModal";
 import { TeamCalendar } from "@/components/super-dash/TeamCalendar";
+import { CastButton } from "@/components/CastButton";
 
 
 
@@ -203,6 +204,7 @@ export default function SuperDashPage() {
                     <Button variant="outline" size="sm" onClick={toggleFullscreen} className="border-border-subtle bg-bg-elevated hover:bg-bg-hover text-text-muted hover:text-white">
                         {isFullscreen ? <><Minimize2 className="w-4 h-4 mr-2" />Sair</> : <><Maximize2 className="w-4 h-4 mr-2" />Tela Cheia</>}
                     </Button>
+                    <CastButton />
                     <UserMenu />
                 </div>
             </header>

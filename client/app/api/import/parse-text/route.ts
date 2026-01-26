@@ -20,8 +20,8 @@ export const POST = withApiErrorHandling(async (req: NextRequest) => {
 
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
-    console.error("GEMINI_API_KEY not configured");
-    return NextResponse.json({ error: "Serviço de IA não configurado" }, { status: 503 });
+    console.warn("GEMINI_API_KEY not configured. Attempting fallback.");
+    throw new Error("GEMINI_API_KEY_MISSING");
   }
 
   try {
@@ -116,6 +116,7 @@ OUTPUT REQUIREMENTS:
       errorMessage.includes('rate_limit') ||
       errorMessage.includes('404') ||
       errorMessage.includes('not found') ||
+      errorMessage.includes('gemini_api_key_missing') ||
       errorMessage.includes('googlegenerativeai error')) {
 
       console.log("[parse-text] Switching to Local Regex Fallback due to AI Error:", errorMessage);
@@ -220,7 +221,7 @@ OUTPUT REQUIREMENTS:
         }
 
         return NextResponse.json({
-          summary: "⚠️ Modo Fallback (Cota de IA excedida). Processado localmente com heurística.",
+          summary: "⚠️ Modo Fallback (IA indisponível). Processado localmente com heurística.",
           leads: leads
         });
       } catch (fallbackError) {

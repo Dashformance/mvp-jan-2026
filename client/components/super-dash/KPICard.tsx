@@ -37,22 +37,21 @@ export const KPICard: React.FC<KPICardProps> = ({
     const isGold = variant === 'gold';
 
     return (
-        <motion.div
-            whileHover={{ translateY: -4 }}
+        <div
             className={cn(
                 "rounded-2xl p-5 border transition-all duration-300 relative overflow-hidden",
                 isGold
-                    ? "bg-gradient-to-br from-[#DECCA8]/10 to-bg-elevated border-[#DECCA8]/30 shadow-[0_0_20px_rgba(222,204,168,0.05)]"
-                    : "bg-bg-elevated border-border-subtle hover:bg-bg-hover hover:border-border",
+                    ? "bg-bg-elevated border-accent/20"
+                    : "bg-bg-elevated border-border-subtle hover:bg-bg-hover hover:border-border-default",
                 className
             )}
         >
             {/* Sparkline Background */}
             {sparklineData && (
-                <div className="absolute bottom-0 right-0 opacity-20 pointer-events-none">
+                <div className="absolute bottom-0 right-0 opacity-10 pointer-events-none">
                     <Sparkline
                         data={sparklineData}
-                        color={isGold ? "#DECCA8" : (trendPositive ? "#10B981" : "#EF4444")}
+                        color={isGold ? "#D4C5A5" : (trendPositive ? "#22C55E" : "#EF4444")}
                         className="w-32 h-16"
                     />
                 </div>
@@ -63,14 +62,14 @@ export const KPICard: React.FC<KPICardProps> = ({
                 <div className={cn(
                     "p-2 rounded-lg border",
                     isGold
-                        ? "bg-[#DECCA8]/10 border-[#DECCA8]/20 text-[#DECCA8]"
-                        : "bg-white/5 border-white/10 " + iconColor
+                        ? "bg-accent/5 border-accent/20 text-accent"
+                        : "bg-bg-surface border-border-subtle " + iconColor
                 )}>
                     <Icon className="w-5 h-5" />
                 </div>
                 <span className={cn(
-                    "text-[10px] uppercase tracking-[0.15em] font-bold",
-                    isGold ? "text-[#DECCA8]" : "text-text-muted"
+                    "text-[10px] uppercase tracking-[0.2em] font-bold",
+                    isGold ? "text-accent" : "text-text-muted"
                 )}>
                     {title}
                 </span>
@@ -79,7 +78,7 @@ export const KPICard: React.FC<KPICardProps> = ({
             {/* Value */}
             <div className={cn(
                 "font-display text-4xl font-bold mb-2",
-                isGold ? "text-[#DECCA8] drop-shadow-md" : "text-white"
+                isGold ? "text-accent" : "text-white"
             )}>
                 {value}
             </div>
@@ -110,6 +109,6 @@ export const KPICard: React.FC<KPICardProps> = ({
             )}>
                 +{xp} XP
             </div>
-        </motion.div>
+        </div>
     );
 };

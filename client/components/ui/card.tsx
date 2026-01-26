@@ -14,9 +14,9 @@ const cardVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-bg-card border-border-subtle text-white shadow-xl shadow-black/20",
-        glass: "glass text-white shadow-2xl",
-        game: "bg-linear-to-b from-white/[0.03] to-transparent border-glass-border hover:-translate-y-1.5 hover:border-white/[0.15] hover:shadow-[0_20px_50px_rgba(0,0,0,0.5)] transition-all duration-500",
+        default: "bg-bg-card text-white shadow-sm",
+        glass: "glass text-white shadow-sm",
+        game: "bg-bg-elevated hover:-translate-y-1 transition-all duration-300 shadow-sm hover:shadow-md",
       },
     },
     defaultVariants: {

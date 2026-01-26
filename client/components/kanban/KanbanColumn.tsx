@@ -96,7 +96,7 @@ export function KanbanColumn({
     };
 
     return (
-        <div className="flex flex-col h-full min-h-0 min-w-[320px] w-[320px] bg-bg-primary rounded-lg border border-border-subtle">
+        <div className="flex flex-col h-full min-h-0 min-w-[320px] w-[320px] bg-bg-deep rounded-md">
             {/* Header - DS v2.0 */}
             <div className="sticky top-0 z-10 bg-bg-primary px-4 py-3 border-b border-border-subtle flex justify-between items-center shrink-0">
                 <div className="flex items-center gap-2 flex-1 min-w-0">
