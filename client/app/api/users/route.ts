@@ -16,7 +16,16 @@ export async function GET() {
         // Ensure the requester is provisioned in the database
         await UserService.getOrCreateUser(user);
 
+        const ALLOWED_EMAILS = [
+            'vitor@visualizen.com',
+            'joao@visualizen.com',
+            'bruno@visualizen.com'
+        ];
+
         const users = await prisma.user.findMany({
+            where: {
+                email: { in: ALLOWED_EMAILS }
+            },
             select: {
                 id: true,
                 email: true,
