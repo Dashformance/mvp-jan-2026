@@ -67,18 +67,27 @@ export function ImportWizard({ open, onOpenChange }: ImportWizardProps) {
         }
     }, [open]);
 
-    // Auto-select first stage when columns load
+    // Auto-select first stage or 'NEW' when columns load
     useEffect(() => {
         if (columns.length > 0 && !globalStageId) {
-            setGlobalStageId(columns[0].id);
+            const hasNewField = columns.some(c => c.id === 'NEW');
+            setGlobalStageId(hasNewField ? 'NEW' : columns[0].id);
         }
-    }, [columns]);
+    }, [columns, globalStageId]);
+
+    // Auto-select current user as default owner
+    useEffect(() => {
+        if (profile?.id && !globalOwnerId) {
+            setGlobalOwnerId(profile.id);
+        }
+    }, [profile, globalOwnerId]);
 
     const [step, setStep] = useState<Step>('UPLOAD');
 
     // Global Import States
     const [globalStageId, setGlobalStageId] = useState<string>('');
-    const [globalSource, setGlobalSource] = useState<string>('');
+    const [globalOwnerId, setGlobalOwnerId] = useState<string>('');
+    const [globalSource, setGlobalSource] = useState<string>('Import');
 
     // File Import State
     const [file, setFile] = useState<File | null>(null);
@@ -164,12 +173,13 @@ export function ImportWizard({ open, onOpenChange }: ImportWizardProps) {
             });
             const dupData = await dupRes.json();
 
-            // Merge duplicate info into leads AND apply global stage
+            // Merge duplicate info into leads AND apply global stage/owner
             const leadsWithDupInfo = leadsData.map((lead: ParsedLead, idx: number) => {
                 const dupInfo = dupData.results?.find((r: any) => r.index === idx);
                 return {
                     ...lead,
-                    stage_id: globalStageId || columns[0]?.id || 'NEW',
+                    stage_id: globalStageId || 'NEW',
+                    owner_id: globalOwnerId || profile?.id || '',
                     source: globalSource || 'Import',
                     _isDuplicate: dupInfo?.isDuplicate || false,
                     _matchReasons: dupInfo?.matchReasons || []
@@ -415,7 +425,9 @@ export function ImportWizard({ open, onOpenChange }: ImportWizardProps) {
                                         <Label className="text-[10px] text-muted-foreground uppercase">Responsável</Label>
                                         <div className="relative">
                                             <Select
+                                                value={globalOwnerId}
                                                 onValueChange={(value) => {
+                                                    setGlobalOwnerId(value);
                                                     const newLeads = parsedLeads.map(l => ({ ...l, owner_id: value }));
                                                     setParsedLeads(newLeads);
                                                 }}
