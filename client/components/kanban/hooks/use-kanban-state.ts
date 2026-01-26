@@ -73,7 +73,8 @@ export function useKanbanState() {
         city?: string;
         scoreMin?: number;
         scoreMax?: number;
-    }>({});
+        view?: 'mine' | 'all';
+    }>({ view: 'mine' });
 
     const [sortBy, setSortBy] = useState<'status' | 'alpha' | 'date_asc' | 'date_desc' | 'score' | 'owner'>('date_desc');
     const [selectedLeads, setSelectedLeads] = useState<Set<string>>(new Set());
@@ -94,6 +95,7 @@ export function useKanbanState() {
             if (filterBarState.city) url += `&city=${encodeURIComponent(filterBarState.city)}`;
             if (filterBarState.scoreMin !== undefined) url += `&scoreMin=${filterBarState.scoreMin}`;
             if (filterBarState.scoreMax !== undefined) url += `&scoreMax=${filterBarState.scoreMax}`;
+            if (filterBarState.view) url += `&view=${filterBarState.view}`;
 
             // Sorting
             let sortField = 'date_added';

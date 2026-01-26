@@ -17,8 +17,20 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 
 interface FilterBarProps {
-    onFilterChange: (filters: { search?: string; status?: string[]; owner?: string; source?: string[] }) => void;
-    currentFilters?: { search?: string; status?: string[]; owner?: string; source?: string[] };
+    onFilterChange: (filters: {
+        search?: string;
+        status?: string[];
+        owner?: string;
+        source?: string[];
+        view?: 'mine' | 'all';
+    }) => void;
+    currentFilters?: {
+        search?: string;
+        status?: string[];
+        owner?: string;
+        source?: string[];
+        view?: 'mine' | 'all';
+    };
 }
 
 const SOURCE_OPTIONS = [
@@ -43,6 +55,7 @@ export function FilterBar({ onFilterChange, currentFilters }: FilterBarProps) {
     const [search, setSearch] = useState(currentFilters?.search || "");
     const [selectedStatuses, setSelectedStatuses] = useState<string[]>(currentFilters?.status || []);
     const [selectedSources, setSelectedSources] = useState<string[]>(currentFilters?.source || []);
+    const [view, setView] = useState<'mine' | 'all'>(currentFilters?.view || 'mine');
 
     // Sync with external changes (e.g. from Table Filters)
     useEffect(() => {
@@ -50,24 +63,24 @@ export function FilterBar({ onFilterChange, currentFilters }: FilterBarProps) {
             if (currentFilters.search !== undefined && currentFilters.search !== search) setSearch(currentFilters.search);
             if (currentFilters.status && JSON.stringify(currentFilters.status) !== JSON.stringify(selectedStatuses)) setSelectedStatuses(currentFilters.status);
             if (currentFilters.source && JSON.stringify(currentFilters.source) !== JSON.stringify(selectedSources)) setSelectedSources(currentFilters.source);
+            if (currentFilters.view && currentFilters.view !== view) setView(currentFilters.view);
         }
     }, [currentFilters]);
 
     // Debounce search
     useEffect(() => {
         const timer = setTimeout(() => {
-            if (currentFilters?.search !== search) {
-                notifyChange();
-            }
+            notifyChange();
         }, 500);
         return () => clearTimeout(timer);
-    }, [search, selectedStatuses, selectedSources]);
+    }, [search, selectedStatuses, selectedSources, view]);
 
     const notifyChange = () => {
         onFilterChange({
             search: search || undefined,
             status: selectedStatuses.length > 0 ? selectedStatuses : undefined,
             source: selectedSources.length > 0 ? selectedSources : undefined,
+            view: view
         });
     };
 
@@ -87,6 +100,7 @@ export function FilterBar({ onFilterChange, currentFilters }: FilterBarProps) {
         setSearch("");
         setSelectedStatuses([]);
         setSelectedSources([]);
+        setView('mine');
     };
 
     return (
@@ -108,6 +122,28 @@ export function FilterBar({ onFilterChange, currentFilters }: FilterBarProps) {
                         <X className="w-3 h-3" />
                     </button>
                 )}
+            </div>
+
+            {/* View Toggle */}
+            <div className="flex bg-bg-elevated border border-border-subtle p-1 rounded-lg">
+                <button
+                    onClick={() => setView('mine')}
+                    className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${view === 'mine'
+                            ? 'bg-accent text-bg-void shadow-[0_0_15px_rgba(222,204,168,0.2)]'
+                            : 'text-text-muted hover:text-text-primary'
+                        }`}
+                >
+                    Meus Leads
+                </button>
+                <button
+                    onClick={() => setView('all')}
+                    className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${view === 'all'
+                            ? 'bg-accent text-bg-void shadow-[0_0_15px_rgba(222,204,168,0.2)]'
+                            : 'text-text-muted hover:text-text-primary'
+                        }`}
+                >
+                    Todos
+                </button>
             </div>
 
             {/* Filters Group */}

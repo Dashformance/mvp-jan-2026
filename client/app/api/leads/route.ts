@@ -61,9 +61,11 @@ export const GET = withApiErrorHandling(async (req: NextRequest) => {
         const scoreMin = scoreMinParam ? parseInt(scoreMinParam) : undefined;
         const scoreMax = scoreMaxParam ? parseInt(scoreMaxParam) : undefined;
 
+        const view = searchParams.get('view') || 'mine';
+
         // If Admin, show ALL leads (ownerId = undefined)
-        // If Seller, show only THEIR leads
-        const ownerId = dbUser.role === 'admin' ? undefined : dbUser.id;
+        // If Seller, show only THEIR leads (unless view=all)
+        const ownerId = view === 'all' ? undefined : dbUser.id;
 
         console.log(`[API] Filtering leads for ownerId: ${ownerId || 'ALL (Admin)'}`);
 

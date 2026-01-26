@@ -90,12 +90,7 @@ export const LeadsService = {
         const AND: any[] = [{ deletedAt: null }];
 
         if (filters?.ownerId) {
-            AND.push({
-                OR: [
-                    { owner_id: filters.ownerId },
-                    { owner_id: null }
-                ]
-            });
+            AND.push({ owner_id: filters.ownerId });
         } else if (filters?.owner && filters.owner !== 'all') {
             // Legacy support
             AND.push({ owner: filters.owner });
