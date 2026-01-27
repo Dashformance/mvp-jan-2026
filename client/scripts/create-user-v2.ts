@@ -75,6 +75,7 @@ async function syncPublicUser(uid: string, email: string, name: string) {
             console.log('[Prisma] Creating new public user...');
             await prisma.user.create({
                 data: {
+                    id: (globalThis as any).crypto?.randomUUID?.() || require('crypto').randomUUID(),
                     supabase_uid: uid,
                     email,
                     name,
