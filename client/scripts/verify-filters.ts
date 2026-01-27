@@ -1,6 +1,7 @@
 
 
 import { PrismaClient } from '@prisma/client';
+import { randomUUID } from 'crypto';
 
 const prisma = new PrismaClient();
 const API_URL = 'http://localhost:3000/api/leads';
@@ -12,6 +13,7 @@ async function main() {
     const timestamp = Date.now();
     const lead1 = await prisma.leads.create({
         data: {
+            id: randomUUID(),
             trade_name: `FilterTest A ${timestamp}`,
             company_name: `Company A`,
             cnpj: `00000000000001${timestamp}`, // 14 chars + timestamp ensures uniqueness? No, CNPJ limit. 
@@ -23,6 +25,7 @@ async function main() {
 
     const lead2 = await prisma.leads.create({
         data: {
+            id: randomUUID(),
             trade_name: `FilterTest B ${timestamp}`,
             company_name: `Company B`,
             status: 'WON',
@@ -32,6 +35,7 @@ async function main() {
 
     const lead3 = await prisma.leads.create({
         data: {
+            id: randomUUID(),
             trade_name: `FilterTest C ${timestamp}`,
             company_name: `Company C`,
             status: 'LOST',
