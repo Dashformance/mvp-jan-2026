@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import { randomUUID } from "crypto";
 
 const prisma = new PrismaClient();
 
@@ -11,6 +12,7 @@ async function main() {
         console.log("1. Creating Test Lead...");
         const lead = await prisma.leads.create({
             data: {
+                id: randomUUID(),
                 company_name: "Test Company Inc.",
                 status: "NEW",
                 owner: "test_bot"
@@ -23,6 +25,8 @@ async function main() {
         console.log("2. Adding First Contact (Non-Primary)...");
         const c1 = await prisma.contacts.create({
             data: {
+                id: randomUUID(),
+                updated_at: new Date(),
                 lead_id: leadId,
                 name: "John Doe",
                 email: "john@test.com",
@@ -55,6 +59,8 @@ async function main() {
 
         const c2 = await prisma.contacts.create({
             data: {
+                id: randomUUID(),
+                updated_at: new Date(),
                 lead_id: leadId,
                 name: "Jane Boss",
                 email: "jane@test.com",
