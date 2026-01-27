@@ -37,6 +37,7 @@ export class UserService {
             console.log(`[USER-SERVICE] Auto-provisioning new user: ${email}`);
             user = await prisma.user.create({
                 data: {
+                    id: crypto.randomUUID(),
                     email,
                     supabase_uid: uid,
                     name: user_metadata?.name || email.split('@')[0],
