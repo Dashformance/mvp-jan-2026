@@ -270,6 +270,60 @@ export const LeadsService = {
         });
     },
 
+    /**
+     * Merges a source lead into a target lead.
+     * Transfers interactions and contacts, then soft-deletes the source.
+     */
+    async mergeLeads(targetId: string, sourceId: string) {
+        console.log(`[LeadsService] Merging lead ${sourceId} into ${targetId}`);
+
+        // 1. Fetch both leads
+        const [target, source] = await Promise.all([
+            prisma.leads.findUnique({ where: { id: targetId } }),
+            prisma.leads.findUnique({ where: { id: sourceId } })
+        ]);
+
+        if (!target || !source) return;
+
+        // 2. Transfer Interactions
+        await prisma.interactions.updateMany({
+            where: { lead_id: sourceId },
+            data: { lead_id: targetId }
+        });
+
+        // 3. Transfer Contacts (only if source has contacts and target doesn't or etc.)
+        // For simplicity, let's just move all contacts to the target lead
+        await prisma.contacts.updateMany({
+            where: { lead_id: sourceId },
+            data: { lead_id: targetId }
+        });
+
+        // 4. Update Target metadata if source has more info
+        const updateData: any = {};
+        if (!target.owner_id && source.owner_id) {
+            updateData.owner_id = source.owner_id;
+            updateData.owner = source.owner;
+        }
+
+        // Merge extra_info (qualifications, etc.)
+        const targetExtra = (target.extra_info as any) || {};
+        const sourceExtra = (source.extra_info as any) || {};
+        updateData.extra_info = { ...sourceExtra, ...targetExtra };
+
+        if (Object.keys(updateData).length > 0) {
+            await prisma.leads.update({
+                where: { id: targetId },
+                data: updateData
+            });
+        }
+
+        // 5. Soft Delete Source
+        await prisma.leads.update({
+            where: { id: sourceId },
+            data: { deletedAt: new Date() }
+        });
+    },
+
     async restore(id: string) {
         return prisma.leads.update({
             where: { id },
@@ -327,11 +381,28 @@ export const LeadsService = {
             return prisma.leads.findUnique({ where: { id } });
         }
 
-        // Always fetch current lead for status change tracking
+        // Always fetch current lead for status change tracking and ownership protection
         const currentLead = await prisma.leads.findUnique({
             where: { id },
             select: { extra_info: true, website_url: true, instagram_url: true, render_quality: true, status: true, owner: true, owner_id: true }
         });
+
+        if (!currentLead) return null;
+
+        // --- OWNERSHIP PROTECTION GUARD ---
+        // If owner_id is missing in update but present in current, preserve it (prevent accidental clearing)
+        if (currentLead.owner_id && !sanitizedData.owner_id && sanitizedData.owner_id !== null) {
+            sanitizedData.owner_id = currentLead.owner_id;
+        }
+
+        // Sync owner name label if owner_id changed
+        if (sanitizedData.owner_id && sanitizedData.owner_id !== currentLead.owner_id) {
+            const newOwner = await prisma.user.findUnique({ where: { id: sanitizedData.owner_id } });
+            if (newOwner) {
+                sanitizedData.owner = newOwner.name.split(' ')[0].toLowerCase();
+            }
+        }
+        // ----------------------------------
 
         // Merge data for accurate score calculation if relevant fields are being updated
         if (currentLead && (data.extra_info || data.website_url || data.instagram_url || data.render_quality)) {
@@ -355,7 +426,7 @@ export const LeadsService = {
                     lead_id: id,
                     type: 'STATUS_CHANGE',
                     content: `MOVETO:${sanitizedData.status}`, // Machine readable format
-                    user_id: sanitizedData.owner_id || currentLead.owner_id || 'system',
+                    user_id: data.userId || sanitizedData.owner_id || currentLead.owner_id || 'system',
                     updated_at: new Date()
                 }
             });
@@ -414,11 +485,13 @@ export const LeadsService = {
             orderBy: { date_added: 'asc' }
         });
 
-        const toDeleteIds = new Set<string>();
+        const mergeJobs: { targetId: string, sourceId: string }[] = [];
+        const processedIds = new Set<string>();
 
         const checkDuplicates = (keyFn: (l: any) => string | null) => {
             const groups = new Map<string, any[]>();
             for (const lead of allLeads) {
+                if (processedIds.has(lead.id)) continue;
                 const key = keyFn(lead);
                 if (!key) continue;
                 if (!groups.has(key)) groups.set(key, []);
@@ -427,6 +500,7 @@ export const LeadsService = {
 
             for (const [key, group] of groups) {
                 if (group.length > 1) {
+                    // Decide which one to keep
                     const withUserNotes = group.filter(l => {
                         if (!l.notes || l.notes.trim().length === 0) return false;
                         const note = l.notes.toLowerCase().trim();
@@ -434,22 +508,33 @@ export const LeadsService = {
                         return true;
                     });
 
-                    let keptLeads: any[] = [];
+                    let targetLead: any;
                     if (withUserNotes.length > 0) {
-                        keptLeads = withUserNotes;
+                        // Prioritize lead with user notes
+                        targetLead = withUserNotes[0];
                     } else {
-                        const scored = group.map(l => ({
-                            lead: l,
-                            score: (l.email && l.email.trim().length > 5 ? 1 : 0) +
-                                (l.phone && l.phone.replace(/[^0-9]/g, '').length >= 8 ? 1 : 0)
-                        }));
-                        const maxScore = Math.max(...scored.map(s => s.score));
-                        const bestLeads = scored.filter(s => s.score === maxScore).map(s => s.lead);
-                        keptLeads = [bestLeads[0]];
+                        // Prioritize lead with owner
+                        const withOwner = group.filter(l => l.owner_id);
+                        if (withOwner.length > 0) {
+                            targetLead = withOwner[0];
+                        } else {
+                            // Prioritize by score
+                            const scored = group.map(l => ({
+                                lead: l,
+                                score: (l.email && l.email.trim().length > 5 ? 1 : 0) +
+                                    (l.phone && l.phone.replace(/[^0-9]/g, '').length >= 8 ? 1 : 0)
+                            }));
+                            const maxScore = Math.max(...scored.map(s => s.score));
+                            targetLead = scored.find(s => s.score === maxScore)!.lead;
+                        }
                     }
-                    const keptIds = new Set(keptLeads.map(l => l.id));
+
+                    processedIds.add(targetLead.id);
                     for (const lead of group) {
-                        if (!keptIds.has(lead.id)) toDeleteIds.add(lead.id);
+                        if (lead.id !== targetLead.id && !processedIds.has(lead.id)) {
+                            mergeJobs.push({ targetId: targetLead.id, sourceId: lead.id });
+                            processedIds.add(lead.id);
+                        }
                     }
                 }
             }
@@ -463,12 +548,14 @@ export const LeadsService = {
             return p;
         });
 
-        if (toDeleteIds.size > 0) {
-            const ids = Array.from(toDeleteIds);
-            await this.removeMany(ids);
-            return { deletedCount: ids.length, ids };
+        if (mergeJobs.length > 0) {
+            console.log(`[LeadsService] Starting merge of ${mergeJobs.length} duplicate pairs`);
+            for (const job of mergeJobs) {
+                await this.mergeLeads(job.targetId, job.sourceId);
+            }
+            return { mergedCount: mergeJobs.length, ids: mergeJobs.map(j => j.sourceId) };
         }
-        return { deletedCount: 0, ids: [] };
+        return { mergedCount: 0, ids: [] };
     },
 
 

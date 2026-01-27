@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { LeadsService } from '@/lib/services/leads-service';
 import { withApiErrorHandling } from '@/lib/api-handler';
 import { LeadUpdateSchema } from '@/lib/schemas/lead.schema';
+import { createClient } from '@/lib/supabase/server';
+import { UserService } from '@/lib/services/user-service';
 
 export const GET = withApiErrorHandling(async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     const { id } = await params;
@@ -33,6 +35,18 @@ export const PATCH = withApiErrorHandling(async (req: NextRequest, { params }: {
             error: 'Validation failed',
             details: errors.fieldErrors
         }, { status: 400 });
+    }
+
+    // Inject current user for attribution
+    const supabase = await createClient();
+    if (supabase) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+            const dbUser = await UserService.getOrCreateUser(user);
+            if (dbUser) {
+                parseResult.data.userId = dbUser.id;
+            }
+        }
     }
 
     try {
