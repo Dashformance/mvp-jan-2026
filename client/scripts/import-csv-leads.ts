@@ -1,5 +1,6 @@
 
 import { PrismaClient } from '@prisma/client';
+import { randomUUID } from 'crypto';
 
 const prisma = new PrismaClient();
 
@@ -100,6 +101,7 @@ async function importLeads() {
             // Create Lead
             const lead = await prisma.leads.create({
                 data: {
+                    id: randomUUID(),
                     company_name: company,
                     trade_name: company,
                     cnpj: cnpj,
@@ -132,6 +134,8 @@ async function importLeads() {
                 const email = cols[baseIdx + 3] === '-' ? null : cols[baseIdx + 3];
 
                 contacts.push({
+                    id: randomUUID(),
+                    updated_at: new Date(),
                     lead_id: lead.id,
                     name,
                     role,
