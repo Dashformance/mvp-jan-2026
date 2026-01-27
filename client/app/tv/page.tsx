@@ -153,23 +153,27 @@ export default function TVPage() {
 
                     {/* Bottom Row: Team Performance / Cards */}
                     <div className="grid grid-cols-4 gap-4">
-                        {collaborators.slice(0, 4).map((collab: any) => (
-                            <PlayerCard
-                                key={collab.id}
-                                id={collab.id}
-                                name={collab.name.split(' ')[0]} // First name only for TV
-                                role={collab.role}
-                                avatar={collab.avatar}
-                                level={collab.level}
-                                xp={collab.xp}
-                                nextLevelXp={collab.nextLevelXp}
-                                score={collab.score}
-                                stats={collab.stats}
-                                badges={collab.badges}
-                                rank={0} // Hide rank badge on small cards
-                                isSelected={false}
-                            />
-                        ))}
+                        {collaborators.slice(0, 4).map((collab: any, idx: number) => {
+                            // Inferred initials and tier for the card
+                            const initials = collab.name.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase();
+                            const tier = collab.score >= 90 ? 'gold' : collab.score >= 80 ? 'diamond' : collab.score >= 70 ? 'platinum' : 'emerald';
+
+                            return (
+                                <PlayerCard
+                                    key={collab.id}
+                                    name={collab.name}
+                                    role={collab.role}
+                                    avatar={collab.avatar}
+                                    level={collab.level}
+                                    score={collab.score}
+                                    stats={collab.stats}
+                                    tier={tier as any}
+                                    initials={initials}
+                                    badge={collab.score >= 90 ? '⭐' : '⚡'}
+                                    ranking={idx + 1}
+                                />
+                            );
+                        })}
                     </div>
                 </div>
             </div>
