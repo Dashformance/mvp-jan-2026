@@ -1,5 +1,6 @@
 import prisma from '../lib/prisma';
 import { InteractionsService } from '../lib/services/interactions-service';
+import { randomUUID } from 'crypto';
 
 async function main() {
     console.log("Starting Verification for Interactions...");
@@ -10,6 +11,7 @@ async function main() {
         console.log("1. Creating Test Lead...");
         const lead = await prisma.leads.create({
             data: {
+                id: randomUUID(),
                 company_name: "Interaction Test Corp",
                 status: "NEW",
                 owner: "test_bot"

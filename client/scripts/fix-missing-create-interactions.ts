@@ -1,5 +1,6 @@
 
 import { PrismaClient } from '@prisma/client';
+import { randomUUID } from 'crypto';
 import { GamificationService } from '../lib/gamification/server';
 
 const prisma = new PrismaClient();
@@ -32,7 +33,7 @@ async function main() {
             // Log interaction
             await prisma.interactions.create({
                 data: {
-                    id: crypto.randomUUID(),
+                    id: randomUUID(),
                     lead_id: lead.id,
                     type: 'CREATE',
                     content: 'Recalculated: Lead criado (Import ou Manual)',

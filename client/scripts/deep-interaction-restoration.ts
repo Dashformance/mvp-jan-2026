@@ -1,5 +1,6 @@
 
 import { PrismaClient } from '@prisma/client';
+import { randomUUID } from 'crypto';
 const prisma = new PrismaClient();
 
 async function main() {
@@ -36,7 +37,7 @@ async function main() {
 
             await prisma.interactions.create({
                 data: {
-                    id: crypto.randomUUID(),
+                    id: randomUUID(),
                     lead_id: lead.id,
                     type: lead.status === 'MEETING' ? 'MEETING' : 'STATUS_CHANGE',
                     content: `Inferred: ${lead.status}`,
