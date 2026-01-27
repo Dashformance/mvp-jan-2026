@@ -35,7 +35,7 @@ async function main() {
 
     console.log(`Total interactions by Bruno yesterday: ${interactions.length}`);
 
-    const interactionTypes = {};
+    const interactionTypes: Record<string, number> = {};
     interactions.forEach(i => {
         if (!interactionTypes[i.type]) interactionTypes[i.type] = 0;
         interactionTypes[i.type]++;
