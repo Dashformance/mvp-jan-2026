@@ -6,6 +6,7 @@
  */
 
 import { PrismaClient } from '@prisma/client';
+import { randomUUID } from 'crypto';
 const prisma = new PrismaClient();
 
 const TEST_STAGE = 'INTERESSADO!';
@@ -71,6 +72,7 @@ async function runE2ETest() {
         // Create lead
         const createdLead = await prisma.leads.create({
             data: {
+                id: randomUUID(),
                 company_name: leadData.company_name,
                 trade_name: leadData.trade_name,
                 status: validatedStatus,
@@ -80,6 +82,8 @@ async function runE2ETest() {
                 uf: leadData.uf,
                 contacts: {
                     create: leadData.contacts.map((c, idx) => ({
+                        id: randomUUID(),
+                        updated_at: new Date(),
                         name: c.name,
                         phone: c.phone,
                         whatsapp: c.phone,

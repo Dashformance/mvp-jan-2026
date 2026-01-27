@@ -9,6 +9,7 @@
  */
 
 import { PrismaClient } from '@prisma/client';
+import { randomUUID } from 'crypto';
 const prisma = new PrismaClient();
 
 const TEST_STAGE = 'INTERESSADO!';
@@ -48,6 +49,7 @@ async function runTests() {
         console.log('\n📋 Test 3: Creating lead via prisma.leads.create (simulating import)...');
         const createdLead = await prisma.leads.create({
             data: {
+                id: randomUUID(),
                 company_name: TEST_COMPANY,
                 trade_name: 'Teste Parcerias',
                 status: TEST_STAGE,
@@ -58,6 +60,8 @@ async function runTests() {
                 contacts: {
                     create: [
                         {
+                            id: randomUUID(),
+                            updated_at: new Date(),
                             name: 'Contato Teste',
                             phone: '11999999999',
                             email: 'teste@test.com',
