@@ -26,6 +26,7 @@ async function main() {
 
         await prisma.contacts.create({
             data: {
+                id: (globalThis as any).crypto?.randomUUID?.() || require('crypto').randomUUID(),
                 lead_id: lead.id,
                 name: contactName,
                 role: "Decisor/Principal",
@@ -33,6 +34,7 @@ async function main() {
                 email: lead.email,
                 is_primary: true,
                 notes: "Migrado automaticamente do cadastro do Lead.",
+                updated_at: new Date()
             },
         });
 
