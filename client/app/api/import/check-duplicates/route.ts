@@ -34,7 +34,7 @@ export const POST = withApiErrorHandling(async (req: NextRequest) => {
     });
 
     // Query for existing leads including those in trash
-    const existingLeads = await prisma.lead.findMany({
+    const existingLeads = await prisma.leads.findMany({
         where: {
             OR: [
                 { company_name: { in: companyNames, mode: 'insensitive' } },

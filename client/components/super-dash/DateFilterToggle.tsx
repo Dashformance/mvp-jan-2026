@@ -10,7 +10,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useState } from "react";
 
-export type DatePeriod = 'today' | '7d' | '15d' | 'custom';
+export type DatePeriod = 'today' | '7d' | '15d' | 'total' | 'custom';
 
 interface DateFilterToggleProps {
     value: DatePeriod;
@@ -48,6 +48,7 @@ export function DateFilterToggle({ value, onChange, currentRange, className }: D
         { id: 'today', label: 'Hoje' },
         { id: '7d', label: '7 Dias' },
         { id: '15d', label: '15 Dias' },
+        { id: 'total', label: 'Total' },
         { id: 'custom', label: 'Personalizado' },
     ];
 

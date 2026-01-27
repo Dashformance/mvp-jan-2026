@@ -10,7 +10,7 @@ async function main() {
 
     // 1. Setup: Create Dummy Leads
     const timestamp = Date.now();
-    const lead1 = await prisma.lead.create({
+    const lead1 = await prisma.leads.create({
         data: {
             trade_name: `FilterTest A ${timestamp}`,
             company_name: `Company A`,
@@ -21,7 +21,7 @@ async function main() {
         }
     });
 
-    const lead2 = await prisma.lead.create({
+    const lead2 = await prisma.leads.create({
         data: {
             trade_name: `FilterTest B ${timestamp}`,
             company_name: `Company B`,
@@ -30,7 +30,7 @@ async function main() {
         }
     });
 
-    const lead3 = await prisma.lead.create({
+    const lead3 = await prisma.leads.create({
         data: {
             trade_name: `FilterTest C ${timestamp}`,
             company_name: `Company C`,
@@ -84,7 +84,7 @@ async function main() {
     } finally {
         // 5. Cleanup
         console.log("\n🧹 Cleaning up...");
-        await prisma.lead.deleteMany({ where: { id: { in: [lead1.id, lead2.id, lead3.id] } } });
+        await prisma.leads.deleteMany({ where: { id: { in: [lead1.id, lead2.id, lead3.id] } } });
         console.log("✅ Cleanup done.");
     }
 }

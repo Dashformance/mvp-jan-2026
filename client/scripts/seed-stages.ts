@@ -18,10 +18,10 @@ async function main() {
     console.log('Seeding stages...');
 
     // Clear existing stages to avoid duplicates during dev
-    await prisma.stage.deleteMany({});
+    await prisma.stages.deleteMany({});
 
     for (const [index, col] of PIPELINE_COLUMNS.entries()) {
-        await prisma.stage.create({
+        await prisma.stages.create({
             data: {
                 name: col.id, // ID used as name for mapping
                 phase: col.title, // Title used as phase (label)

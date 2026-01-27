@@ -4,7 +4,7 @@ const prisma = new PrismaClient();
 async function checkLeads() {
     console.log('--- Lead Check ---');
     try {
-        const leads = await prisma.lead.findMany({
+        const leads = await prisma.leads.findMany({
             where: { deletedAt: null },
             take: 1
         });

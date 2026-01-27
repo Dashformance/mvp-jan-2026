@@ -218,15 +218,15 @@ export function KanbanView() {
                 {viewMode === 'kanban' ? (
                     <ConnectedKanbanBoard />
                 ) : (
-                    <div className="absolute inset-0 border border-white/10 rounded-xl overflow-y-auto overflow-x-hidden bg-black/20 backdrop-blur-sm custom-scrollbar pb-24">
+                    <div className="border border-white/10 rounded-xl overflow-hidden bg-black/20 backdrop-blur-sm custom-scrollbar pb-24 min-h-[1080px]">
                         <LeadsTable
                             leads={leads}
                             selectedLeads={selectedLeads}
                             onToggleSelect={toggleSelectLead}
                             onSelectAll={selectAllLeads}
-                            onSort={(col) => setSortBy(col)}
+                            onSort={(col) => setSortBy(col as any)}
                             sortBy={sortBy}
-                            sortOrder={'desc'}
+                            sortOrder={sortBy === 'alpha' ? 'asc' : 'desc'}
                             onEdit={openLeadSheet}
                             onDelete={deleteLead}
                             onStatusChange={updateLeadStatus}

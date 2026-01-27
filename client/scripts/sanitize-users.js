@@ -26,7 +26,7 @@ async function sanitizeUsers() {
         const idsToDelete = usersToDelete.map(u => u.id);
 
         // 2. Reassign leads to null to avoid foreign key violations
-        const reassignedLeads = await prisma.lead.updateMany({
+        const reassignedLeads = await prisma.leads.updateMany({
             where: {
                 owner_id: { in: idsToDelete }
             },

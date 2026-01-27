@@ -60,6 +60,7 @@ export function useKanbanState() {
     const [filters, setFilters] = useState(defaultFilters);
     const [searchQuery, setSearchQuery] = useState('');
     const [viewMode, setViewMode] = useState<'list' | 'kanban'>('kanban');
+    const [availableUsers, setAvailableUsers] = useState<any[]>([]);
 
     // Gamification Hook
     const { addXP } = useGamification();
@@ -76,7 +77,7 @@ export function useKanbanState() {
         view?: 'mine' | 'all';
     }>({ view: 'mine' });
 
-    const [sortBy, setSortBy] = useState<'status' | 'alpha' | 'date_asc' | 'date_desc' | 'score' | 'owner'>('date_desc');
+    const [sortBy, setSortBy] = useState<'status' | 'alpha' | 'date_asc' | 'date_desc' | 'score' | 'owner' | 'last_interaction'>('date_desc');
     const [selectedLeads, setSelectedLeads] = useState<Set<string>>(new Set());
 
     // UI State
@@ -86,7 +87,7 @@ export function useKanbanState() {
     const fetchLeads = useCallback(async (pageToFetch = 1, append = false) => {
         setLoading(true);
         try {
-            const limit = 50;
+            const limit = 200;
             let url = `${API_URL}/leads?page=${pageToFetch}&limit=${limit}`;
 
             // Append Advanced Filters
@@ -108,6 +109,7 @@ export function useKanbanState() {
             else if (sortBy === 'status') { sortField = 'status'; sortOrder = 'asc'; }
             else if (sortBy === 'score') { sortField = 'score'; sortOrder = 'desc'; }
             else if (sortBy === 'owner') { sortField = 'owner'; sortOrder = 'asc'; }
+            else if (sortBy === 'last_interaction') { sortField = 'last_contact_date'; sortOrder = 'desc'; }
 
             url += `&sortBy=${sortField}&sortOrder=${sortOrder}`;
 
@@ -179,6 +181,15 @@ export function useKanbanState() {
 
             // Fetch Leads
             await fetchLeads(1);
+
+            // Fetch Users
+            try {
+                const res = await fetch('/api/users');
+                const data = await res.json();
+                if (Array.isArray(data)) setAvailableUsers(data);
+            } catch (err) {
+                console.error("Failed to load users", err);
+            }
         }
         init();
 
@@ -481,6 +492,7 @@ export function useKanbanState() {
         openLeadSheet,
         closeLeadSheet,
         selectedLeadForSheet,
-        cleanupDuplicates
+        cleanupDuplicates,
+        availableUsers
     };
 }

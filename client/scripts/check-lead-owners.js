@@ -3,7 +3,7 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 async function main() {
-    const leads = await prisma.lead.findMany({
+    const leads = await prisma.leads.findMany({
         take: 20,
         select: {
             owner: true,
@@ -13,7 +13,7 @@ async function main() {
     });
     console.log('Sample Leads:', leads);
 
-    const distinctOwners = await prisma.lead.groupBy({
+    const distinctOwners = await prisma.leads.groupBy({
         by: ['owner'],
         _count: {
             owner: true

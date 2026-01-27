@@ -3,7 +3,7 @@ const prisma = new PrismaClient();
 
 async function check() {
     console.log('--- Checking Leads for "Trisul" ---');
-    const leads = await prisma.lead.findMany({
+    const leads = await prisma.leads.findMany({
         where: {
             OR: [
                 { company_name: { contains: 'Trisul', mode: 'insensitive' } },
@@ -21,7 +21,7 @@ async function check() {
     console.log(JSON.stringify(users, null, 2));
 
     console.log('\n--- Checking Statistics of Leads ---');
-    const stats = await prisma.lead.groupBy({
+    const stats = await prisma.leads.groupBy({
         by: ['status'],
         _count: { _all: true }
     });

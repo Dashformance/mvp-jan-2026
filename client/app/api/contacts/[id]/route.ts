@@ -12,9 +12,9 @@ export async function PUT(request: Request, props: { params: Promise<{ id: strin
         // If setting to primary, unset others for this lead
         if (body.is_primary) {
             // First get the contact to find the lead_id
-            const existingContact = await prisma.contact.findUnique({ where: { id } });
+            const existingContact = await prisma.contacts.findUnique({ where: { id } });
             if (existingContact) {
-                await prisma.contact.updateMany({
+                await prisma.contacts.updateMany({
                     where: {
                         lead_id: existingContact.lead_id,
                         id: { not: id }, // Don't update self yet
@@ -25,7 +25,7 @@ export async function PUT(request: Request, props: { params: Promise<{ id: strin
             }
         }
 
-        const contact = await prisma.contact.update({
+        const contact = await prisma.contacts.update({
             where: { id },
             data: body
         });
@@ -41,7 +41,7 @@ export async function DELETE(request: Request, props: { params: Promise<{ id: st
     try {
         const params = await props.params;
         const { id } = params;
-        await prisma.contact.delete({ where: { id } });
+        await prisma.contacts.delete({ where: { id } });
         return NextResponse.json({ success: true });
     } catch (error) {
         console.error("Error deleting contact:", error);

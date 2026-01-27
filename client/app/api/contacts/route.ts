@@ -12,7 +12,7 @@ export async function GET(request: Request) {
     }
 
     try {
-        const contacts = await prisma.contact.findMany({
+        const contacts = await prisma.contacts.findMany({
             where: { lead_id },
             orderBy: [
                 { is_primary: "desc" },
@@ -37,14 +37,15 @@ export async function POST(request: Request) {
 
         // If new contact is primary, unmark others
         if (is_primary) {
-            await prisma.contact.updateMany({
+            await prisma.contacts.updateMany({
                 where: { lead_id, is_primary: true },
                 data: { is_primary: false }
             });
         }
 
-        const contact = await prisma.contact.create({
+        const contact = await prisma.contacts.create({
             data: {
+                id: crypto.randomUUID(),
                 lead_id,
                 name,
                 role,
@@ -52,7 +53,8 @@ export async function POST(request: Request) {
                 whatsapp,
                 email,
                 is_primary: is_primary || false,
-                notes
+                notes,
+                updated_at: new Date()
             }
         });
 

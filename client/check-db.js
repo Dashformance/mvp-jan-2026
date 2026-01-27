@@ -6,7 +6,7 @@ async function main() {
         const startDate = new Date();
         startDate.setDate(startDate.getDate() - 7);
 
-        const ints = await prisma.interaction.findMany({
+        const ints = await prisma.interactions.findMany({
             where: { date: { gte: startDate } },
             select: { date: true, type: true }
         });
@@ -23,7 +23,7 @@ async function main() {
         console.log('--- INTERACTION SUMMARY (LAST 7 DAYS) ---');
         console.log(JSON.stringify(summary, null, 2));
 
-        const leadStats = await prisma.lead.groupBy({
+        const leadStats = await prisma.leads.groupBy({
             by: ['status'],
             _count: { _all: true }
         });

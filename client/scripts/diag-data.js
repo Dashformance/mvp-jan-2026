@@ -4,9 +4,9 @@ const prisma = new PrismaClient();
 async function checkData() {
     console.log('--- Data Check ---');
     try {
-        const totalLeads = await prisma.lead.count();
-        const activeLeads = await prisma.lead.count({ where: { deletedAt: null } });
-        const deletedLeads = await prisma.lead.count({ where: { NOT: { deletedAt: null } } });
+        const totalLeads = await prisma.leads.count();
+        const activeLeads = await prisma.leads.count({ where: { deletedAt: null } });
+        const deletedLeads = await prisma.leads.count({ where: { NOT: { deletedAt: null } } });
 
         console.log(`Total Leads in DB: ${totalLeads}`);
         console.log(`Active Leads (deletedAt is null): ${activeLeads}`);

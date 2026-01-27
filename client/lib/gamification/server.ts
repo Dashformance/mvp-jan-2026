@@ -55,12 +55,13 @@ export const GamificationService = {
                 // For now, valid for feed consumption
                 await prisma.interactions.create({
                     data: {
-                        lead_id: undefined, // System interaction
+                        id: crypto.randomUUID(),
                         user_id: userId,
                         type: 'LEVEL_UP',
                         content: `LEVEL_UP:${newLevel}`,
+                        updated_at: new Date()
                     }
-                }).catch(() => { }); // Ignore if lead_id is strict foreign key (it is, see schema)
+                }).catch(() => { }); // Ignore errors if needed
             }
 
             return {

@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { LeadsService } from '@/lib/services/leads-service';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: Request) {
     try {
         // PARSE QUERY PARAMS (Sprint 11)
@@ -30,6 +32,9 @@ export async function GET(request: Request) {
             case '15d':
                 SEASON_START_DATE = new Date(now.getTime() - 15 * 24 * 60 * 60 * 1000);
                 break;
+            case 'total':
+                SEASON_START_DATE = new Date('2025-01-01T00:00:00-03:00'); // Assuming project start or reasonable beginning
+                break;
             case 'custom':
                 if (customStart) {
                     SEASON_START_DATE = new Date(customStart);
@@ -42,7 +47,7 @@ export async function GET(request: Request) {
                 }
                 break;
             default:
-                SEASON_START_DATE = new Date('2026-01-01T00:00:00-03:00'); // Fallback to "all time" or season start
+                SEASON_START_DATE = new Date('2025-01-01T00:00:00-03:00'); // Fallback to "all time" or season start
                 break;
         }
 
@@ -176,12 +181,23 @@ export async function GET(request: Request) {
         // Let's keep feed recent.
         const feed = await LeadsService.getRecentActivity(20);
 
+        // 6. Fetch Activity Trend (Real-time or Period)
+        let hourlyActions = [];
+        try {
+            console.log(`[SuperDash API] Fetching trend for ${period}. Start: ${SEASON_START_DATE?.toISOString()} End: ${SEASON_END_DATE?.toISOString()}`);
+            hourlyActions = await LeadsService.getActivityTrend(SEASON_START_DATE, SEASON_END_DATE || now);
+        } catch (trendError) {
+            console.error('[SuperDash API] Trend Error:', trendError);
+            hourlyActions = []; // Fallback
+        }
+
         return NextResponse.json({
             overview,
             collaborators: collaborators.sort((a, b) => b.score - a.score),
             timeData,
             calendar,
-            feed
+            feed,
+            hourlyActions
         });
 
     } catch (error) {

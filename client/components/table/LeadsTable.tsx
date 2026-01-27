@@ -84,10 +84,10 @@ export function LeadsTable({
     onFilterChange,
     onBulkUpdate
 }: LeadsTableProps) {
-    const { columns, bulkUpdateLeads } = useKanban();
+    const { columns, bulkUpdateLeads, availableUsers } = useKanban();
 
     const STATUS_OPTIONS = columns.length > 0
-        ? columns.map(c => ({ value: c.id, label: c.title, color: '' }))
+        ? columns.map(c => ({ value: c.id, label: c.title, color: c.color }))
         : DEFAULT_STATUS_OPTIONS;
 
     const getSortIcon = (column: string) => {
@@ -114,15 +114,24 @@ export function LeadsTable({
         return <span className="text-muted-foreground">{diffDays}d atrás</span>;
     };
 
-    const getStatusColor = (status: string) => {
+    const getStatusInfo = (status: string) => {
+        const column = columns.find(c => c.id === status);
+        if (column) {
+            return {
+                label: column.title,
+                className: `bg-${column.color || 'gray'}-500/10 text-${column.color || 'gray'}-400 border-${column.color || 'gray'}-500/20`
+            };
+        }
+
+        // Fallback or legacy mapping
         switch (status) {
-            case 'NEW': return 'bg-blue-500/10 text-blue-400 border-blue-500/20';
-            case 'ATTEMPTED': return 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20';
-            case 'CONTACTED': return 'bg-purple-500/10 text-purple-400 border-purple-500/20';
-            case 'MEETING': return 'bg-pink-500/10 text-pink-400 border-pink-500/20';
-            case 'WON': return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
-            case 'LOST': return 'bg-red-500/10 text-red-400 border-red-500/20';
-            default: return 'bg-gray-500/10 text-gray-400 border-gray-500/20';
+            case 'NEW': return { label: 'Novo', className: 'bg-blue-500/10 text-blue-400 border-blue-500/20' };
+            case 'ATTEMPTED': return { label: 'Tentativa', className: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' };
+            case 'CONTACTED': return { label: 'Contatado', className: 'bg-purple-500/10 text-purple-400 border-purple-500/20' };
+            case 'MEETING': return { label: 'Reunião', className: 'bg-pink-500/10 text-pink-400 border-pink-500/20' };
+            case 'WON': return { label: 'Ganho', className: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' };
+            case 'LOST': return { label: 'Perdido', className: 'bg-red-500/10 text-red-400 border-red-500/20' };
+            default: return { label: status, className: 'bg-gray-500/10 text-gray-400 border-gray-500/20' };
         }
     };
 
@@ -134,23 +143,15 @@ export function LeadsTable({
         await (onBulkUpdate || bulkUpdateLeads)(ids, { status });
     };
 
-    const handleBulkOwnerChange = async (owner: string) => {
+    const handleBulkOwnerChange = async (ownerId: string, ownerName: string) => {
         if (!selectedLeads || selectedLeads.size === 0) return;
         const ids = Array.from(selectedLeads);
-
-        const ownerMap: Record<string, string> = {
-            'joao': '21d216a4-e8c9-464d-b486-0b4db827f5ba',
-            'bruno': '0184fc53-a696-4ed6-b5e4-2391fd21b902',
-            'nitz': '1e83c3b1-b8ed-4a59-a37b-4425947525ea'
-        };
-
-        const owner_id = ownerMap[owner] || null;
-        await (onBulkUpdate || bulkUpdateLeads)(ids, { owner, owner_id });
+        await (onBulkUpdate || bulkUpdateLeads)(ids, { owner: ownerName, owner_id: ownerId });
     };
 
     return (
-        <div className="relative flex flex-col gap-4">
-            <div className="rounded-md border border-white/5 bg-[#181818]/50 overflow-hidden">
+        <div className="relative flex flex-col gap-4 min-h-[1080px]">
+            <div className="rounded-md border border-white/5 bg-[#181818]/50 overflow-hidden min-h-[1000px]">
                 <Table>
                     <TableHeader className="bg-[#1c1c1c]">
                         <TableRow className="border-b border-white/5 hover:bg-transparent">
@@ -217,9 +218,9 @@ export function LeadsTable({
                             </TableHead>
 
                             <TableHead className="w-[150px] text-right">
-                                <Button variant="ghost" className="h-8 p-0 hover:bg-transparent hover:text-white font-bold text-[11px] uppercase tracking-wider" onClick={() => onSort('date_desc')}>
+                                <Button variant="ghost" className="h-8 p-0 hover:bg-transparent hover:text-white font-bold text-[11px] uppercase tracking-wider" onClick={() => onSort('last_interaction')}>
                                     Última Interação
-                                    {getSortIcon('date_desc')}
+                                    {getSortIcon('last_interaction')}
                                 </Button>
                             </TableHead>
 
@@ -277,9 +278,14 @@ export function LeadsTable({
                                     </TableCell>
 
                                     <TableCell>
-                                        <Badge variant="outline" className={`text-[10px] border px-2 py-0.5 h-6 ${getStatusColor(lead.status)}`}>
-                                            {lead.status}
-                                        </Badge>
+                                        {(() => {
+                                            const statusInfo = getStatusInfo(lead.status);
+                                            return (
+                                                <Badge variant="outline" className={`text-[10px] border px-2 py-0.5 h-6 whitespace-nowrap ${statusInfo.className}`}>
+                                                    {statusInfo.label}
+                                                </Badge>
+                                            );
+                                        })()}
                                     </TableCell>
 
                                     <TableCell>
@@ -387,11 +393,17 @@ export function LeadsTable({
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end" className="bg-zinc-900 border-white/10 text-white w-48">
                                     <DropdownMenuLabel className="text-[10px] uppercase text-muted-foreground px-2 py-1">Consultores Disponíveis</DropdownMenuLabel>
-                                    <DropdownMenuItem onClick={() => handleBulkOwnerChange('joao')} className="focus:bg-white/5 cursor-pointer">João Vitor</DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => handleBulkOwnerChange('bruno')} className="focus:bg-white/5 cursor-pointer">Bruno</DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => handleBulkOwnerChange('nitz')} className="focus:bg-white/5 cursor-pointer">Nitz</DropdownMenuItem>
+                                    {availableUsers.map((user: any) => (
+                                        <DropdownMenuItem
+                                            key={user.id}
+                                            onClick={() => handleBulkOwnerChange(user.id, user.name || user.email.split('@')[0])}
+                                            className="focus:bg-white/5 cursor-pointer"
+                                        >
+                                            {user.name || user.email}
+                                        </DropdownMenuItem>
+                                    ))}
                                     <DropdownMenuSeparator className="bg-white/5" />
-                                    <DropdownMenuItem onClick={() => handleBulkOwnerChange('')} className="focus:bg-white/5 cursor-pointer text-rose-400">Remover Responsável</DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => handleBulkOwnerChange('', '')} className="focus:bg-white/5 cursor-pointer text-rose-400">Remover Responsável</DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
 

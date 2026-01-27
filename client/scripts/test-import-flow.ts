@@ -35,7 +35,7 @@ async function runTests() {
 
         // 2. Verify stage exists
         console.log('\n📋 Test 2: Verifying stage exists...');
-        const stage = await prisma.stage.findFirst({
+        const stage = await prisma.stages.findFirst({
             where: { name: TEST_STAGE }
         });
 
@@ -45,8 +45,8 @@ async function runTests() {
         console.log(`   ✅ Stage found: "${stage.name}" (phase: "${stage.phase}")`);
 
         // 3. Simulate import - Create lead with contacts
-        console.log('\n📋 Test 3: Creating lead via prisma.lead.create (simulating import)...');
-        const createdLead = await prisma.lead.create({
+        console.log('\n📋 Test 3: Creating lead via prisma.leads.create (simulating import)...');
+        const createdLead = await prisma.leads.create({
             data: {
                 company_name: TEST_COMPANY,
                 trade_name: 'Teste Parcerias',
@@ -91,7 +91,7 @@ async function runTests() {
 
         // 6. Verify lead appears in query (simulating LeadsService.findAll)
         console.log('\n📋 Test 6: Verifying lead appears in findMany query...');
-        const leads = await prisma.lead.findMany({
+        const leads = await prisma.leads.findMany({
             where: {
                 deletedAt: null,
                 status: TEST_STAGE,
@@ -126,8 +126,8 @@ async function runTests() {
         // Cleanup: Delete test lead
         if (testLeadId) {
             console.log('\n🧹 Cleaning up test data...');
-            await prisma.contact.deleteMany({ where: { lead_id: testLeadId } });
-            await prisma.lead.delete({ where: { id: testLeadId } });
+            await prisma.contacts.deleteMany({ where: { lead_id: testLeadId } });
+            await prisma.leads.delete({ where: { id: testLeadId } });
             console.log(`   Test lead ${testLeadId} deleted.`);
         }
 

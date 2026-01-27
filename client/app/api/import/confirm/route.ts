@@ -58,8 +58,11 @@ export const POST = withApiErrorHandling(async (req: NextRequest) => {
             // Determine owner_id: explicit > internal user id
             let targetOwnerId: string | null = dbUser.id;
 
-            if (leadData.owner_id !== undefined) {
-                targetOwnerId = leadData.owner_id === "" ? null : leadData.owner_id;
+            if (leadData.owner_id !== undefined && leadData.owner_id !== null && leadData.owner_id !== "") {
+                targetOwnerId = leadData.owner_id;
+            } else if (leadData.owner_id === "" || leadData.owner_id === null) {
+                // If explicitly cleared in UI, keep it as currentUser unless we want to force user attribution
+                targetOwnerId = dbUser.id;
             }
 
             // Log stage assignment
@@ -68,7 +71,7 @@ export const POST = withApiErrorHandling(async (req: NextRequest) => {
             // Validate stage exists if provided
             let validatedStatus = leadData.stage_id || 'NEW';
             if (leadData.stage_id && leadData.stage_id !== 'NEW') {
-                const stageExists = await prisma.stage.findFirst({
+                const stageExists = await prisma.stages.findFirst({
                     where: { name: leadData.stage_id }
                 });
                 if (!stageExists) {

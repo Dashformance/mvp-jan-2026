@@ -68,7 +68,7 @@ async function main() {
             // We'll use a dummy unique CNPJ based on name to prevent duplicates if script runs twice.
             const dummyCnpj = `NITZ-${nome.toUpperCase()}`;
 
-            await prisma.lead.upsert({
+            await prisma.leads.upsert({
                 where: { cnpj: dummyCnpj },
                 update: {
                     status: 'NEW', // Keep it in Qualified Pipeline

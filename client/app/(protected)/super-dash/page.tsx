@@ -1,6 +1,5 @@
 "use client"
 
-
 import { useAuth } from "@/context/auth-context";
 import { ArrowLeft, Trophy, Target, Users, TrendingUp, Zap, Star, Shield, Filter, Maximize2, Minimize2, DollarSign, Phone, Calendar, Award, Flame, Activity } from "lucide-react";
 import Link from "next/link";
@@ -24,21 +23,19 @@ import { DualGauge } from "@/components/super-dash/DualGauge";
 import { InsightAlert } from "@/components/super-dash/InsightAlert";
 import { Sparkline } from "@/components/super-dash/Sparkline";
 import { PlayerCard } from "@/components/super-dash/PlayerCard";
+import { generatePlayerCard, getTier } from "@/lib/utils/score-calculator";
+
+// Missing imports
+import { CastButton } from "@/components/CastButton";
+import { DateFilterToggle, type DatePeriod } from "@/components/super-dash/DateFilterToggle";
 import { LevelUpModal } from "@/components/super-dash/LevelUpModal";
 import { TeamCalendar } from "@/components/super-dash/TeamCalendar";
-import { CastButton } from "@/components/CastButton";
-import { DateFilterToggle, DatePeriod } from "@/components/super-dash/DateFilterToggle"; // Sprint 11
-import { format } from "date-fns";
+import { ActionTrendChart } from "@/components/super-dash/ActionTrendChart";
 
-
-
-
-// Mock XP Feed Events
-// Mock Daily Quests
 const MOCK_QUESTS = [
-    { id: '1', title: 'Contatar 5 leads', description: 'Faça primeiro contato com novos leads', xpReward: 50, completed: true },
-    { id: '2', title: 'Agendar 2 reuniões', description: 'Converta contatos em reuniões', xpReward: 100, completed: false, progress: 1, target: 2 },
-    { id: '3', title: 'Fechar 1 venda', description: 'Conclua uma negociação', xpReward: 200, completed: false },
+    { id: '1', title: 'Fazer 50 ligações', description: 'Realize 50 chamadas', progress: 30, total: 50, xpReward: 500, completed: false },
+    { id: '2', title: 'Fechar 1 venda', description: 'Feche pelo menos uma venda', progress: 0, total: 1, xpReward: 1000, completed: false },
+    { id: '3', title: 'Agendar 3 reuniões', description: 'Agende reuniões qualificadas', progress: 1, total: 3, xpReward: 750, completed: false }
 ];
 
 export default function SuperDashPage() {
@@ -80,45 +77,63 @@ export default function SuperDashPage() {
         return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
     }, []);
 
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                // Sprint 11: Add Query Params
-                const params = new URLSearchParams();
-                params.set('period', selectedPeriod);
-                if (selectedPeriod === 'custom' && customRange?.from && customRange?.to) {
-                    params.set('startDate', customRange.from.toISOString());
-                    params.set('endDate', customRange.to.toISOString());
-                }
-
-                const res = await fetch(`/api/super-dash/stats?${params.toString()}`);
-                if (!res.ok) throw new Error('Failed to fetch stats');
-                const json = await res.json();
-
-                if (!json.error) {
-                    setData(json);
-
-                    // Preserve selected user if they still exist in the new data, otherwise select top 1
-                    if (json.collaborators && json.collaborators.length > 0) {
-                        if (selectedUser) {
-                            const updatedUser = json.collaborators.find((c: any) => c.id === selectedUser.id);
-                            setSelectedUser(updatedUser || json.collaborators[0]);
-                        } else {
-                            setSelectedUser(json.collaborators[0]);
-                        }
-                    }
-                }
-            } catch (error) {
-                console.error("Failed to fetch superdash data", error);
-            } finally {
-                setLoading(false);
+    const fetchStats = useCallback(async () => {
+        try {
+            // Sprint 11: Add Query Params
+            const params = new URLSearchParams();
+            params.set('period', selectedPeriod);
+            if (selectedPeriod === 'custom' && customRange?.from && customRange?.to) {
+                params.set('startDate', customRange.from.toISOString());
+                params.set('endDate', customRange.to.toISOString());
             }
-        };
-        fetchData();
-        // Poll every 30 seconds
-        const interval = setInterval(fetchData, 30000);
-        return () => clearInterval(interval);
+
+            const res = await fetch(`/api/super-dash/stats?${params.toString()}`);
+            if (!res.ok) {
+                console.error('[SuperDash] Fetch Error:', res.status, res.statusText);
+                if (res.status === 401) {
+                    console.log('Session expired, redirecting to login...');
+                    window.location.href = '/login';
+                    return;
+                }
+                throw new Error(`Failed to fetch stats: ${res.status}`);
+            }
+            const json = await res.json();
+
+            if (json.collaborators && json.collaborators.length > 0) {
+                // Use functional update to avoid dependency on selectedUser
+                setSelectedUser((prevUser: any) => {
+                    if (prevUser) {
+                        const updatedUser = json.collaborators.find((c: any) => c.id === prevUser.id);
+                        return updatedUser || json.collaborators[0];
+                    }
+                    return json.collaborators[0];
+                });
+            }
+            setData(json); // Also update 'data' state which was used elsewhere
+        } catch (error) {
+            console.error("Failed to fetch superdash data", error);
+        } finally {
+            setLoading(false);
+        }
     }, [selectedPeriod, customRange]);
+
+    useEffect(() => {
+        if (!process.env.NEXT_PUBLIC_CAST_MODE) {
+            fetchStats();
+        }
+
+        // Polling interaction for real-time feel (every 30s)
+        const interval = setInterval(fetchStats, 30000);
+        return () => clearInterval(interval);
+    }, [fetchStats]);
+
+
+
+    if (authLoading || loading) return (
+        <div className="min-h-screen bg-bg-deep flex items-center justify-center text-white">
+            <Zap className="w-8 h-8 animate-bounce text-neon-green" />
+        </div>
+    );
 
     if (profile?.role !== 'admin') {
         return (
@@ -139,7 +154,7 @@ export default function SuperDashPage() {
         pipelineValue: 0
     };
 
-    const collaborators = data?.collaborators || [];
+    const collaborators = Array.isArray(data?.collaborators) ? data.collaborators : [];
 
     // Default zeroed time data if missing
     const timeData = data?.timeData || [
@@ -177,8 +192,8 @@ export default function SuperDashPage() {
     const periodLabel = selectedPeriod === 'today' ? 'HOJE' :
         selectedPeriod === '7d' ? '7D' :
             selectedPeriod === '15d' ? '15D' :
-                selectedPeriod === '30d' ? '30D' :
-                    selectedPeriod === 'custom' ? 'CUSTOM' : selectedPeriod.toUpperCase();
+                selectedPeriod === 'total' ? 'TOTAL' :
+                    selectedPeriod === 'custom' ? 'CUSTOM' : (selectedPeriod as string).toUpperCase();
 
     return (
         <div className="min-h-screen bg-bg-deep text-white flex flex-col overflow-hidden font-sans">
@@ -263,7 +278,7 @@ export default function SuperDashPage() {
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="col-span-1 bg-gradient-to-br from-[#DECCA8]/10 to-bg-elevated border border-[#DECCA8]/20 rounded-2xl p-6 relative overflow-hidden group hover:border-[#DECCA8]/40 transition-all"
+                        className="col-span-1 bg-linear-to-br from-[#DECCA8]/10 to-bg-elevated border border-[#DECCA8]/20 rounded-2xl p-6 relative overflow-hidden group hover:border-[#DECCA8]/40 transition-all"
                     >
                         {/* Sparkline Overlay */}
                         <div className="absolute bottom-0 right-0 opacity-20 pointer-events-none">
@@ -295,7 +310,7 @@ export default function SuperDashPage() {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.1 }}
-                        className="col-span-1 bg-gradient-to-br from-neon-cyan/5 to-bg-elevated border border-neon-cyan/20 rounded-2xl p-6 relative overflow-hidden group hover:border-neon-cyan/40 transition-all"
+                        className="col-span-1 bg-linear-to-br from-neon-cyan/5 to-bg-elevated border border-neon-cyan/20 rounded-2xl p-6 relative overflow-hidden group hover:border-neon-cyan/40 transition-all"
                     >
                         <div className="absolute bottom-0 right-0 opacity-20 pointer-events-none">
                             <Sparkline
@@ -396,6 +411,7 @@ export default function SuperDashPage() {
                                 <DateFilterToggle
                                     value={selectedPeriod}
                                     onChange={(p, r) => {
+                                        console.log('Changing period to:', p, r);
                                         setSelectedPeriod(p);
                                         if (r) setCustomRange(r);
                                     }}
@@ -407,108 +423,60 @@ export default function SuperDashPage() {
 
                         {/* Player Cards Grid */}
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
-                            {collaborators.map((collab: any, index: number) => (
-                                <div key={collab.id} className="flex justify-center">
-                                    <PlayerCard
-                                        id={collab.id}
-                                        name={collab.name}
-                                        role={collab.role}
-                                        avatar={collab.avatar}
-                                        level={collab.level}
-                                        xp={collab.xp || 0} // Total XP from DB
-                                        nextLevelXp={collab.nextLevelXp}
-                                        score={collab.score}
-                                        stats={{
-                                            ...collab.stats,
-                                            quality: collab.quality,
-                                            xpToday: collab.xpToday
-                                        }}
-                                        badges={collab.badges}
-                                        rank={index + 1}
-                                        isSelected={selectedUser?.id === collab.id}
-                                        onClick={() => setSelectedUser(collab)}
-                                        index={index}
-                                        period={periodLabel}
-                                        edition={index === 0 ? "Top #1" : index < 3 ? "Elite" : "Pro"}
-                                    />
-                                </div>
-                            ))}
+                            {collaborators.map((collab: any, index: number) => {
+                                // Cumulative Score: Use XP as base for performance-based rating (0-99)
+                                // We normalize XP relative to a high target (e.g. 5000 XP)
+                                const cumulativeScore = Math.min(Math.round((collab.xp / 5000) * 99), 99);
+
+                                // Period Data still used for the badge and sub-stats
+                                const cardData = generatePlayerCard(
+                                    {
+                                        leads: collab.stats.contacts,
+                                        respostas: collab.stats.responses,
+                                        reunioes: collab.stats.meetings,
+                                        vendas: collab.stats.sales,
+                                    },
+                                    index + 1,
+                                    collaborators.length,
+                                    5 // Mock streak for now
+                                );
+
+                                // Final Tier should be derived from the CUMULATIVE score + Ranking
+                                const tier = getTier(cumulativeScore, index + 1, collaborators.length);
+
+                                return (
+                                    <div key={collab.id} className="flex justify-center transform transition-all duration-500 hover:scale-105">
+                                        <PlayerCard
+                                            name={collab.name}
+                                            initials={
+                                                collab.name.toLowerCase().includes('joao') ? 'JVG' :
+                                                    collab.name.toLowerCase().includes('bruno') ? 'BRV' :
+                                                        collab.name.toLowerCase().includes('vitor') ? 'VTZ' :
+                                                            collab.role.substring(0, 3).toUpperCase()
+                                            }
+                                            role={collab.role}
+                                            avatar={collab.avatar}
+                                            level={collab.level}
+                                            score={cumulativeScore}
+                                            tier={tier}
+                                            stats={cardData.stats}
+                                            badge={cardData.badge}
+                                            ranking={index + 1}
+                                            period={periodLabel}
+                                            edition={index === 0 ? "Top #1" : index < 3 ? "Elite" : "Pro"}
+                                            onClick={() => setSelectedUser(collab)}
+                                        />
+                                    </div>
+                                );
+                            })}
                         </div>
 
-                        {/* Selected User Detail */}
-                        {selectedUser && (
-                            <motion.div
-                                key={selectedUser.id}
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                className="mt-6 bg-bg-elevated border border-border-subtle rounded-2xl p-6"
-                            >
-                                <div className="flex items-center justify-between mb-4">
-                                    <h3 className="text-lg font-bold text-white">Performance: {selectedUser.name}</h3>
-                                    <span className="text-xs text-text-muted">Monitoramento ao vivo</span>
-                                </div>
-
-                                {/* Gauges */}
-                                <div className="grid grid-cols-2 gap-6 mb-6">
-                                    <div className="bg-bg-surface rounded-xl p-4 border border-border-subtle">
-                                        <div className="flex items-center justify-between">
-                                            <div>
-                                                <h4 className="text-xs text-neon-green-soft font-bold uppercase tracking-wider mb-1">Empenho</h4>
-                                                <div className="font-display text-4xl font-black text-white">{selectedUser.pace}%</div>
-                                                <div className="text-xs text-neon-green-soft flex items-center gap-1 mt-1">
-                                                    <TrendingUp className="w-3 h-3" />
-                                                    {selectedUser.pace >= 70 ? 'Excelente ritmo!' : 'Precisa acelerar'}
-                                                </div>
-                                            </div>
-                                            <div className="w-20 h-20">
-                                                <CircularProgressbar
-                                                    value={selectedUser.pace}
-                                                    strokeWidth={14}
-                                                    styles={buildStyles({
-                                                        pathColor: selectedUser.pace >= 70 ? '#22C55E' : '#F59E0B',
-                                                        trailColor: 'rgba(255,255,255,0.05)',
-                                                    })}
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="bg-bg-surface rounded-xl p-4 border border-border-subtle">
-                                        <div className="flex items-center justify-between">
-                                            <div>
-                                                <h4 className="text-xs text-neon-purple-soft font-bold uppercase tracking-wider mb-1">Conversão</h4>
-                                                <div className="font-display text-4xl font-black text-white">{selectedUser.quality}%</div>
-                                                <div className="text-xs text-neon-purple-soft flex items-center gap-1 mt-1">
-                                                    <Target className="w-3 h-3" />
-                                                    {selectedUser.quality >= 10 ? 'Alta eficiência' : 'Revisar abordagem'}
-                                                </div>
-                                            </div>
-                                            <div className="w-20 h-20">
-                                                <CircularProgressbar
-                                                    value={selectedUser.quality}
-                                                    strokeWidth={14}
-                                                    styles={buildStyles({
-                                                        pathColor: '#8B5CF6',
-                                                        trailColor: 'rgba(255,255,255,0.05)',
-                                                    })}
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Funnel */}
-                                <div className="grid grid-cols-4 gap-3">
-                                    {selectedUser.funnel.map((step: any, idx: number) => (
-                                        <div key={idx} className="bg-bg-surface rounded-lg p-3 text-center border border-border-subtle">
-                                            <div className="text-[10px] text-text-muted uppercase tracking-wider mb-1">{step.stage}</div>
-                                            <div className="font-display text-2xl font-bold text-white">{step.value}</div>
-                                            <div className="text-xs text-accent font-mono">{step.rate}%</div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </motion.div>
-                        )}
+                        {/* Action Trend Chart - Real-time activities */}
+                        <ActionTrendChart
+                            data={data?.actionTrend || []}
+                            period={selectedPeriod}
+                            className="mt-6"
+                        />
                     </div>
 
                     {/* RIGHT: Gamification Sidebar */}

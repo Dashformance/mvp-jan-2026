@@ -239,7 +239,7 @@ export function PlayerCard({
                         width: '100%',
                         height: '100%',
                         borderRadius: '16px',
-                        background: 'rgba(255,255,255,0.02)', // Slightly more visible glass (6%)
+                        background: 'rgba(255,255,255,0.02)', // Slightly more visible glass
                         backdropFilter: 'blur(12px)', // Stronger blur
                         border: '1px solid rgba(255,255,255,0.15)',
                         boxShadow: '0 4px 30px rgba(0, 0, 0, 0.1)', // Glass shadow

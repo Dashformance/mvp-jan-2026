@@ -57,7 +57,7 @@ async function runE2ETest() {
 
         // Validate stage exists (as route.ts now does)
         let validatedStatus = leadData.stage_id || 'NEW';
-        const stageExists = await prisma.stage.findFirst({
+        const stageExists = await prisma.stages.findFirst({
             where: { name: leadData.stage_id }
         });
 
@@ -69,7 +69,7 @@ async function runE2ETest() {
         }
 
         // Create lead
-        const createdLead = await prisma.lead.create({
+        const createdLead = await prisma.leads.create({
             data: {
                 company_name: leadData.company_name,
                 trade_name: leadData.trade_name,
@@ -99,7 +99,7 @@ async function runE2ETest() {
         // 3. Verify lead appears with correct status
         console.log('\n📋 Verifying lead in database...');
 
-        const dbLead = await prisma.lead.findUnique({
+        const dbLead = await prisma.leads.findUnique({
             where: { id: createdLead.id },
             include: { contacts: true }
         });
@@ -134,8 +134,8 @@ async function runE2ETest() {
         // Cleanup
         if (createdLeadId) {
             console.log('\n🧹 Cleaning up...');
-            await prisma.contact.deleteMany({ where: { lead_id: createdLeadId } });
-            await prisma.lead.delete({ where: { id: createdLeadId } });
+            await prisma.contacts.deleteMany({ where: { lead_id: createdLeadId } });
+            await prisma.leads.delete({ where: { id: createdLeadId } });
             console.log('   Done.');
         }
         await prisma.$disconnect();

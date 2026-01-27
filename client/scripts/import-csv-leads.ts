@@ -98,7 +98,7 @@ async function importLeads() {
 
         try {
             // Create Lead
-            const lead = await prisma.lead.create({
+            const lead = await prisma.leads.create({
                 data: {
                     company_name: company,
                     trade_name: company,
@@ -142,7 +142,7 @@ async function importLeads() {
             }
 
             if (contacts.length > 0) {
-                await prisma.contact.createMany({
+                await prisma.contacts.createMany({
                     data: contacts
                 });
             }
@@ -150,7 +150,7 @@ async function importLeads() {
             // Sync legacy fields for compatibility
             if (contacts.length > 0) {
                 const primary = contacts[0];
-                await prisma.lead.update({
+                await prisma.leads.update({
                     where: { id: lead.id },
                     data: {
                         decision_maker: primary.name,

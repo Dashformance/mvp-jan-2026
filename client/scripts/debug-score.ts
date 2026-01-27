@@ -5,7 +5,7 @@ import { calculateAdvancedScore } from '../lib/services/lead-sanitizer';
 const prisma = new PrismaClient();
 
 async function debugLead() {
-    const lead = await prisma.lead.findFirst({
+    const lead = await prisma.leads.findFirst({
         where: { trade_name: { contains: 'engeed_inc', mode: 'insensitive' } }
     });
 

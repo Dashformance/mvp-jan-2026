@@ -5,6 +5,11 @@ import { ACTION_POINTS, calculateLevel } from '@/lib/gamification';
 
 export async function POST(request: Request) {
     const supabase = await createClient();
+
+    if (!supabase) {
+        return NextResponse.json({ error: 'Supabase functionality unavailable' }, { status: 503 });
+    }
+
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {

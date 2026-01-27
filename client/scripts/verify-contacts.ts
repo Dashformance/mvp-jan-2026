@@ -9,7 +9,7 @@ async function main() {
     try {
         // 1. Create a Test Lead
         console.log("1. Creating Test Lead...");
-        const lead = await prisma.lead.create({
+        const lead = await prisma.leads.create({
             data: {
                 company_name: "Test Company Inc.",
                 status: "NEW",
@@ -21,7 +21,7 @@ async function main() {
 
         // 2. Add First Contact (Not Primary)
         console.log("2. Adding First Contact (Non-Primary)...");
-        const c1 = await prisma.contact.create({
+        const c1 = await prisma.contacts.create({
             data: {
                 lead_id: leadId,
                 name: "John Doe",
@@ -48,12 +48,12 @@ async function main() {
         // I will manually perform the "unmark" logic here to verify it works as a sequence of DB operations.
 
         // Simulating API behavior: Unmark others
-        await prisma.contact.updateMany({
+        await prisma.contacts.updateMany({
             where: { lead_id: leadId, is_primary: true },
             data: { is_primary: false }
         });
 
-        const c2 = await prisma.contact.create({
+        const c2 = await prisma.contacts.create({
             data: {
                 lead_id: leadId,
                 name: "Jane Boss",
@@ -65,7 +65,7 @@ async function main() {
 
         // 4. Verify State
         console.log("4. Verifying State...");
-        const contacts = await prisma.contact.findMany({
+        const contacts = await prisma.contacts.findMany({
             where: { lead_id: leadId },
             orderBy: [{ is_primary: 'desc' }, { created_at: 'asc' }]
         });
@@ -86,7 +86,7 @@ async function main() {
         // Cleanup
         if (leadId) {
             console.log("Cleaning up...");
-            await prisma.lead.delete({ where: { id: leadId } }); // Cascade delete contacts
+            await prisma.leads.delete({ where: { id: leadId } }); // Cascade delete contacts
         }
         await prisma.$disconnect();
     }

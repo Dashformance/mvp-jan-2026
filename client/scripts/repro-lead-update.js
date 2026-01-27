@@ -27,7 +27,7 @@ async function reproduceUpdateError() {
     try {
         console.log('\n🔄 Tentando update direto no Prisma...');
         // A validação de argumentos do Prisma roda ANTES do banco.
-        await prisma.lead.update({
+        await prisma.leads.update({
             where: { id: lead.id },
             data: dirtyPayload
         });

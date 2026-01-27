@@ -5,7 +5,7 @@ const prisma = new PrismaClient();
 async function main() {
     console.log("Starting migration: Leads -> Contacts");
 
-    const leads = await prisma.lead.findMany({
+    const leads = await prisma.leads.findMany({
         where: {
             contacts: {
                 none: {},
@@ -24,7 +24,7 @@ async function main() {
 
         const contactName = lead.decision_maker || "Contato Principal";
 
-        await prisma.contact.create({
+        await prisma.contacts.create({
             data: {
                 lead_id: lead.id,
                 name: contactName,

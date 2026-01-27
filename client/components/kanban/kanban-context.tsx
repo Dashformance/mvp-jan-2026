@@ -48,6 +48,7 @@ export interface KanbanContextType {
     openLeadSheet: (lead?: any) => void;
     closeLeadSheet: () => void;
     selectedLeadForSheet: any;
+    availableUsers: any[];
 }
 
 export const KanbanContext = createContext<KanbanContextType | undefined>(undefined);

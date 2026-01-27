@@ -4,7 +4,7 @@ const prisma = new PrismaClient();
 async function debugStrings() {
     console.log('--- Debugging String Match ---');
 
-    const lead = await prisma.lead.findFirst({
+    const lead = await prisma.leads.findFirst({
         where: { company_name: { contains: 'Trisul' } }
     });
 
@@ -13,7 +13,7 @@ async function debugStrings() {
         return;
     }
 
-    const stages = await prisma.stage.findMany();
+    const stages = await prisma.stages.findMany();
     const interestedStage = stages.find(s => s.name.includes('INTERESSADO'));
 
     console.log(`Lead Status: '${lead.status}' (Length: ${lead.status.length})`);

@@ -7,7 +7,7 @@ const prisma = new PrismaClient();
 async function syncScores() {
     console.log('🔄 Starting Score Sync...');
 
-    const leads = await prisma.lead.findMany({
+    const leads = await prisma.leads.findMany({
         where: { deletedAt: null }
     });
 
@@ -29,7 +29,7 @@ async function syncScores() {
 
         if (newScore !== lead.score) {
             console.log(`📝 Updating ${lead.trade_name || lead.company_name}: ${lead.score} -> ${newScore}`);
-            await prisma.lead.update({
+            await prisma.leads.update({
                 where: { id: lead.id },
                 data: { score: newScore }
             });

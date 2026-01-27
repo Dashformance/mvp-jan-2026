@@ -13,7 +13,7 @@ async function backdateLeads() {
     // Today's start to filter out new leads
     const today = new Date('2026-01-12T00:00:00.000Z');
 
-    const leads = await prisma.lead.findMany({
+    const leads = await prisma.leads.findMany({
         where: {
             date_added: {
                 lt: today // "Tirando os que foram adicionados hoje"
@@ -29,7 +29,7 @@ async function backdateLeads() {
 
     for (const lead of leads) {
         // Update lead
-        await prisma.lead.update({
+        await prisma.leads.update({
             where: { id: lead.id },
             data: {
                 last_contact_date: targetDate

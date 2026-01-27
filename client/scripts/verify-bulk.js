@@ -7,7 +7,7 @@ async function main() {
 
     try {
         // 1. Encontrar ou criar leads de teste
-        const leads = await prisma.lead.findMany({
+        const leads = await prisma.leads.findMany({
             take: 5,
             where: { deletedAt: null }
         });
@@ -23,7 +23,7 @@ async function main() {
         console.log(`\n1. Atualizando ${ids.length} leads para responsável "bruno"...`);
 
         // Simular a chamada que o LeadsService.updateMany faz
-        const result = await prisma.lead.updateMany({
+        const result = await prisma.leads.updateMany({
             where: { id: { in: ids } },
             data: { owner: 'bruno' }
         });
@@ -31,7 +31,7 @@ async function main() {
         console.log(`✅ Resultado: ${result.count} leads afetados.`);
 
         // 2. Verificar se mudou
-        const updatedLeads = await prisma.lead.findMany({
+        const updatedLeads = await prisma.leads.findMany({
             where: { id: { in: ids } }
         });
 
@@ -45,7 +45,7 @@ async function main() {
         // 3. Restaurar (opcional)
         console.log('\n2. Restaurando donos originais...');
         for (let i = 0; i < ids.length; i++) {
-            await prisma.lead.update({
+            await prisma.leads.update({
                 where: { id: ids[i] },
                 data: { owner: originalOwners[i] }
             });

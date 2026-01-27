@@ -46,6 +46,7 @@ interface ParsedLead {
     owner_id?: string;
     stage_id?: string;
     contract_value?: string | number;
+    contacts?: Contact[];
     // Duplicate detection fields (added client-side)
     _isDuplicate?: boolean;
     _matchReasons?: string[];
@@ -303,10 +304,18 @@ export function ImportWizard({ open, onOpenChange }: ImportWizardProps) {
     const handleConfirmFileImport = async () => {
         setStep('IMPORTING');
         try {
+            // Apply global fields to all leads from file before sending
+            const leadsToImport = fullData.map(lead => ({
+                ...lead,
+                owner_id: globalOwnerId && globalOwnerId !== 'none' ? globalOwnerId : (profile?.id || undefined),
+                stage_id: globalStageId || 'NEW',
+                source: globalSource || 'Import'
+            }));
+
             const res = await fetch('/api/import/confirm', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ leads: fullData, mapping })
+                body: JSON.stringify({ leads: leadsToImport, mapping })
             });
             const data = await res.json();
 

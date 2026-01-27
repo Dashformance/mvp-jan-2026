@@ -8,7 +8,7 @@ async function main() {
     try {
         // 1. Create a Test Lead
         console.log("1. Creating Test Lead...");
-        const lead = await prisma.lead.create({
+        const lead = await prisma.leads.create({
             data: {
                 company_name: "Interaction Test Corp",
                 status: "NEW",
@@ -65,7 +65,7 @@ async function main() {
         // Cleanup
         if (leadId) {
             console.log("Cleaning up...");
-            await prisma.lead.delete({ where: { id: leadId } });
+            await prisma.leads.delete({ where: { id: leadId } });
         }
         await prisma.$disconnect();
     }

@@ -102,7 +102,7 @@ export class ExtractionService {
                 totalChecked += results.length;
 
                 const batchCnpjs = results.map((l: any) => l.cnpj);
-                const existingLeads = await prisma.lead.findMany({
+                const existingLeads = await prisma.leads.findMany({
                     where: { cnpj: { in: batchCnpjs }, deletedAt: null },
                     select: { cnpj: true }
                 });
@@ -126,13 +126,13 @@ export class ExtractionService {
                     })
                     .filter((p: string) => p.length >= 8);
 
-                const existingByEmail = batchEmails.length > 0 ? await prisma.lead.findMany({
+                const existingByEmail = batchEmails.length > 0 ? await prisma.leads.findMany({
                     where: { email: { in: batchEmails, mode: 'insensitive' }, deletedAt: null },
                     select: { email: true }
                 }) : [];
                 const existingEmails = new Set(existingByEmail.map((l: any) => l.email?.toLowerCase()));
 
-                const existingByPhone = batchPhones.length > 0 ? await prisma.lead.findMany({
+                const existingByPhone = batchPhones.length > 0 ? await prisma.leads.findMany({
                     where: { deletedAt: null },
                     select: { phone: true }
                 }) : [];

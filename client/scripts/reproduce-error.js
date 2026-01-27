@@ -7,7 +7,7 @@ async function reproduceUpdateError() {
 
     // Assunção: O usuário está tentando atualizar um lead existente.
     // Vamos buscar o primeiro lead disponível para teste.
-    const lead = await prisma.lead.findFirst({
+    const lead = await prisma.leads.findFirst({
         where: { deletedAt: null },
         include: { segment: true } // Simula o fetch que o frontend faz
     });
@@ -33,7 +33,7 @@ async function reproduceUpdateError() {
     try {
         // Nota: Aqui estamos testando diretamente o PRISMA primeiro
         // para provar o que quebra o banco.
-        await prisma.lead.update({
+        await prisma.leads.update({
             where: { id: lead.id },
             data: dirtyPayload
         });

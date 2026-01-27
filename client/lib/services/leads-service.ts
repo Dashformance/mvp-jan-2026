@@ -1238,5 +1238,179 @@ export const LeadsService = {
 
         console.log(`✅ Deduplication complete. Merged ${totalMerged} leads.`);
         return { totalMerged };
+    },
+
+    async getHourlyActivity(ownerId?: string) {
+        const now = new Date();
+        // End at the next hour marks (e.g. if 10:30, end at 11:00) so we capture the current partial hour fully
+        // Actually, simpler: start at "current hour - 23"
+        const currentHourStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours());
+        const startOfWindow = new Date(currentHourStart.getTime() - 23 * 60 * 60 * 1000);
+
+        // Fetch interactions and new leads in parallel
+        const [interactions, newLeads] = await Promise.all([
+            prisma.interactions.findMany({
+                where: {
+                    date: { gte: startOfWindow },
+                    ...(ownerId ? { user_id: ownerId } : {})
+                },
+                select: { date: true, type: true, content: true }
+            }),
+            prisma.leads.findMany({
+                where: {
+                    date_added: { gte: startOfWindow },
+                    deletedAt: null,
+                    ...(ownerId ? { owner_id: ownerId } : {})
+                },
+                select: { date_added: true }
+            })
+        ]);
+
+        // Initialize 24-hour rolling window buckets
+        const hourlyData: any[] = [];
+        for (let i = 0; i < 24; i++) {
+            const date = new Date(startOfWindow.getTime() + i * 60 * 60 * 1000);
+            hourlyData.push({
+                // Store timestamp for reference, but use 'label' for the X-axis
+                timestamp: date.getTime(),
+                label: date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+                added: 0,
+                contacts: 0,
+                messages: 0,
+                meetings: 0
+            });
+        }
+
+        const getBucketIndex = (date: Date) => {
+            const diffMs = date.getTime() - startOfWindow.getTime();
+            const hourIndex = Math.floor(diffMs / (1000 * 60 * 60));
+            // Clamp strictly to 0-23
+            if (hourIndex < 0) return 0;
+            if (hourIndex > 23) return 23;
+            return hourIndex;
+        };
+
+        // Process Leads Adicionados
+        newLeads.forEach(lead => {
+            const idx = getBucketIndex(lead.date_added);
+            if (hourlyData[idx]) hourlyData[idx].added++;
+        });
+
+        // Process Interactions
+        interactions.forEach(int => {
+            const idx = getBucketIndex(new Date(int.date));
+            if (!hourlyData[idx]) return;
+
+            const type = int.type;
+            const content = int.content || '';
+
+            if (type === 'CALL' || type === 'EMAIL' || type === 'CONTACT') {
+                hourlyData[idx].contacts++;
+            } else if (type === 'WHATSAPP') {
+                hourlyData[idx].messages++;
+            } else if (type === 'MEETING' || (type === 'STATUS_CHANGE' && (content.includes('MEETING') || content.includes('AGENDADA')))) {
+                hourlyData[idx].meetings++;
+            }
+        });
+
+        return hourlyData.sort((a, b) => a.timestamp - b.timestamp);
+    },
+
+    async getActivityTrend(startDate: Date, endDate: Date, ownerId?: string) {
+        const diffMs = endDate.getTime() - startDate.getTime();
+        const diffDays = diffMs / (1000 * 60 * 60 * 24);
+        const isSingleDay = diffDays <= 1.1; // Allow some margin for 24h/daily resets
+
+        // Fetch interactions and new leads in parallel
+        const [interactions, newLeads] = await Promise.all([
+            prisma.interactions.findMany({
+                where: {
+                    date: { gte: startDate, lte: endDate },
+                    ...(ownerId ? { user_id: ownerId } : {})
+                },
+                select: { date: true, type: true, content: true }
+            }),
+            prisma.leads.findMany({
+                where: {
+                    date_added: { gte: startDate, lte: endDate },
+                    deletedAt: null,
+                    ...(ownerId ? { owner_id: ownerId } : {})
+                },
+                select: { date_added: true }
+            })
+        ]);
+
+        if (isSingleDay) {
+            // Initialize 24 hours (0-23)
+            const hourlyData = Array.from({ length: 24 }, (_, i) => ({
+                label: `${i.toString().padStart(2, '0')}:00`,
+                added: 0,
+                contacts: 0,
+                messages: 0,
+                meetings: 0
+            }));
+
+            newLeads.forEach(lead => {
+                const hour = lead.date_added.getHours();
+                hourlyData[hour].added++;
+            });
+
+            interactions.forEach(int => {
+                const hour = new Date(int.date).getHours();
+                const type = int.type;
+                const content = int.content || '';
+
+                if (type === 'CALL' || type === 'EMAIL' || type === 'CONTACT') {
+                    hourlyData[hour].contacts++;
+                } else if (type === 'WHATSAPP') {
+                    hourlyData[hour].messages++;
+                } else if (type === 'MEETING' || (type === 'STATUS_CHANGE' && content.includes('MEETING'))) {
+                    hourlyData[hour].meetings++;
+                }
+            });
+
+            return hourlyData;
+        } else {
+            // Group by Day
+            const dailyMap = new Map<string, any>();
+
+            // Pre-fill days in range
+            let current = new Date(startDate);
+            while (current <= endDate) {
+                const key = current.toISOString().split('T')[0];
+                dailyMap.set(key, {
+                    label: key, // YYYY-MM-DD
+                    added: 0,
+                    contacts: 0,
+                    messages: 0,
+                    meetings: 0
+                });
+                current.setDate(current.getDate() + 1);
+            }
+
+            newLeads.forEach(lead => {
+                const key = lead.date_added.toISOString().split('T')[0];
+                if (dailyMap.has(key)) dailyMap.get(key).added++;
+            });
+
+            interactions.forEach(int => {
+                const key = new Date(int.date).toISOString().split('T')[0];
+                if (dailyMap.has(key)) {
+                    const entry = dailyMap.get(key);
+                    const type = int.type;
+                    const content = int.content || '';
+
+                    if (type === 'CALL' || type === 'EMAIL' || type === 'CONTACT') {
+                        entry.contacts++;
+                    } else if (type === 'WHATSAPP') {
+                        entry.messages++;
+                    } else if (type === 'MEETING' || (type === 'STATUS_CHANGE' && content.includes('MEETING'))) {
+                        entry.meetings++;
+                    }
+                }
+            });
+
+            return Array.from(dailyMap.values()).sort((a, b) => a.label.localeCompare(b.label));
+        }
     }
 };
