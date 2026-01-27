@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js'
 import { PrismaClient } from '@prisma/client'
 import dotenv from 'dotenv'
 import path from 'path'
+import { randomUUID } from 'crypto'
 
 // Load env from .env.local
 dotenv.config({ path: path.resolve(__dirname, '../.env.local') })
@@ -59,6 +60,7 @@ async function main() {
             role: 'admin'
         },
         create: {
+            id: randomUUID(),
             email: TARGET_EMAIL,
             supabase_uid: authUser.id,
             name: TARGET_NAME,
