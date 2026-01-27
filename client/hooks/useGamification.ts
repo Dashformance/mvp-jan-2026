@@ -79,6 +79,13 @@ export function useGamification() {
     const addXP = useCallback((actionType: ActionType) => {
         const result = storeAddXP(actionType);
 
+        // Sync with Server (Fire and Forget)
+        fetch('/api/gamification/action', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ actionType })
+        }).catch(err => console.error("Failed to sync XP", err));
+
         // Atualiza estatísticas baseado na ação
         switch (actionType) {
             case 'LEAD_CREATED':
@@ -113,6 +120,13 @@ export function useGamification() {
             const result = storeAddXP('BULK_IMPORT');
             totalXPGained += result.xpGained;
         }
+
+        // Sync with Server (Bulk)
+        fetch('/api/gamification/action', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ actionType: 'BULK_IMPORT', multiplier: leadCount })
+        }).catch(err => console.error("Failed to sync Bulk XP", err));
 
         // Atualiza estatística de leads criados
         updateStats({

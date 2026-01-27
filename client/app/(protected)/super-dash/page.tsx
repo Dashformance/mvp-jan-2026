@@ -27,6 +27,8 @@ import { PlayerCard } from "@/components/super-dash/PlayerCard";
 import { LevelUpModal } from "@/components/super-dash/LevelUpModal";
 import { TeamCalendar } from "@/components/super-dash/TeamCalendar";
 import { CastButton } from "@/components/CastButton";
+import { DateFilterToggle, DatePeriod } from "@/components/super-dash/DateFilterToggle"; // Sprint 11
+import { format } from "date-fns";
 
 
 
@@ -45,6 +47,10 @@ export default function SuperDashPage() {
     const [selectedUser, setSelectedUser] = useState<any>(null);
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [loading, setLoading] = useState(true);
+
+    // Sprint 11: Date Filters
+    const [selectedPeriod, setSelectedPeriod] = useState<DatePeriod>('today');
+    const [customRange, setCustomRange] = useState<{ from: Date; to: Date } | undefined>();
 
     // Level Up State (Sprint 7)
     const [showLevelUp, setShowLevelUp] = useState(false);
@@ -77,12 +83,29 @@ export default function SuperDashPage() {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const res = await fetch('/api/super-dash/stats');
+                // Sprint 11: Add Query Params
+                const params = new URLSearchParams();
+                params.set('period', selectedPeriod);
+                if (selectedPeriod === 'custom' && customRange?.from && customRange?.to) {
+                    params.set('startDate', customRange.from.toISOString());
+                    params.set('endDate', customRange.to.toISOString());
+                }
+
+                const res = await fetch(`/api/super-dash/stats?${params.toString()}`);
+                if (!res.ok) throw new Error('Failed to fetch stats');
                 const json = await res.json();
+
                 if (!json.error) {
                     setData(json);
-                    if (json.collaborators.length > 0) {
-                        setSelectedUser(json.collaborators[0]);
+
+                    // Preserve selected user if they still exist in the new data, otherwise select top 1
+                    if (json.collaborators && json.collaborators.length > 0) {
+                        if (selectedUser) {
+                            const updatedUser = json.collaborators.find((c: any) => c.id === selectedUser.id);
+                            setSelectedUser(updatedUser || json.collaborators[0]);
+                        } else {
+                            setSelectedUser(json.collaborators[0]);
+                        }
                     }
                 }
             } catch (error) {
@@ -95,13 +118,7 @@ export default function SuperDashPage() {
         // Poll every 30 seconds
         const interval = setInterval(fetchData, 30000);
         return () => clearInterval(interval);
-    }, []);
-
-    if (authLoading || loading) return (
-        <div className="min-h-screen bg-bg-deep flex items-center justify-center text-white">
-            <Zap className="w-8 h-8 animate-bounce text-neon-green" />
-        </div>
-    );
+    }, [selectedPeriod, customRange]);
 
     if (profile?.role !== 'admin') {
         return (
@@ -147,13 +164,21 @@ export default function SuperDashPage() {
         role: c.role,
         level: c.level,
         xp: c.xp,
+        xpToday: c.xpToday, // Real session XP
         sales: c.stats.sales,
-        avatar: c.avatar
+        avatar: c.avatar,
+        addedToday: c.addedToday // New field
     }));
 
-    // Aggregate Pace and Quality for Hero Section
     const teamPace = collaborators.length > 0 ? Math.round(collaborators.reduce((acc: number, c: any) => acc + c.pace, 0) / collaborators.length) : 0;
     const teamQuality = collaborators.length > 0 ? Math.round(collaborators.reduce((acc: number, c: any) => acc + c.quality, 0) / collaborators.length) : 0;
+
+    // Calculate Period Label for Cards
+    const periodLabel = selectedPeriod === 'today' ? 'HOJE' :
+        selectedPeriod === '7d' ? '7D' :
+            selectedPeriod === '15d' ? '15D' :
+                selectedPeriod === '30d' ? '30D' :
+                    selectedPeriod === 'custom' ? 'CUSTOM' : selectedPeriod.toUpperCase();
 
     return (
         <div className="min-h-screen bg-bg-deep text-white flex flex-col overflow-hidden font-sans">
@@ -367,29 +392,46 @@ export default function SuperDashPage() {
                                 <Users className="w-5 h-5 text-accent" />
                                 Arena do Time
                             </h2>
-                            <span className="text-xs text-text-muted">{collaborators.length} jogadores</span>
+                            <div className="flex items-center gap-4">
+                                <DateFilterToggle
+                                    value={selectedPeriod}
+                                    onChange={(p, r) => {
+                                        setSelectedPeriod(p);
+                                        if (r) setCustomRange(r);
+                                    }}
+                                    currentRange={customRange}
+                                />
+                                <span className="text-xs text-text-muted">{collaborators.length} jogadores</span>
+                            </div>
                         </div>
 
                         {/* Player Cards Grid */}
-                        <div className="grid grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
                             {collaborators.map((collab: any, index: number) => (
-                                <PlayerCard
-                                    key={collab.id}
-                                    id={collab.id}
-                                    name={collab.name}
-                                    role={collab.role}
-                                    avatar={collab.avatar}
-                                    level={collab.level}
-                                    xp={collab.xp}
-                                    nextLevelXp={collab.nextLevelXp}
-                                    score={collab.score}
-                                    stats={collab.stats}
-                                    badges={collab.badges}
-                                    rank={index + 1}
-                                    isSelected={selectedUser?.id === collab.id}
-                                    onClick={() => setSelectedUser(collab)}
-                                    index={index}
-                                />
+                                <div key={collab.id} className="flex justify-center">
+                                    <PlayerCard
+                                        id={collab.id}
+                                        name={collab.name}
+                                        role={collab.role}
+                                        avatar={collab.avatar}
+                                        level={collab.level}
+                                        xp={collab.xp || 0} // Total XP from DB
+                                        nextLevelXp={collab.nextLevelXp}
+                                        score={collab.score}
+                                        stats={{
+                                            ...collab.stats,
+                                            quality: collab.quality,
+                                            xpToday: collab.xpToday
+                                        }}
+                                        badges={collab.badges}
+                                        rank={index + 1}
+                                        isSelected={selectedUser?.id === collab.id}
+                                        onClick={() => setSelectedUser(collab)}
+                                        index={index}
+                                        period={periodLabel}
+                                        edition={index === 0 ? "Top #1" : index < 3 ? "Elite" : "Pro"}
+                                    />
+                                </div>
                             ))}
                         </div>
 

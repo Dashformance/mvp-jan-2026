@@ -104,8 +104,8 @@ export function QualificationForm({ data, onChange, leadData }: QualificationFor
             <Accordion type="single" collapsible className="w-full space-y-2" defaultValue="item-1">
 
                 {/* 1. Uso comprovado de visualização (25 pts) */}
-                <AccordionItem value="item-1" className="border border-border-subtle rounded-lg bg-bg-elevated/40 px-3">
-                    <AccordionTrigger className="hover:no-underline py-3 text-text-primary text-xs font-bold uppercase tracking-widest">
+                <AccordionItem value="item-1" className="border border-white/10 rounded-lg bg-[#222222]/50 px-3">
+                    <AccordionTrigger className="hover:no-underline py-3 text-white text-xs font-bold uppercase tracking-widest">
                         <div className="flex items-center gap-2">
                             <MonitorPlay className="w-4 h-4 text-neon-purple-soft" />
                             Visualização (Max 25 pts)
@@ -128,8 +128,8 @@ export function QualificationForm({ data, onChange, leadData }: QualificationFor
                 </AccordionItem>
 
                 {/* 2. Maturidade Digital (20 pts) */}
-                <AccordionItem value="item-2" className="border border-border-subtle rounded-lg bg-bg-elevated/40 px-3">
-                    <AccordionTrigger className="hover:no-underline py-3 text-text-primary text-xs font-bold uppercase tracking-widest">
+                <AccordionItem value="item-2" className="border border-white/10 rounded-lg bg-[#222222]/50 px-3">
+                    <AccordionTrigger className="hover:no-underline py-3 text-white text-xs font-bold uppercase tracking-widest">
                         <div className="flex items-center gap-2">
                             <SearchCheck className="w-4 h-4 text-neon-green-soft" />
                             Maturidade Digital (Max 20 pts)
@@ -156,8 +156,8 @@ export function QualificationForm({ data, onChange, leadData }: QualificationFor
                 </AccordionItem>
 
                 {/* 3. Estrutura Empresarial (15 pts) */}
-                <AccordionItem value="item-3" className="border border-border-subtle rounded-lg bg-bg-elevated/40 px-3">
-                    <AccordionTrigger className="hover:no-underline py-3 text-text-primary text-xs font-bold uppercase tracking-widest">
+                <AccordionItem value="item-3" className="border border-white/10 rounded-lg bg-[#222222]/50 px-3">
+                    <AccordionTrigger className="hover:no-underline py-3 text-white text-xs font-bold uppercase tracking-widest">
                         <div className="flex items-center gap-2">
                             <Building2 className="w-4 h-4 text-neon-cyan-soft" />
                             Estrutura (Max 15 pts)
@@ -180,8 +180,8 @@ export function QualificationForm({ data, onChange, leadData }: QualificationFor
                 </AccordionItem>
 
                 {/* 4. Escala (15 pts) */}
-                <AccordionItem value="item-4" className="border border-white/5 rounded-lg bg-white/2 px-3">
-                    <AccordionTrigger className="hover:no-underline py-3">
+                <AccordionItem value="item-4" className="border border-white/10 rounded-lg bg-[#222222]/50 px-3">
+                    <AccordionTrigger className="hover:no-underline py-3 text-white text-xs font-bold uppercase tracking-widest">
                         <div className="flex items-center gap-2 text-sm font-medium">
                             <BarChart2 className="w-4 h-4 text-orange-400" />
                             Escala (Max 15 pts)
@@ -204,8 +204,8 @@ export function QualificationForm({ data, onChange, leadData }: QualificationFor
                 </AccordionItem>
 
                 {/* 5. Capacidade Financeira (15 pts) */}
-                <AccordionItem value="item-5" className="border border-white/5 rounded-lg bg-white/2 px-3">
-                    <AccordionTrigger className="hover:no-underline py-3">
+                <AccordionItem value="item-5" className="border border-white/10 rounded-lg bg-[#222222]/50 px-3">
+                    <AccordionTrigger className="hover:no-underline py-3 text-white text-xs font-bold uppercase tracking-widest">
                         <div className="flex items-center gap-2 text-sm font-medium">
                             <DollarSign className="w-4 h-4 text-emerald-500" />
                             Financeiro (Max 15 pts)
@@ -228,8 +228,8 @@ export function QualificationForm({ data, onChange, leadData }: QualificationFor
                 </AccordionItem>
 
                 {/* 6. Abertura Tecnologia (10 pts) */}
-                <AccordionItem value="item-6" className="border border-white/5 rounded-lg bg-white/2 px-3">
-                    <AccordionTrigger className="hover:no-underline py-3">
+                <AccordionItem value="item-6" className="border border-white/10 rounded-lg bg-[#222222]/50 px-3">
+                    <AccordionTrigger className="hover:no-underline py-3 text-white text-xs font-bold uppercase tracking-widest">
                         <div className="flex items-center gap-2 text-sm font-medium">
                             <Zap className="w-4 h-4 text-yellow-400" />
                             Tecnologia (Max 10 pts)

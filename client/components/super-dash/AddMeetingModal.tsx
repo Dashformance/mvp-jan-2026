@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { searchLeadsAction, scheduleMeeting } from '@/app/actions/meeting-actions';
 import { Calendar as CalendarIcon, Clock, Users, Loader2, Search, Plus } from 'lucide-react';
 import { format } from 'date-fns';
+import { useGamification } from '@/hooks/useGamification';
 
 interface AddMeetingModalProps {
     isOpen: boolean;
@@ -15,6 +16,7 @@ interface AddMeetingModalProps {
 }
 
 export const AddMeetingModal: React.FC<AddMeetingModalProps> = ({ isOpen, onClose }) => {
+    const { addXP } = useGamification();
     const [loading, setLoading] = useState(false);
 
     // Search State
@@ -69,6 +71,9 @@ export const AddMeetingModal: React.FC<AddMeetingModalProps> = ({ isOpen, onClos
                 date: DateTime,
                 participants: participants.split(',').map(p => p.trim()).filter(Boolean)
             });
+
+            // Gamification Trigger
+            addXP('LEAD_QUALIFIED');
 
             onClose();
             // Reset

@@ -24,8 +24,8 @@ const COLORS: any = {
     EMAIL: "bg-neon-yellow-bg text-neon-yellow border-neon-yellow/20",
     WHATSAPP: "bg-neon-green-bg text-neon-green border-neon-green/20",
     MEETING: "bg-neon-purple-bg text-neon-purple border-neon-purple/20",
-    NOTE: "bg-bg-elevated text-text-muted border-border-subtle",
-    STATUS_CHANGE: "bg-accent-muted text-accent border-accent/20"
+    NOTE: "bg-[#222222] text-[#888888] border-white/10",
+    STATUS_CHANGE: "bg-[#DECCA8]/10 text-[#DECCA8] border-[#DECCA8]/20"
 };
 
 const LABELS: any = {
@@ -87,7 +87,7 @@ export function Timeline({ leadId }: TimelineProps) {
 
                             return (
                                 <div key={item.id} className="relative pl-10 group">
-                                    <div className={`absolute left-1 top-0 w-6 h-6 rounded-full border flex items-center justify-center bg-background z-10 ${colorClass}`}>
+                                    <div className={`absolute left-1 top-0 w-6 h-6 rounded-full border flex items-center justify-center bg-[#1C1C1C] z-10 ${colorClass}`}>
                                         <Icon className="w-3 h-3" />
                                     </div>
 
@@ -109,7 +109,7 @@ export function Timeline({ leadId }: TimelineProps) {
                                                 <Trash2 className="w-3 h-3" />
                                             </Button>
                                         </div>
-                                        <div className="whitespace-pre-wrap text-foreground/90 bg-muted/30 p-2.5 rounded-md border border-border/50 text-xs leading-relaxed">
+                                        <div className="whitespace-pre-wrap text-white/90 bg-[#222222] p-2.5 rounded-md border border-white/5 text-xs leading-relaxed">
                                             {item.content}
                                         </div>
                                     </div>

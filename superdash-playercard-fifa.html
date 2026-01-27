@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Superdash — Player Card FIFA Style</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #050505;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 40px;
+      padding: 40px;
+      flex-wrap: wrap;
+    }
+
+    /* ===== PLAYER CARD FIFA STYLE ===== */
+    .player-card {
+      width: 280px;
+      aspect-ratio: 0.714;
+      position: relative;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 
+        0 25px 50px rgba(0, 0, 0, 0.5),
+        0 0 0 1px rgba(255, 255, 255, 0.1);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .player-card:hover {
+      transform: translateY(-8px) scale(1.02);
+      box-shadow: 
+        0 35px 70px rgba(0, 0, 0, 0.6),
+        0 0 60px var(--card-glow);
+    }
+
+    /* Card Backgrounds por Tier */
+    .player-card.gold {
+      --card-primary: #C9A227;
+      --card-secondary: #8B7021;
+      --card-accent: #FFD700;
+      --card-glow: rgba(255, 215, 0, 0.3);
+      --card-text: #1a1a0a;
+      background: linear-gradient(145deg, #8B7021 0%, #C9A227 30%, #A6891A 60%, #8B7021 100%);
+    }
+
+    .player-card.diamond {
+      --card-primary: #B9F2FF;
+      --card-secondary: #1E3A5F;
+      --card-accent: #00D4FF;
+      --card-glow: rgba(0, 212, 255, 0.4);
+      --card-text: #0a1a2a;
+      background: linear-gradient(145deg, #1E3A5F 0%, #2E5A8F 30%, #1E4A7F 60%, #0E2A4F 100%);
+    }
+
+    .player-card.platinum {
+      --card-primary: #E5E4E2;
+      --card-secondary: #4A4A4A;
+      --card-accent: #FFFFFF;
+      --card-glow: rgba(255, 255, 255, 0.3);
+      --card-text: #1a1a1a;
+      background: linear-gradient(145deg, #3A3A3A 0%, #5A5A5A 30%, #4A4A4A 60%, #2A2A2A 100%);
+    }
+
+    .player-card.emerald {
+      --card-primary: #00FF88;
+      --card-secondary: #0A3D2A;
+      --card-accent: #00FF88;
+      --card-glow: rgba(0, 255, 136, 0.4);
+      --card-text: #0a2a1a;
+      background: linear-gradient(145deg, #0A3D2A 0%, #1A5D4A 30%, #0A4D3A 60%, #0A2D1A 100%);
+    }
+
+    /* Diagonal Lines Pattern */
+    .player-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: repeating-linear-gradient(
+        -45deg,
+        transparent,
+        transparent 2px,
+        rgba(255, 255, 255, 0.03) 2px,
+        rgba(255, 255, 255, 0.03) 4px
+      );
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* Inner Border Glow */
+    .player-card::after {
+      content: '';
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      right: 8px;
+      bottom: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 12px;
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .card-content {
+      position: relative;
+      z-index: 3;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ===== TOP SECTION ===== */
+    .card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 16px 16px 0;
+    }
+
+    .card-left {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    /* Tier Badge */
+    .tier-badge {
+      background: rgba(0, 0, 0, 0.3);
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      color: var(--card-accent);
+      text-transform: uppercase;
+      backdrop-filter: blur(4px);
+    }
+
+    /* Score */
+    .player-score {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .score-value {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 56px;
+      font-weight: 700;
+      line-height: 1;
+      color: var(--card-accent);
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    }
+
+    .score-role {
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      color: var(--card-accent);
+      opacity: 0.9;
+    }
+
+    /* Right Info */
+    .card-right {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 8px;
+    }
+
+    .card-period {
+      font-size: 10px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.7);
+      text-align: right;
+    }
+
+    .card-edition {
+      font-size: 9px;
+      color: rgba(255, 255, 255, 0.5);
+    }
+
+    .card-badge {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      background: rgba(0, 0, 0, 0.2);
+      border: 2px solid var(--card-accent);
+    }
+
+    /* ===== AVATAR SECTION ===== */
+    .avatar-section {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .avatar-container {
+      width: 120px;
+      height: 120px;
+      position: relative;
+    }
+
+    .avatar-bg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(180deg, transparent 0%, var(--card-accent) 100%);
+      border-radius: 12px;
+      opacity: 0.3;
+    }
+
+    .avatar {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(180deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 48px;
+      font-weight: 700;
+      color: var(--card-accent);
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      overflow: hidden;
+    }
+
+    .avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    /* ===== NAME BANNER ===== */
+    .name-banner {
+      background: var(--card-accent);
+      padding: 12px 16px;
+      text-align: center;
+      clip-path: polygon(0 20%, 5% 0, 95% 0, 100% 20%, 100% 100%, 0 100%);
+    }
+
+    .player-name {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--card-text);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    /* ===== STATS SECTION ===== */
+    .stats-section {
+      background: var(--card-accent);
+      padding: 12px 20px 20px;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px 24px;
+    }
+
+    .stat-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .stat-value {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--card-text);
+      min-width: 32px;
+    }
+
+    .stat-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--card-text);
+      opacity: 0.7;
+      letter-spacing: 0.5px;
+    }
+
+    /* ===== CARD FOOTER ===== */
+    .card-footer {
+      position: absolute;
+      bottom: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 4;
+    }
+
+    .card-logo {
+      font-size: 16px;
+      color: var(--card-text);
+      opacity: 0.4;
+    }
+
+    /* ===== VARIATIONS SHOWCASE ===== */
+    .showcase-title {
+      width: 100%;
+      text-align: center;
+      color: #888;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: -20px;
+    }
+
+    /* ===== LEVEL INDICATOR ===== */
+    .level-indicator {
+      position: absolute;
+      bottom: -8px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--card-text);
+      color: var(--card-accent);
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 4px 12px;
+      border-radius: 10px;
+      border: 2px solid var(--card-accent);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- GOLD CARD -->
+  <div class="player-card gold">
+    <div class="card-content">
+      <div class="card-top">
+        <div class="card-left">
+          <div class="tier-badge">Ultimate</div>
+          <div class="player-score">
+            <span class="score-value">92</span>
+            <span class="score-role">SDR</span>
+          </div>
+        </div>
+        <div class="card-right">
+          <div class="card-period">
+            Jan 2026<br>
+            <span class="card-edition">Top Seller</span>
+          </div>
+          <div class="card-badge">🔥</div>
+        </div>
+      </div>
+
+      <div class="avatar-section">
+        <div class="avatar-container">
+          <div class="avatar-bg"></div>
+          <div class="avatar">JV</div>
+          <div class="level-indicator">LVL 12</div>
+        </div>
+      </div>
+
+      <div class="name-banner">
+        <div class="player-name">J. VITOR</div>
+      </div>
+
+      <div class="stats-section">
+        <div class="stats-grid">
+          <div class="stat-row">
+            <span class="stat-value">145</span>
+            <span class="stat-label">LEADS</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-value">93</span>
+            <span class="stat-label">CONV%</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-value">68</span>
+            <span class="stat-label">RESP</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-value">24</span>
+            <span class="stat-label">MEET</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-value">12</span>
+            <span class="stat-label">VENDAS</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-value">85</span>
+            <span class="stat-label">XP/DIA</span>
+          </div>
+        </div>
+        <div class="card-footer">
+          <span class="card-logo">✦</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DIAMOND CARD -->
+  <div class="player-card diamond">
+    <div class="card-content">
+      <div class="card-top">
+        <div class="card-left">
+          <div class="tier-badge">Diamond</div>
+          <div class="player-score">
+            <span class="score-value">88</span>
+            <span class="score-role">CLO</span>
+          </div>
+        </div>
+        <div class="card-right">
+          <div class="card-period">
+            Jan 2026<br>
+            <span class="card-edition">Closer Elite</span>
+          </div>
+          <div class="card-badge">💎</div>
+        </div>
+      </div>
+
+      <div class="avatar-section">
+        <div class="avatar-container">
+          <div class="avatar-bg"></div>
+          <div class="avatar">BR</div>
+          <div class="level-indicator">LVL 8</div>
+        </div>
+      </div>
+
+      <div class="name-banner">
+        <div class="player-name">BRUNO</div>
+      </div>
+
+      <div class="stats-section">
+        <div class="stats-grid">
+          <div class="stat-row">
+            <span class="stat-value">98</span>
+            <span class="stat-label">LEADS</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-value">78</span>
+            <span class="stat-label">CONV%</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-value">52</span>
+            <span class="stat-label">RESP</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-value">30</span>
+            <span class="stat-label">MEET</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-value">8</span>
+            <span class="stat-label">VENDAS</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-value">62</span>
+            <span class="stat-label">XP/DIA</span>
+          </div>
+        </div>
+        <div class="card-footer">
+          <span class="card-logo">✦</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- EMERALD CARD -->
+  <div class="player-card emerald">
+    <div class="card-content">
+      <div class="card-top">
+        <div class="card-left">
+          <div class="tier-badge">Rising</div>
+          <div class="player-score">
+            <span class="score-value">74</span>
+            <span class="score-role">JR</span>
+          </div>
+        </div>
+        <div class="card-right">
+          <div class="card-period">
+            Jan 2026<br>
+            <span class="card-edition">Rookie Star</span>
+          </div>
+          <div class="card-badge">⚡</div>
+        </div>
+      </div>
+
+      <div class="avatar-section">
+        <div class="avatar-container">
+          <div class="avatar-bg"></div>
+          <div class="avatar">NZ</div>
+          <div class="level-indicator">LVL 5</div>
+        </div>
+      </div>
+
+      <div class="name-banner">
+        <div class="player-name">NITZ</div>
+      </div>
+
+      <div class="stats-section">
+        <div class="stats-grid">
+          <div class="stat-row">
+            <span class="stat-value">210</span>
+            <span class="stat-label">LEADS</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-value">45</span>
+            <span class="stat-label">CONV%</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-value">40</span>
+            <span class="stat-label">RESP</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-value">8</span>
+            <span class="stat-label">MEET</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-value">1</span>
+            <span class="stat-label">VENDAS</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-value">35</span>
+            <span class="stat-label">XP/DIA</span>
+          </div>
+        </div>
+        <div class="card-footer">
+          <span class="card-logo">✦</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

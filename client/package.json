@@ -43,6 +43,7 @@
     "react": "19.2.3",
     "react-apexcharts": "^1.9.0",
     "react-circular-progressbar": "^2.2.0",
+    "react-day-picker": "^9.13.0",
     "react-dom": "19.2.3",
     "react-dropzone": "^14.3.8",
     "react-simple-maps": "^3.0.0",

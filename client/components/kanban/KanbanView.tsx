@@ -11,6 +11,8 @@ import { Plus, RefreshCcw, Download } from "lucide-react";
 import { LeadSheet } from "../lead/LeadSheet";
 import { ImportReviewDialog } from "../ImportReviewDialog";
 import { TrashSheet } from "../TrashSheet";
+import { deduplicateLeadsAction } from "@/app/actions/deduplicate-leads";
+import { Eraser } from "lucide-react";
 import { useLeadImport } from "./hooks/use-lead-import";
 import { toast } from "sonner";
 import { useState } from "react";
@@ -64,6 +66,29 @@ export function KanbanView() {
     } = useLeadImport();
 
     const [importDialogOpen, setImportDialogOpen] = useState(false);
+    const [isDeduplicating, setIsDeduplicating] = useState(false);
+    const [deduplicateConfirmOpen, setDeduplicateConfirmOpen] = useState(false);
+
+    const handleDeduplicate = async () => {
+        setIsDeduplicating(true);
+        try {
+            const result = await deduplicateLeadsAction();
+            if (result.success && 'totalMerged' in result) {
+                toast.success(`Limpeza concluída! ${result.totalMerged} leads duplicados foram mesclados.`);
+                fetchLeads();
+            } else if (result.success) {
+                toast.success(`Limpeza concluída!`);
+                fetchLeads();
+            } else {
+                toast.error(result.error || "Erro ao limpar duplicatas");
+            }
+        } catch (error) {
+            toast.error("Erro inesperado ao limpar duplicatas");
+        } finally {
+            setIsDeduplicating(false);
+            setDeduplicateConfirmOpen(false);
+        }
+    };
 
     const duplicateApiParams = (filters: any) => {
         // Replicating logic from page.tsx buildApiParams temporarily to enable import
@@ -124,6 +149,16 @@ export function KanbanView() {
                     >
                         <Download className="w-4 h-4" />
                         <span className="hidden sm:inline">Importar</span>
+                    </Button>
+
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-9 bg-black/20 border-white/10 hover:bg-orange-500/10 hover:text-orange-500 hover:border-orange-500/50 gap-2 transition-all"
+                        onClick={() => setDeduplicateConfirmOpen(true)}
+                    >
+                        <Eraser className="w-4 h-4" />
+                        <span className="hidden sm:inline">Limpar Duplicatas</span>
                     </Button>
 
                     <Button
@@ -242,6 +277,66 @@ export function KanbanView() {
                 open={importDialogOpen}
                 onOpenChange={setImportDialogOpen}
             />
+
+            {/* Deduplication Confirmation */}
+            <Dialog open={deduplicateConfirmOpen} onOpenChange={setDeduplicateConfirmOpen}>
+                <DialogContent className="max-w-md bg-[#0D0D0D] border-white/10 text-white">
+                    <DialogHeader>
+                        <DialogTitle className="text-xl font-bold flex items-center gap-2">
+                            <Eraser className="w-5 h-5 text-orange-500" />
+                            Limpar Duplicatas de Leads
+                        </DialogTitle>
+                    </DialogHeader>
+
+                    <div className="py-4 space-y-4">
+                        <p className="text-white/70 text-sm leading-relaxed">
+                            Esta ação irá identificar leads com o mesmo <span className="text-white font-bold">e-mail</span> e realizar um "Smart Merge":
+                        </p>
+                        <ul className="space-y-2 text-sm text-white/70">
+                            <li className="flex items-start gap-2">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-1.5 shrink-0" />
+                                Transfere todo o <span className="text-white">histórico de interações</span> para o lead principal.
+                            </li>
+                            <li className="flex items-start gap-2">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-1.5 shrink-0" />
+                                Completa campos vazios (telefone, redes sociais) do lead principal.
+                            </li>
+                            <li className="flex items-start gap-2">
+                                <span className="w-1.5 h-1.5 rounded-full bg-red-500 mt-1.5 shrink-0" />
+                                Remove os leads duplicados (soft-delete).
+                            </li>
+                        </ul>
+                        <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg text-xs text-blue-400">
+                            Dica: Recomendamos fazer isso periodicamente para manter seu CRM organizado.
+                        </div>
+                    </div>
+
+                    <DialogFooter className="gap-2 sm:gap-0">
+                        <Button
+                            variant="ghost"
+                            className="hover:bg-white/5"
+                            onClick={() => setDeduplicateConfirmOpen(false)}
+                            disabled={isDeduplicating}
+                        >
+                            Cancelar
+                        </Button>
+                        <Button
+                            className="bg-orange-500 hover:bg-orange-600 text-white font-bold"
+                            onClick={handleDeduplicate}
+                            disabled={isDeduplicating}
+                        >
+                            {isDeduplicating ? (
+                                <>
+                                    <RefreshCcw className="w-4 h-4 animate-spin mr-2" />
+                                    Processando...
+                                </>
+                            ) : (
+                                "Confirmar Limpeza"
+                            )}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

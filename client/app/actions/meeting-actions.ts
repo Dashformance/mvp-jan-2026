@@ -7,20 +7,19 @@ export async function searchLeadsAction(query: string) {
     if (!query || query.length < 2) return [];
 
     try {
-        const leads = await prisma.lead.findMany({
+        const leads = await prisma.leads.findMany({
             where: {
                 deletedAt: null,
                 OR: [
                     { company_name: { contains: query, mode: 'insensitive' } },
                     { trade_name: { contains: query, mode: 'insensitive' } },
-                    // { decision_maker: { contains: query, mode: 'insensitive' } }
                 ]
             },
             select: {
                 id: true,
                 company_name: true,
                 trade_name: true,
-                owner_user: {
+                User: {
                     select: { name: true, avatar_url: true }
                 }
             },
@@ -40,27 +39,29 @@ export async function scheduleMeeting(data: {
     participants?: string[];
 }) {
     try {
-        // Update the existing Lead
-        // Set Status -> MEETING
-        // Set Next Follow Up -> Date
-        // Add participants to extra_info (merge with existing if needed, but for now replace/add)
+        // Fetch current extra_info to avoid wiping
+        const currentLead = await prisma.leads.findUnique({ where: { id: data.leadId }, select: { extra_info: true } });
+        const currentExtra = (currentLead?.extra_info as any) || {};
 
-        await prisma.lead.update({
+        await prisma.leads.update({
             where: { id: data.leadId },
             data: {
                 status: 'MEETING',
                 next_followup_date: data.date,
-                // We could append to notes, but usually a meeting has its own note field or we just leave it.
-                // Storing participants in extra_info for now.
                 extra_info: {
-                    // We can't easily merge JSON in Prisma without raw query or fetching first. 
-                    // For safety, let's just update the participants field.
-                    // Assuming extra_info is an object.
+                    ...currentExtra,
                     participants: data.participants || [],
                     last_meeting_scheduled_at: new Date().toISOString()
                 }
             }
         });
+
+        // XP Trigger
+        const lead = await prisma.leads.findUnique({ where: { id: data.leadId }, select: { owner_id: true } });
+        if (lead?.owner_id) {
+            const { GamificationService } = await import('@/lib/gamification/server');
+            await GamificationService.addXP(lead.owner_id, 'LEAD_QUALIFIED');
+        }
 
         revalidatePath('/super-dash');
         return { success: true };
@@ -80,7 +81,7 @@ export async function createMeeting(data: {
         const { title, date, participants } = data;
 
         // Try to find a lead that matches the title
-        let lead = await prisma.lead.findFirst({
+        let lead = await prisma.leads.findFirst({
             where: {
                 OR: [
                     { company_name: { equals: title, mode: 'insensitive' } },
@@ -92,8 +93,9 @@ export async function createMeeting(data: {
         if (!lead) {
             // Create new lead if not found
             // We set status to MEETING immediately
-            lead = await prisma.lead.create({
+            lead = await prisma.leads.create({
                 data: {
+                    id: crypto.randomUUID(),
                     company_name: title,
                     trade_name: title,
                     status: 'MEETING',
@@ -106,7 +108,7 @@ export async function createMeeting(data: {
             });
         } else {
             // Update existing lead
-            await prisma.lead.update({
+            await prisma.leads.update({
                 where: { id: lead.id },
                 data: {
                     status: 'MEETING',
@@ -119,6 +121,11 @@ export async function createMeeting(data: {
                     }
                 }
             });
+            // XP Trigger
+            if (lead.owner_id) {
+                const { GamificationService } = await import('@/lib/gamification/server');
+                await GamificationService.addXP(lead.owner_id, 'LEAD_QUALIFIED');
+            }
         }
 
         revalidatePath('/super-dash');
@@ -134,7 +141,7 @@ export async function deleteMeeting(leadId: string) {
     try {
         if (!leadId) throw new Error('Lead ID is required');
 
-        await prisma.lead.update({
+        await prisma.leads.update({
             where: { id: leadId },
             data: {
                 next_followup_date: null,

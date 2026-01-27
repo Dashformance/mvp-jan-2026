@@ -149,14 +149,14 @@ export function LeadSheet({ lead, open, onOpenChange, onSave }: LeadSheetProps) 
 
     return (
         <Sheet open={open} onOpenChange={onOpenChange}>
-            <SheetContent className="w-[500px] sm:max-w-[600px] overflow-y-auto bg-bg-surface border-l border-border-default p-8 shadow-2xl">
+            <SheetContent className="w-[600px] sm:max-w-[600px] overflow-y-auto bg-[#1C1C1C] border-l border-white/10 p-8 shadow-2xl">
                 <SheetHeader className="mb-4">
                     <SheetTitle className="text-xl text-text-primary tracking-tight">{formData.trade_name || formData.company_name || "Novo Lead"}</SheetTitle>
                     <SheetDescription className="flex items-center gap-2 flex-wrap mt-2">
-                        {formData.cnpj && <span className="font-mono bg-bg-deep text-text-muted px-2 py-0.5 rounded-md text-xs">{formData.cnpj}</span>}
-                        {formData.uf && <span className="bg-neon-cyan-bg text-neon-cyan px-2 py-0.5 rounded-md text-xs font-medium border border-neon-cyan/20">{formData.uf}</span>}
+                        {formData.cnpj && <span className="font-mono bg-[#222222] text-[#888888] px-2 py-0.5 rounded-full text-[10px] border border-white/5">{formData.cnpj}</span>}
+                        {formData.uf && <span className="bg-neon-cyan/10 text-neon-cyan px-2 py-0.5 rounded-full text-[10px] font-medium border border-neon-cyan/20">{formData.uf}</span>}
                         {/* Owner Badge */}
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-accent-muted text-accent border border-accent/20`}>
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-[#DECCA8]/10 text-[#DECCA8] border border-[#DECCA8]/20`}>
                             {availableUsers.find(u => u.id === formData.owner_id)?.name || formData.owner || 'Sem dono'}
                         </span>
                     </SheetDescription>
@@ -172,11 +172,11 @@ export function LeadSheet({ lead, open, onOpenChange, onSave }: LeadSheetProps) 
                             if (user) handleChange('owner', user.name.split(' ')[0].toLowerCase());
                         }}
                     >
-                        <SelectTrigger className="w-[140px] h-7 bg-bg-elevated/80 text-[10px] uppercase font-bold text-text-muted border-border-subtle rounded-full px-3 py-1 outline-none">
+                        <SelectTrigger className="w-[140px] h-7 bg-[#222222] text-[10px] uppercase font-bold text-[#888888] border-white/10 rounded-full px-3 py-1 outline-none hover:bg-[#2A2A2A] transition-colors">
                             <SelectValue placeholder="Responsável" />
                         </SelectTrigger>
-                        <SelectContent className="bg-bg-surface border-border-subtle text-white">
-                            <SelectItem value="none">Sem responsável</SelectItem>
+                        <SelectContent className="bg-[#1C1C1C] border-white/10 text-white shadow-xl">
+                            <SelectItem value="none" className="focus:bg-[#2A2A2A] focus:text-white">Sem responsável</SelectItem>
                             {availableUsers.map(u => (
                                 <SelectItem key={u.id} value={u.id} className="text-[10px] uppercase font-bold">
                                     {u.name}
@@ -187,22 +187,22 @@ export function LeadSheet({ lead, open, onOpenChange, onSave }: LeadSheetProps) 
                 </div>
 
                 <Tabs defaultValue="details" className="w-full">
-                    <TabsList className="grid w-full grid-cols-3 bg-bg-deep p-1 h-11 rounded-xl border border-border-subtle">
+                    <TabsList className="grid w-full grid-cols-3 bg-[#181818] p-1 h-11 rounded-lg border border-white/5">
                         <TabsTrigger
                             value="details"
-                            className="rounded-lg data-[state=active]:bg-bg-primary data-[state=active]:text-accent data-[state=active]:shadow-sm text-text-muted h-9 text-xs font-semibold uppercase tracking-wide"
+                            className="rounded-md data-[state=active]:bg-[#222222] data-[state=active]:text-[#DECCA8] data-[state=active]:shadow-sm text-[#888888] h-9 text-xs font-semibold uppercase tracking-wide"
                         >
                             Dados
                         </TabsTrigger>
                         <TabsTrigger
                             value="qualification"
-                            className="rounded-lg data-[state=active]:bg-bg-primary data-[state=active]:text-accent data-[state=active]:shadow-sm text-text-muted h-9 text-xs font-semibold uppercase tracking-wide"
+                            className="rounded-md data-[state=active]:bg-[#222222] data-[state=active]:text-[#DECCA8] data-[state=active]:shadow-sm text-[#888888] h-9 text-xs font-semibold uppercase tracking-wide"
                         >
                             Qualificação
                         </TabsTrigger>
                         <TabsTrigger
                             value="history"
-                            className="rounded-lg data-[state=active]:bg-bg-primary data-[state=active]:text-accent data-[state=active]:shadow-sm text-text-muted h-9 text-xs font-semibold uppercase tracking-wide"
+                            className="rounded-md data-[state=active]:bg-[#222222] data-[state=active]:text-[#DECCA8] data-[state=active]:shadow-sm text-[#888888] h-9 text-xs font-semibold uppercase tracking-wide"
                         >
                             Histórico
                         </TabsTrigger>
@@ -211,20 +211,20 @@ export function LeadSheet({ lead, open, onOpenChange, onSave }: LeadSheetProps) 
                     <TabsContent value="details" className="space-y-4 py-4">
 
                         {/* Cadastro Rápido - Social & Marketing (Top Priority) */}
-                        <div className="space-y-4 p-4 bg-accent/5 rounded-xl border border-accent/20">
-                            <h4 className="font-medium text-sm flex items-center gap-2 text-foreground">
-                                <Search className="w-4 h-4 text-accent" /> Prospecção Rápida
+                        <div className="space-y-5 p-6 bg-[#222222] rounded-xl border border-white/5 shadow-sm">
+                            <h4 className="font-display font-semibold text-sm flex items-center gap-2 text-white/90">
+                                <Search className="w-4 h-4 text-[#DECCA8]" /> Prospecção Rápida
                             </h4>
                             <div className="space-y-3">
                                 {/* Nome da Empresa */}
                                 <div className="space-y-1.5">
-                                    <Label className="text-xs text-muted-foreground flex items-center gap-1">
+                                    <Label className="text-[10px] font-medium uppercase tracking-[0.05em] text-[#888888] flex items-center gap-1">
                                         Nome da Empresa
                                     </Label>
                                     <Input
                                         value={formData.trade_name || ''}
                                         onChange={e => handleChange('trade_name', e.target.value)}
-                                        className="h-10"
+                                        className="h-10 bg-[#1C1C1C] border-white/10 focus:border-[#DECCA8]/50 text-white placeholder:text-[#444444]"
                                         placeholder="Nome Fantasia"
                                     />
                                 </div>
@@ -240,22 +240,22 @@ export function LeadSheet({ lead, open, onOpenChange, onSave }: LeadSheetProps) 
                                 />
                             </div>
 
-                            <div className="grid grid-cols-2 gap-3 pt-2 border-t border-border">
+                            <div className="grid grid-cols-2 gap-4 pt-2">
                                 <div className="space-y-1.5">
-                                    <Label className="text-xs text-muted-foreground flex items-center gap-1">
+                                    <Label className="text-[10px] font-medium uppercase tracking-[0.05em] text-[#888888] flex items-center gap-1">
                                         <Instagram className="w-3 h-3" /> Instagram
                                     </Label>
                                     <div className="flex gap-2">
                                         <Input
                                             value={formData.instagram_url || ''}
                                             onChange={e => handleChange('instagram_url', e.target.value)}
-                                            className="h-10"
+                                            className="h-10 bg-[#1C1C1C] border-white/10 focus:border-[#DECCA8]/50 text-white placeholder:text-[#444444]"
                                             placeholder="link do perfil"
                                         />
                                         <Button
                                             size="icon"
-                                            variant="outline"
-                                            className="h-10 w-10 shrink-0 hover:text-pink-400 hover:border-pink-500/30"
+                                            variant="ghost"
+                                            className="h-10 w-10 shrink-0 bg-[#1C1C1C] border border-white/10 text-[#888888] hover:text-pink-400 hover:bg-pink-500/10 hover:border-pink-500/30"
                                             disabled={!formData.instagram_url}
                                             onClick={() => formData.instagram_url && window.open(formData.instagram_url, '_blank')}
                                         >
@@ -264,20 +264,20 @@ export function LeadSheet({ lead, open, onOpenChange, onSave }: LeadSheetProps) 
                                     </div>
                                 </div>
                                 <div className="space-y-1.5">
-                                    <Label className="text-xs text-muted-foreground flex items-center gap-1">
+                                    <Label className="text-[10px] font-medium uppercase tracking-[0.05em] text-[#888888] flex items-center gap-1">
                                         <Globe className="w-3 h-3" /> Site
                                     </Label>
                                     <div className="flex gap-2">
                                         <Input
                                             value={formData.website_url || ''}
                                             onChange={e => handleChange('website_url', e.target.value)}
-                                            className="h-10"
+                                            className="h-10 bg-[#1C1C1C] border-white/10 focus:border-[#DECCA8]/50 text-white placeholder:text-[#444444]"
                                             placeholder="www.exemplo.com"
                                         />
                                         <Button
                                             size="icon"
-                                            variant="outline"
-                                            className="h-10 w-10 shrink-0 hover:text-blue-400 hover:border-blue-500/30"
+                                            variant="ghost"
+                                            className="h-10 w-10 shrink-0 bg-[#1C1C1C] border border-white/10 text-[#888888] hover:text-blue-400 hover:bg-blue-500/10 hover:border-blue-500/30"
                                             disabled={!formData.website_url}
                                             onClick={() => {
                                                 let url = formData.website_url;
@@ -291,19 +291,19 @@ export function LeadSheet({ lead, open, onOpenChange, onSave }: LeadSheetProps) 
                                 </div>
                             </div>
 
-                            <div className="space-y-2 pt-2 border-t border-border">
-                                <Label className="text-xs text-muted-foreground">Qualidade do Render</Label>
+                            <div className="space-y-3 pt-2">
+                                <Label className="text-[10px] font-medium uppercase tracking-[0.05em] text-[#888888]">Qualidade do Render</Label>
                                 <div className="flex gap-2">
                                     {[
-                                        { id: 'GOOD', label: 'Bom', color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/20' },
-                                        { id: 'MEDIUM', label: 'Médio', color: 'bg-amber-500/10 text-amber-400 border-amber-500/20 hover:bg-amber-500/20' },
-                                        { id: 'BAD', label: 'Ruim', color: 'bg-rose-500/10 text-rose-400 border-rose-500/20 hover:bg-rose-500/20' }
+                                        { id: 'GOOD', label: 'Bom', color: 'bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/30' },
+                                        { id: 'MEDIUM', label: 'Médio', color: 'bg-amber-500/20 text-amber-400 ring-1 ring-amber-500/30' },
+                                        { id: 'BAD', label: 'Ruim', color: 'bg-rose-500/20 text-rose-400 ring-1 ring-rose-500/30' }
                                     ].map((q) => (
                                         <Button
                                             key={q.id}
-                                            variant="outline"
+                                            variant="ghost"
                                             size="sm"
-                                            className={`flex-1 h-9 text-xs transition-all ${formData.render_quality === q.id ? q.color + ' border-current' : 'bg-muted/50 border-transparent text-muted-foreground hover:bg-muted'}`}
+                                            className={`flex-1 h-9 text-xs transition-all ${formData.render_quality === q.id ? q.color : 'bg-[#1C1C1C] border border-white/5 text-[#888888] hover:bg-[#2A2A2A]'}`}
                                             onClick={() => handleChange('render_quality', q.id)}
                                         >
                                             {q.label}
@@ -314,56 +314,61 @@ export function LeadSheet({ lead, open, onOpenChange, onSave }: LeadSheetProps) 
                         </div>
 
                         {/* Dados da Empresa */}
-                        <div className="space-y-4 p-4 bg-muted/50 rounded-xl border border-border">
-                            <h4 className="font-medium text-sm text-foreground">Identificação</h4>
+                        <div className="space-y-5 p-6 bg-[#222222] rounded-xl border border-white/5 shadow-sm mt-4">
+                            <h4 className="font-display font-semibold text-sm text-white/90">Identificação</h4>
                             <div className="space-y-3">
                                 {/* Removido Nome Fantasia daqui pois já está no card acima */}
 
                                 <div className="space-y-1.5">
-                                    <Label className="text-xs text-muted-foreground">Razão Social</Label>
-                                    <Input value={formData.company_name || ''} onChange={e => handleChange('company_name', e.target.value)} className="h-10" placeholder="Opcional" />
+                                    <Label className="text-[10px] font-medium uppercase tracking-[0.05em] text-[#888888]">Razão Social</Label>
+                                    <Input
+                                        value={formData.company_name || ''}
+                                        onChange={e => handleChange('company_name', e.target.value)}
+                                        className="h-10 bg-[#1C1C1C] border-white/10 focus:border-[#DECCA8]/50 text-white placeholder:text-[#444444]"
+                                        placeholder="Opcional"
+                                    />
                                 </div>
-                                <div className="grid grid-cols-2 gap-3 pt-2 border-t border-border mt-2">
+                                <div className="grid grid-cols-2 gap-4 pt-2">
                                     <div className="space-y-1.5">
-                                        <Label className="text-xs text-muted-foreground flex items-center gap-1">
+                                        <Label className="text-[10px] font-medium uppercase tracking-[0.05em] text-[#888888] flex items-center gap-1">
                                             <MapPin className="w-3 h-3" /> Cidade
                                         </Label>
                                         <Input
                                             value={formData.city || ''}
                                             onChange={e => handleChange('city', e.target.value)}
-                                            className="h-10"
+                                            className="h-10 bg-[#1C1C1C] border-white/10 focus:border-[#DECCA8]/50 text-white placeholder:text-[#444444]"
                                             placeholder="Ex: Itapema"
                                         />
                                     </div>
                                     <div className="space-y-1.5">
-                                        <Label className="text-xs text-muted-foreground flex items-center gap-1">
+                                        <Label className="text-[10px] font-medium uppercase tracking-[0.05em] text-[#888888] flex items-center gap-1">
                                             UF
                                         </Label>
                                         <Input
                                             value={formData.uf || ''}
                                             onChange={e => handleChange('uf', e.target.value)}
-                                            className="h-10"
+                                            className="h-10 bg-[#1C1C1C] border-white/10 focus:border-[#DECCA8]/50 text-white placeholder:text-[#444444]"
                                             placeholder="Ex: SC"
                                         />
                                     </div>
                                 </div>
-                                <div className="space-y-1.5 pt-2 border-t border-border mt-2">
-                                    <Label className="text-xs text-muted-foreground">CNPJ</Label>
+                                <div className="space-y-1.5 pt-2">
+                                    <Label className="text-[10px] font-medium uppercase tracking-[0.05em] text-[#888888]">CNPJ</Label>
                                     <Input
                                         value={formData.cnpj || ''}
                                         onChange={e => handleChange('cnpj', e.target.value)}
-                                        className="h-10 font-mono text-xs"
+                                        className="h-10 font-mono text-xs bg-[#1C1C1C] border-white/10 focus:border-[#DECCA8]/50 text-white placeholder:text-[#444444]"
                                         placeholder="00.000.000/0000-00"
                                     />
                                 </div>
 
                                 {/* Valor do Contrato */}
-                                <div className="space-y-1.5 pt-2 border-t border-border mt-2">
-                                    <Label className="text-xs text-accent font-semibold flex items-center gap-1">
+                                <div className="space-y-1.5 pt-2 mt-2">
+                                    <Label className="text-[10px] font-medium uppercase tracking-[0.05em] text-[#DECCA8] flex items-center gap-1">
                                         💰 Valor do Contrato
                                     </Label>
                                     <div className="relative">
-                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted text-sm">R$</span>
+                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#888888] text-sm">R$</span>
                                         <Input
                                             type="text"
                                             value={formData.contract_value ? formData.contract_value.toString() : ''}
@@ -393,7 +398,7 @@ export function LeadSheet({ lead, open, onOpenChange, onSave }: LeadSheetProps) 
                                                     handleChange('contract_value', num.toFixed(2));
                                                 }
                                             }}
-                                            className="h-10 pl-10 font-display text-lg text-neon-green-soft bg-neon-green-bg/30 border-neon-green/30 focus:border-neon-green"
+                                            className="h-10 pl-10 font-display text-lg text-white bg-[#1C1C1C] border-white/10 focus:border-[#DECCA8] placeholder:text-[#444444]"
                                             placeholder="0.00"
                                         />
                                     </div>
@@ -440,13 +445,13 @@ export function LeadSheet({ lead, open, onOpenChange, onSave }: LeadSheetProps) 
                         Desqualificar
                     </Button>
                     <div className="flex gap-3">
-                        <Button variant="secondary" onClick={() => onOpenChange(false)} disabled={saving}>Cancelar</Button>
-                        <Button onClick={handleSave} disabled={saving}>
+                        <Button variant="secondary" className="bg-[#222222] border-white/10 hover:bg-[#2A2A2A] text-white" onClick={() => onOpenChange(false)} disabled={saving}>Cancelar</Button>
+                        <Button onClick={handleSave} disabled={saving} className="bg-[#DECCA8] text-[#0F0F0F] hover:bg-[#E0D4BA] font-semibold">
                             {saving ? "Salvando..." : "Salvar Alterações"}
                         </Button>
                     </div>
                 </SheetFooter>
-            </SheetContent>
+            </SheetContent >
         </Sheet >
     );
 }

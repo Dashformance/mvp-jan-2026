@@ -114,9 +114,9 @@ export function ContactForm({ leadId, contact, onSuccess, onCancel, onSubmit }: 
     };
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-4 pt-4">
+        <form onSubmit={handleSubmit} className="space-y-4 pt-4 bg-[#1C1C1C] text-white">
             <div className="flex justify-between items-center mb-4">
-                <h3 className="font-semibold">{contact ? "Editar Contato" : "Novo Contato"}</h3>
+                <h3 className="font-semibold text-white">{contact ? "Editar Contato" : "Novo Contato"}</h3>
             </div>
 
             <div className="space-y-3">
@@ -125,11 +125,11 @@ export function ContactForm({ leadId, contact, onSuccess, onCancel, onSubmit }: 
                     <div className="space-y-1">
                         <Label className="text-xs">Nome *</Label>
                         <div className="relative">
-                            <User className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                            <User className="absolute left-2.5 top-2.5 h-4 w-4 text-[#888888]" />
                             <Input
                                 value={formData.name}
                                 onChange={e => handleChange("name", e.target.value)}
-                                className="pl-9 h-9"
+                                className="pl-9 h-9 bg-[#222222] border-white/10 text-white placeholder:text-[#444444]"
                                 placeholder="Ex: Ana Silva"
                             />
                         </div>
@@ -137,11 +137,11 @@ export function ContactForm({ leadId, contact, onSuccess, onCancel, onSubmit }: 
                     <div className="space-y-1">
                         <Label className="text-xs">Cargo</Label>
                         <div className="relative">
-                            <Briefcase className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                            <Briefcase className="absolute left-2.5 top-2.5 h-4 w-4 text-[#888888]" />
                             <Input
                                 value={formData.role}
                                 onChange={e => handleChange("role", e.target.value)}
-                                className="pl-9 h-9"
+                                className="pl-9 h-9 bg-[#222222] border-white/10 text-white placeholder:text-[#444444]"
                                 placeholder="Ex: Gerente"
                             />
                         </div>
@@ -155,7 +155,7 @@ export function ContactForm({ leadId, contact, onSuccess, onCancel, onSubmit }: 
                         <Input
                             value={formData.whatsapp}
                             onChange={e => handleChange("whatsapp", e.target.value)}
-                            className="h-9"
+                            className="h-9 bg-[#222222] border-white/10 text-white placeholder:text-[#444444]"
                             placeholder="(00) 00000-0000"
                         />
                     </div>
@@ -164,7 +164,7 @@ export function ContactForm({ leadId, contact, onSuccess, onCancel, onSubmit }: 
                         <Input
                             value={formData.phone}
                             onChange={e => handleChange("phone", e.target.value)}
-                            className="h-9"
+                            className="h-9 bg-[#222222] border-white/10 text-white placeholder:text-[#444444]"
                             placeholder="(00) 0000-0000"
                         />
                     </div>
@@ -174,11 +174,11 @@ export function ContactForm({ leadId, contact, onSuccess, onCancel, onSubmit }: 
                 <div className="space-y-1">
                     <Label className="text-xs">Email</Label>
                     <div className="relative">
-                        <Mail className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Mail className="absolute left-2.5 top-2.5 h-4 w-4 text-[#888888]" />
                         <Input
                             value={formData.email}
                             onChange={e => handleChange("email", e.target.value)}
-                            className="pl-9 h-9"
+                            className="pl-9 h-9 bg-[#222222] border-white/10 text-white placeholder:text-[#444444]"
                             placeholder="email@empresa.com"
                         />
                     </div>
@@ -190,7 +190,7 @@ export function ContactForm({ leadId, contact, onSuccess, onCancel, onSubmit }: 
                     <Textarea
                         value={formData.notes}
                         onChange={e => handleChange("notes", e.target.value)}
-                        className="h-20 resize-none text-xs"
+                        className="h-20 resize-none text-xs bg-[#222222] border-white/10 text-white placeholder:text-[#444444]"
                         placeholder="Detalhes adicionais..."
                     />
                 </div>
@@ -209,8 +209,8 @@ export function ContactForm({ leadId, contact, onSuccess, onCancel, onSubmit }: 
             </div>
 
             <div className="flex justify-end gap-2 pt-4">
-                <Button type="button" variant="outline" onClick={onCancel}>Cancelar</Button>
-                <Button type="submit" disabled={saving}>{saving ? "Salvando..." : "Salvar"}</Button>
+                <Button type="button" variant="ghost" onClick={onCancel} className="text-[#888888] hover:text-white hover:bg-[#222222]">Cancelar</Button>
+                <Button type="submit" disabled={saving} className="bg-[#DECCA8] text-black hover:bg-[#DECCA8]/90">{saving ? "Salvando..." : "Salvar"}</Button>
             </div>
         </form>
     );

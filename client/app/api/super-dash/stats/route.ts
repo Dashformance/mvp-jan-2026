@@ -1,20 +1,63 @@
-
 import { NextResponse } from 'next/server';
 import { LeadsService } from '@/lib/services/leads-service';
 
-export async function GET() {
+export async function GET(request: Request) {
     try {
+        // PARSE QUERY PARAMS (Sprint 11)
+        const { searchParams } = new URL(request.url);
+        const period = searchParams.get('period') || 'today';
+        const customStart = searchParams.get('startDate');
+        const customEnd = searchParams.get('endDate');
+
         // SUPERDASH CONFIG
-        // DEFINING SEASON START: 2026-01-26 00:00:00 (Start of Monday/New Season)
-        // Adjust this date to control when the "Score/Ranking" resets.
-        const SEASON_START_DATE = new Date('2026-01-26T00:00:00-03:00');
+        // DEFINING SEASON START based on Period
+        let SEASON_START_DATE = new Date();
+        let SEASON_END_DATE: Date | undefined = undefined;
 
-        // 1. Fetch LIFE TIME DATA (For Revenue)
-        const lifetimeStats = await LeadsService.getPerformanceByOwner();
+        const now = new Date();
+        now.setHours(23, 59, 59, 999); // End of today
 
-        // 2. Fetch SEASONAL DATA (For XP, Ranking, Funnel)
-        // 2. Fetch SEASONAL DATA (For XP, Ranking, Funnel) && GLOBAL MONEY STATS
-        // 2. Fetch SEASONAL DATA (Safe Fetch)
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0); // Start of today
+
+        switch (period) {
+            case 'today':
+                SEASON_START_DATE = todayStart;
+                break;
+            case '7d':
+                SEASON_START_DATE = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+                break;
+            case '15d':
+                SEASON_START_DATE = new Date(now.getTime() - 15 * 24 * 60 * 60 * 1000);
+                break;
+            case 'custom':
+                if (customStart) {
+                    SEASON_START_DATE = new Date(customStart);
+                } else {
+                    SEASON_START_DATE = todayStart;
+                }
+                if (customEnd) {
+                    SEASON_END_DATE = new Date(customEnd);
+                    SEASON_END_DATE.setHours(23, 59, 59, 999);
+                }
+                break;
+            default:
+                SEASON_START_DATE = new Date('2026-01-01T00:00:00-03:00'); // Fallback to "all time" or season start
+                break;
+        }
+
+        console.log(`[SuperDash API] Fetching stats for period: ${period}. Start: ${SEASON_START_DATE.toISOString()}`);
+
+        // 1. Fetch LIFE TIME DATA (For Revenue - Optional: Make strict if needed)
+        // For SuperDash filters, usually we want "Revenue in Period", so we should pass the date too.
+        // But "Level" and "XP" are lifetime concepts in RPG. We should be careful.
+        // DECISION: 
+        // - RPG Stats (Level, Total XP) -> Lifetime (Constant)
+        // - Performance Stats (Sales, Meetings, XP Today) -> Period (Filtered)
+
+        const lifetimeStats = await LeadsService.getPerformanceByOwner(); // Used for Fallback Levels/XP
+
+        // 2. Fetch SEASONAL DATA (Filtered by Date)
         let funnel: any[] = [];
         let seasonalStats: any = {};
         let regionDistribution: any = [];
@@ -24,9 +67,9 @@ export async function GET() {
         try {
             [funnel, seasonalStats, regionDistribution, globalStats, calendar] = await Promise.all([
                 LeadsService.getConversionFunnel(SEASON_START_DATE).catch(e => { console.error('Funnel error:', e); return []; }),
-                LeadsService.getPerformanceByOwner(SEASON_START_DATE).catch(e => { console.error('Seasonal stats error:', e); return {}; }),
+                LeadsService.getPerformanceByOwner(SEASON_START_DATE, SEASON_END_DATE).catch(e => { console.error('Seasonal stats error:', e); return {}; }),
                 LeadsService.getLeadsByState().catch(e => { console.error('Regions error:', e); return []; }),
-                LeadsService.getStatsOverview().catch(e => { console.error('Overview stats error:', e); return { revenue: 0, pipelineValue: 0 }; }),
+                LeadsService.getStatsOverview(undefined, SEASON_START_DATE, SEASON_END_DATE).catch(e => { console.error('Overview stats error:', e); return { revenue: 0, pipelineValue: 0 }; }),
                 LeadsService.getUpcomingMeetings(100).catch(e => { console.error('Calendar error:', e); return []; })
             ]);
         } catch (err) {
@@ -34,45 +77,35 @@ export async function GET() {
         }
 
         // Map "PerformanceByOwner" to "Collaborators"
-        const ownerKeys = ['joao', 'bruno', 'nitz'];
+        const collaborators = Object.entries(seasonalStats).map(([key, data]: [string, any]) => {
+            const sStats = data;
+            const meta = sStats.meta || {};
 
-        // Mock levels/XP logic
-        // 1 Sale = 1000 XP
-        // 1 Meeting = 300 XP
-        // 1 Contact = 50 XP
-        // 1 New Lead = 10 XP
+            // Use LIFETIME stats for Level/XP if not in seasonal (though leads-service returns strict meta)
+            // Correction: sStats.meta contains the USER info which is consistent. 
+            // However, sStats.xp is "Period XP" or "Global XP"? 
+            // In getPerformanceByOwner, meta.xp is Global. sStats.xpPeriod is Date Range XP.
 
-        const collaborators = ownerKeys.map((key, index) => {
-            // Use SEASONAL stats for Score/XP
-            const sStats = seasonalStats[key] || { total: 0, won: 0, contacted: 0, meeting: 0, conversionRate: 0, added: 0 };
+            // XP from Database (Persistent - Lifetime)
+            const globalXp = meta.xp || 0;
+            const level = meta.level || 1;
+            // Formula must match server.ts (150 * level^2)
+            const nextLevelXp = Math.floor(150 * Math.pow(level + 1, 2));
 
-            // Use LIFETIME stats for Revenue/Total Sales if requested? 
-            // User said: "Unica coisa que será mantida é o faturamento". 
-            // Main revenue comes from lifetime won * ticket.
-            const lStats = lifetimeStats[key] || { won: 0, total: 0 };
+            // XP Session (Today) & Period
+            const xpToday = sStats.xpToday || 0;
+            const xpPeriod = sStats.xpPeriod || 0;
 
-            // Calculate XP (Seasonal)
-            // Added leads now contribute to XP
-            const xp = (sStats.won * 1000) + (sStats.meeting * 300) + (sStats.contacted * 50) + ((sStats.added || 0) * 10);
-
-            // Level formula (Seasonal)
-            // Forced to Level 1 as per request
-            let level = 1;
-            // let level = Math.floor(Math.sqrt(xp / 100));
-            // if (level < 1) level = 1;
-
-            const nextLevelXp = Math.pow(level + 1, 2) * 100;
-
-            // Score logic (Seasonal)
+            // Score logic (Seasonal Performance Score)
             let score = 70; // Base
             if (sStats.conversionRate > 5) score += 10;
             if (sStats.conversionRate > 10) score += 10;
-            if (sStats.total > 50) score += 10;
-            if (sStats.won > 0) score += (sStats.won * 2);
+            if (sStats.added > 20) score += 10;
+            if (sStats.sold > 0) score += (sStats.sold * 5); // Points for Sales (SOLD)
             if (score > 99) score = 99;
 
-            // Revenue (Lifetime)
-            const revenue = lStats.won * 2500;
+            // Revenue (Period specific)
+            const revenue = sStats.revenue || 0;
 
             // Funnel (Seasonal)
             const userFunnel = funnel.map(stage => {
@@ -90,21 +123,24 @@ export async function GET() {
             });
 
             return {
-                id: key,
-                name: key === 'joao' ? 'João Vitor' : key === 'bruno' ? 'Bruno' : 'Nitz',
-                role: 'Consultor',
-                avatar: key === 'joao' ? 'JV' : key === 'bruno' ? 'BR' : 'NZ',
+                id: meta.id || key,
+                name: meta.name || key,
+                role: meta.role || 'Consultor',
+                avatar: meta.avatar,
                 level,
-                xp,
+                xp: globalXp, // Always show Global XP for progress bar
+                xpToday,
+                xpPeriod, // XP Gained in this period (can be used for ranking if requested)
                 nextLevelXp,
                 score,
-                badges: sStats.won > 5 ? ["Top Gun"] : [],
+                badges: sStats.sold > 5 ? ["Top Gun"] : [],
+                addedToday: sStats.addedToday,
                 stats: {
-                    contacts: lStats.total, // PERMANENT / Total Leads in CRM
-                    responses: Math.floor(sStats.contacted * 0.6),
-                    meetings: sStats.meeting, // Seasonal
-                    sales: sStats.won, // Seasonal
-                    revenue // PERMANENT
+                    contacts: sStats.addedToday, // Mapped to "Lds (Dia)" in UI
+                    responses: sStats.contacted, // Real interaction count
+                    meetings: sStats.meeting,
+                    sales: sStats.sold,
+                    revenue
                 },
                 funnel: userFunnel.slice(0, 4),
                 pace: Math.min(Math.round((sStats.contacted / 20) * 100), 100),
@@ -113,24 +149,21 @@ export async function GET() {
         });
 
         // Overview
-        // Total Sales: Seasonal or Lifetime? Dashboard usually shows "Sales This Month/Season".
-        // Revenue: Lifetime (as requested).
         const totalSalesSeasonal = collaborators.reduce((acc, c) => acc + c.stats.sales, 0);
-        const totalRevenueLifetime = collaborators.reduce((acc, c) => acc + c.stats.revenue, 0);
         const activeLeadsSeasonal = collaborators.reduce((acc, c) => acc + c.stats.contacts, 0);
 
         const overview = {
-            totalLeads: activeLeadsSeasonal + 10, // Mock buffer
-            totalSales: totalSalesSeasonal, // Seasonal count
+            totalLeads: activeLeadsSeasonal,
+            totalSales: totalSalesSeasonal,
             conversionRate: activeLeadsSeasonal > 0 ? ((totalSalesSeasonal / activeLeadsSeasonal) * 100).toFixed(1) : 0,
             activeLeads: activeLeadsSeasonal,
-            growth: 100, // New season, infinite growth? Or 0. Let's keep 100 for hype.
+            growth: 0,
             revenue: globalStats.revenue,
             moneyOnTable: globalStats.moneyOnTable,
             pipelineValue: globalStats.pipelineValue
         };
 
-        // Time Data (Mock)
+        // Time Data (Mock - TODO: Make real with getTimelineStats(days) if needed)
         const timeData = [
             { name: 'Seg', sales: 0, meetings: 0 },
             { name: 'Ter', sales: 0, meetings: 0 },
@@ -139,7 +172,8 @@ export async function GET() {
             { name: 'Sex', sales: 0, meetings: 0 },
         ];
 
-        // 5. Fetch Activity Feed (Real)
+        // 5. Fetch Activity Feed (Real) - Limit by date? Usually Feed is just "Recent", regardless of filter.
+        // Let's keep feed recent.
         const feed = await LeadsService.getRecentActivity(20);
 
         return NextResponse.json({

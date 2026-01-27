@@ -14,6 +14,7 @@ interface LeaderboardPlayer {
     role: string;
     level: number;
     xp: number;
+    xpToday?: number; // New: Session XP
     sales: number;
     avatar?: string;
 }
@@ -49,8 +50,12 @@ const MEDAL_STYLES = {
 };
 
 export function Leaderboard({ players, currentUserId, className = "" }: LeaderboardProps) {
-    // Sort by XP descending
-    const sortedPlayers = [...players].sort((a, b) => b.xp - a.xp);
+    // Sort by xpToday if available (Session ranking), otherwise global XP
+    const sortedPlayers = [...players].sort((a, b) => {
+        const xpA = a.xpToday ?? a.xp;
+        const xpB = b.xpToday ?? b.xp;
+        return xpB - xpA;
+    });
 
     return (
         <div className={`bg-bg-elevated border border-border-subtle rounded-xl overflow-hidden ${className}`}>
@@ -97,14 +102,27 @@ export function Leaderboard({ players, currentUserId, className = "" }: Leaderbo
 
                             {/* Avatar */}
                             <div className={`
-                                w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold
+                                w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold overflow-hidden
                                 ${isTop3 && medalStyle
                                     ? `border-2 ${medalStyle.border} bg-bg-surface`
                                     : 'border border-border-subtle bg-bg-surface'
                                 }
                                 ${isTop3 && index === 0 ? 'text-yellow-400' : 'text-white'}
                             `}>
-                                {player.avatar || player.name.slice(0, 2).toUpperCase()}
+                                {player.avatar && (player.avatar.startsWith('http') || player.avatar.startsWith('/')) ? (
+                                    <img
+                                        src={player.avatar}
+                                        alt={player.name}
+                                        className="w-full h-full object-cover"
+                                        onError={(e) => {
+                                            // Fallback to initials if image fails to load
+                                            (e.target as HTMLImageElement).style.display = 'none';
+                                            (e.target as HTMLImageElement).parentElement!.innerText = player.name.slice(0, 2).toUpperCase();
+                                        }}
+                                    />
+                                ) : (
+                                    <span>{player.avatar || player.name.slice(0, 2).toUpperCase()}</span>
+                                )}
                             </div>
 
                             {/* Name & Role */}
@@ -124,8 +142,13 @@ export function Leaderboard({ players, currentUserId, className = "" }: Leaderbo
                             {/* Stats */}
                             <div className="text-right">
                                 <p className="font-display text-sm font-bold text-neon-green-soft">
-                                    {player.xp.toLocaleString('pt-BR')} XP
+                                    {((player.xpToday !== undefined) ? player.xpToday : player.xp).toLocaleString('pt-BR')} XP
                                 </p>
+                                {player.xpToday !== undefined && (
+                                    <p className="text-[9px] text-text-muted opacity-60">
+                                        Total: {player.xp.toLocaleString('pt-BR')}
+                                    </p>
+                                )}
                                 <p className="text-[10px] text-text-muted flex items-center justify-end gap-1">
                                     <TrendingUp className="w-3 h-3" />
                                     {player.sales} vendas

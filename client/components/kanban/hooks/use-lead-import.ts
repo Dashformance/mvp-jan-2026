@@ -3,11 +3,13 @@
 import { useState } from 'react';
 import { toast } from "sonner";
 import { useKanban } from '../kanban-context';
+import { useGamification } from '@/hooks/useGamification';
 
 const API_URL = "/api";
 
 export function useLeadImport() {
     const { fetchLeads, setFilterBarState } = useKanban();
+    const { addBulkImportXP } = useGamification();
 
     const [extracting, setExtracting] = useState(false);
     const [importProgress, setImportProgress] = useState<{
@@ -104,8 +106,13 @@ export function useLeadImport() {
 
             if (res.ok) {
                 const result = await res.json();
+                const importedCount = result.count || selectedLeads.length;
+
+                // Gamification
+                addBulkImportXP(importedCount);
+
                 toast.success(`Importado com sucesso!`, {
-                    description: `${result.count} leads novos foram adicionados.`
+                    description: `${importedCount} leads novos foram adicionados.`
                 });
                 setReviewDialogOpen(false);
                 setExtracting(false);

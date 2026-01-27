@@ -135,21 +135,42 @@ export const POST = withApiErrorHandling(async (req: NextRequest) => {
             }
 
             // Create Lead with nested Contacts
-            const createdLead = await prisma.lead.create({
+            const createdLead = await prisma.leads.create({
                 data: {
                     ...finalLead,
+                    id: crypto.randomUUID(),
                     contacts: leadData.contacts && leadData.contacts.length > 0 ? {
                         create: leadData.contacts.map((c: ContactInput, idx: number) => ({
+                            id: crypto.randomUUID(),
                             name: c.name || 'Contato ' + (idx + 1),
                             role: c.role,
                             phone: c.phone,
                             whatsapp: c.phone, // Often same as phone in BR
                             email: c.email,
-                            is_primary: c.is_primary ?? idx === 0
+                            is_primary: c.is_primary ?? idx === 0,
+                            updated_at: new Date()
                         }))
                     } : undefined
                 }
             });
+
+            // Log interaction for Gamification
+            await prisma.interactions.create({
+                data: {
+                    id: crypto.randomUUID(),
+                    lead_id: createdLead.id,
+                    type: 'CREATE',
+                    content: `Imported from ${finalLead.source || 'Import'}`,
+                    user_id: createdLead.owner_id || 'system',
+                    updated_at: new Date()
+                }
+            });
+
+            // XP Reward
+            if (createdLead.owner_id) {
+                const { GamificationService } = await import('@/lib/gamification/server');
+                await GamificationService.addXP(createdLead.owner_id, 'LEAD_CREATED');
+            }
 
             successCount++;
         } catch (error: any) {

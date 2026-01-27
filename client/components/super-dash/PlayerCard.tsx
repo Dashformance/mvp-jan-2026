@@ -2,33 +2,34 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { CircularProgressbar, buildStyles } from 'react-circular-progressbar';
-import 'react-circular-progressbar/dist/styles.css';
 import { cn } from '@/lib/utils';
-import { Progress } from "@/components/ui/progress";
 
 interface PlayerStats {
     contacts: number;
     responses: number;
     meetings: number;
     sales: number;
+    quality: number;
+    xpToday: number;
 }
 
 interface PlayerCardProps {
     id: string;
     name: string;
     role: string;
-    avatar: string;
+    avatar: string | null | undefined;
     level: number;
     xp: number;
     nextLevelXp: number;
     score: number;
     stats: PlayerStats;
     badges: string[];
-    rank?: number; // 1, 2, 3...
+    rank?: number;
     isSelected?: boolean;
     onClick?: () => void;
-    index?: number; // for animation delay
+    index?: number;
+    period?: string;
+    edition?: string;
 }
 
 export const PlayerCard: React.FC<PlayerCardProps> = ({
@@ -45,8 +46,20 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
     rank,
     isSelected = false,
     onClick,
-    index = 0
+    index = 0,
+    period = "Jan 2026",
+    edition = "Top Seller"
 }) => {
+    // Determine Tier based on Score
+    const getTier = (s: number) => {
+        if (s >= 90) return 'gold';
+        if (s >= 80) return 'diamond';
+        if (s >= 70) return 'platinum';
+        return 'emerald';
+    };
+
+    const tier = getTier(score);
+
     // Determine visuals based on Score
     const getScoreColor = (val: number) => {
         if (val >= 90) return { text: "text-neon-green", bg: "bg-neon-green/40", border: "border-neon-green/30" };
@@ -54,159 +67,216 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
         return { text: "text-neon-yellow", bg: "bg-neon-yellow/40", border: "border-neon-yellow/30" };
     };
 
+    // Badge selection based on rank or tier
+    const getBadge = () => {
+        if (rank === 1) return '🏆';
+        if (stats.sales > 5) return '🔥';
+        if (tier === 'gold') return '👑';
+        if (tier === 'diamond') return '💎';
+        if (tier === 'platinum') return '⭐';
+        return '⚡';
+    };
+
+    const displayBadge = getBadge();
+    const tierLabel = tier === 'gold' ? 'Ultimate' : tier.charAt(0).toUpperCase() + tier.slice(1);
     const visuals = getScoreColor(score);
+
+    // Tier Styles Configuration (Exact match from HTML ref)
+    const TIER_STYLES: Record<string, React.CSSProperties> = {
+        gold: {
+            ['--card-primary' as any]: '#C9A227',
+            ['--card-secondary' as any]: '#8B7021',
+            ['--card-accent' as any]: '#FFD700',
+            ['--card-glow' as any]: 'rgba(255, 215, 0, 0.3)',
+            ['--card-text' as any]: '#1a1a0a',
+            background: 'linear-gradient(145deg, #8B7021 0%, #C9A227 30%, #A6891A 60%, #8B7021 100%)',
+        },
+        diamond: {
+            ['--card-primary' as any]: '#B9F2FF',
+            ['--card-secondary' as any]: '#1E3A5F',
+            ['--card-accent' as any]: '#00D4FF',
+            ['--card-glow' as any]: 'rgba(0, 212, 255, 0.4)',
+            ['--card-text' as any]: '#0a1a2a',
+            background: 'linear-gradient(145deg, #1E3A5F 0%, #2E5A8F 30%, #1E4A7F 60%, #0E2A4F 100%)',
+        },
+        platinum: {
+            ['--card-primary' as any]: '#E5E4E2',
+            ['--card-secondary' as any]: '#4A4A4A',
+            ['--card-accent' as any]: '#FFFFFF',
+            ['--card-glow' as any]: 'rgba(255, 255, 255, 0.3)',
+            ['--card-text' as any]: '#1a1a1a',
+            background: 'linear-gradient(145deg, #3A3A3A 0%, #5A5A5A 30%, #4A4A4A 60%, #2A2A2A 100%)',
+        },
+        emerald: {
+            ['--card-primary' as any]: '#00FF88',
+            ['--card-secondary' as any]: '#0A3D2A',
+            ['--card-accent' as any]: '#00FF88',
+            ['--card-glow' as any]: 'rgba(0, 255, 136, 0.4)',
+            ['--card-text' as any]: '#0a2a1a',
+            background: 'linear-gradient(145deg, #0A3D2A 0%, #1A5D4A 30%, #0A4D3A 60%, #0A2D1A 100%)',
+        }
+    };
+
+    const currentStyle = TIER_STYLES[tier];
 
     return (
         <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: index * 0.1 }}
+            initial={{ opacity: 0, y: 20, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ delay: index * 0.05, duration: 0.5 }}
             onClick={onClick}
+            style={{
+                ...currentStyle,
+                fontFamily: "'Inter', sans-serif"
+            }}
             className={cn(
-                "relative bg-gradient-to-b from-bg-elevated to-bg-surface border rounded-2xl p-0 overflow-hidden cursor-pointer transition-all duration-300 group hover:shadow-2xl hover:-translate-y-1",
-                isSelected
-                    ? "border-accent ring-2 ring-accent/30 shadow-[0_0_30px_rgba(222,204,168,0.15)]"
-                    : "border-border-subtle hover:border-accent/50"
+                "player-card cursor-pointer group",
+                tier,
+                isSelected && "selected-card"
             )}
         >
-            {/* --- TOP HEADER (Score & Rank) --- */}
+            <style jsx>{`
+                .player-card {
+                    width: 100%;
+                    max-width: 280px;
+                    aspect-ratio: 0.714;
+                    position: relative;
+                    border-radius: 16px;
+                    overflow: hidden;
+                    box-shadow: 
+                        0 25px 50px rgba(0, 0, 0, 0.5),
+                        0 0 0 1px rgba(255, 255, 255, 0.1);
+                    transition: transform 0.3s ease, box-shadow 0.3s ease;
+                }
 
-            {/* Rating Badge */}
-            <div className="absolute top-3 left-3 z-10">
-                <div className="relative w-12 h-12 flex items-center justify-center">
-                    {/* Visual Glow behind score */}
-                    <div className={cn("absolute inset-0 rounded-lg blur-md transition-colors duration-500", visuals.bg)} />
+                .player-card:hover {
+                    transform: translateY(-8px) scale(1.02);
+                    box-shadow: 
+                        0 35px 70px rgba(0, 0, 0, 0.6),
+                        0 0 60px var(--card-glow);
+                }
 
-                    <div className="relative bg-black/60 backdrop-blur-sm border border-white/10 rounded-lg w-full h-full flex items-center justify-center shadow-inner">
-                        <span className={cn("font-display text-xl font-black drop-shadow-md", visuals.text)}>
-                            {score}
-                        </span>
+                .selected-card {
+                    ring: 3px solid var(--card-accent);
+                    z-index: 10;
+                }
+
+                /* Diagonal Lines Pattern */
+                .player-card::before {
+                    content: '';
+                    position: absolute;
+                    top: 0; left: 0; right: 0; bottom: 0;
+                    background: repeating-linear-gradient(
+                        -45deg,
+                        transparent,
+                        transparent 2px,
+                        rgba(255, 255, 255, 0.03) 2px,
+                        rgba(255, 255, 255, 0.03) 4px
+                    );
+                    pointer-events: none;
+                    z-index: 1;
+                }
+
+                /* Inner Border Glow */
+                .player-card::after {
+                    content: '';
+                    position: absolute;
+                    top: 8px; left: 8px; right: 8px; bottom: 8px;
+                    border: 1px solid rgba(255, 255, 255, 0.15);
+                    border-radius: 12px;
+                    pointer-events: none;
+                    z-index: 2;
+                }
+
+                .card-content { position: relative; z-index: 3; height: 100%; display: flex; flex-direction: column; }
+                
+                .card-top { display: flex; justify-content: space-between; padding: 16px 16px 0; }
+                .tier-badge { background: rgba(0, 0, 0, 0.3); padding: 4px 10px; border-radius: 6px; font-size: 10px; font-weight: 700; color: var(--card-accent); text-transform: uppercase; }
+                .score-value { font-family: var(--font-numbers, sans-serif); font-size: 48px; font-weight: 900; color: var(--card-accent); line-height: 1; text-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+                .score-role { font-size: 12px; font-weight: 800; color: var(--card-accent); opacity: 0.8; margin-top: -4px; letter-spacing: 1px; }
+                
+                .card-right { text-align: right; }
+                .card-period { font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.7); line-height: 1.2; }
+                .card-edition { font-size: 9px; font-weight: 500; color: rgba(255,255,255,0.5); }
+                .card-badge { width: 36px; height: 36px; border-radius: 50%; background: rgba(0,0,0,0.2); border: 2px solid var(--card-accent); display: flex; items-center; justify-center; font-size: 18px; margin-top: 8px; margin-left: auto; }
+
+                .avatar-section { flex: 1; display: flex; align-items: center; justify-content: center; position: relative; }
+                .avatar-mask { width: 100%; height: 100%; background: linear-gradient(180deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05)); border: 2px solid rgba(255,255,255,0.1); border-radius: 16px; overflow: hidden; display: flex; items-center; justify-center; }
+                .avatar-image { width: 100%; height: 100%; object-fit: cover; }
+                .avatar-initials { font-family: var(--font-numbers, sans-serif); font-size: 42px; font-weight: 900; color: var(--card-accent); }
+                
+                .level-badge { position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%); background: #000; color: var(--card-accent); font-family: var(--font-numbers, sans-serif); padding: 4px 10px; border-radius: 6px; font-size: 10px; font-weight: 800; border: 1px solid var(--card-accent); white-space: nowrap; z-index: 5; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+
+                .name-banner { background: var(--card-accent); padding: 8px 10px; text-align: center; clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); margin-top: 16px; border-bottom-left-radius: 12px; border-bottom-right-radius: 12px; }
+                .player-name { font-family: var(--font-numbers, sans-serif); font-size: 16px; font-weight: 900; color: var(--card-text); letter-spacing: 0.5px; text-transform: uppercase; }
+
+                .stats-section { padding: 16px 20px 24px; position: relative; z-index: 2; }
+                .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 24px; }
+                .stat-row { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px; }
+                .stat-val { font-family: var(--font-numbers, sans-serif); font-size: 20px; font-weight: 700; color: var(--card-text); }
+                .stat-lbl { font-size: 10px; font-weight: 700; color: var(--card-text); opacity: 0.6; letter-spacing: 1px; text-transform: uppercase; }
+            `}</style>
+
+            <div className="card-content">
+                <div className="card-top">
+                    <div className="card-left">
+                        <div className="tier-badge">{tierLabel}</div>
+                        <div className="flex flex-col mt-1">
+                            <span className="score-value">{score}</span>
+                            <span className="score-role">{
+                                name.toLowerCase().includes('joao') ? 'JVG' :
+                                    name.toLowerCase().includes('bruno') ? 'BRV' :
+                                        name.toLowerCase().includes('vitor') ? 'VTZ' : role.substring(0, 3).toUpperCase()
+                            }</span>
+                        </div>
+                    </div>
+                    <div className="card-right">
+                        <div className="card-period">
+                            {period}<br />
+                            <span className="card-edition">{edition}</span>
+                        </div>
+                        <div className="card-badge">{displayBadge}</div>
                     </div>
                 </div>
-            </div>
 
-            {/* Rank Badge for Top 3 */}
-            {rank && rank <= 3 && (
-                <div className="absolute top-3 right-3 z-10 text-2xl drop-shadow-[0_4px_4px_rgba(0,0,0,0.5)] animate-bounce-slow">
-                    {rank === 1 ? '🥇' : rank === 2 ? '🥈' : '🥉'}
-                </div>
-            )}
-
-            {/* --- MAIN BODY (Avatar & Info) --- */}
-            <div className="pt-16 pb-4 px-4 flex flex-col items-center relative">
-
-                {/* FIFA Style Background Pattern Effect (Optional subtle overlay) */}
-                <div className="absolute inset-0 bg-[url('/grid-pattern.svg')] opacity-5 pointer-events-none" />
-
-                <div className="relative mb-3 group-hover:scale-105 transition-transform duration-300 ease-out">
-                    {/* XP Progress Ring */}
-                    <div className="w-24 h-24 relative">
-                        {/* Shadow/Glow behind ring */}
-                        <div className="absolute inset-0 rounded-full bg-black/50 blur-xl" />
-
-                        <CircularProgressbar
-                            value={(xp / nextLevelXp) * 100}
-                            strokeWidth={6}
-                            styles={buildStyles({
-                                pathColor: '#22C55E', // Green for progress
-                                trailColor: 'rgba(255,255,255,0.1)',
-                                pathTransitionDuration: 1.5
-                            })}
-                        />
-                        {/* Avatar Container */}
-                        <div className="absolute inset-2 rounded-full bg-bg-surface border-2 border-white/5 flex items-center justify-center text-3xl font-bold text-white overflow-hidden shadow-inner">
-                            {avatar.length > 2 ? (
-                                <img src={avatar} alt={name} className="w-full h-full object-cover" />
+                <div className="avatar-section">
+                    <div className="avatar-container">
+                        <div className="avatar-mask">
+                            {avatar ? (
+                                <img src={avatar} alt={name} className="avatar-image" />
                             ) : (
-                                <span>{avatar}</span>
+                                <span className="avatar-initials">{name.substring(0, 2).toUpperCase()}</span>
                             )}
                         </div>
+                        <div className="level-badge">LVL {level}</div>
                     </div>
+                </div>
 
-                    {/* Hexagon Level Badge */}
-                    <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 z-20 flex items-center justify-center">
-                        <div className="relative w-8 h-9 flex items-center justify-center">
-                            {/* Animated Glow Layer */}
-                            <motion.div
-                                animate={{
-                                    scale: [1, 1.2, 1],
-                                    opacity: [0.5, 0.8, 0.5],
-                                    rotate: [0, 180, 360]
-                                }}
-                                transition={{
-                                    duration: 4,
-                                    repeat: Infinity,
-                                    ease: "linear"
-                                }}
-                                className="absolute inset-0 bg-neon-green/30 blur-md"
-                                style={{ clipPath: "polygon(50% 0%, 95% 25%, 95% 75%, 50% 100%, 5% 75%, 5% 25%)" }}
-                            />
+                <div className="name-banner">
+                    <div className="player-name truncate">{name}</div>
+                </div>
 
-                            {/* Static Hexagon Border */}
-                            <div
-                                className="absolute inset-0 bg-bg-surface border border-neon-green/50"
-                                style={{ clipPath: "polygon(50% 0%, 95% 25%, 95% 75%, 50% 100%, 5% 75%, 5% 25%)" }}
-                            />
-
-                            {/* Level Number */}
-                            <span className="relative z-10 font-display text-sm font-black text-neon-green drop-shadow-[0_0_5px_rgba(34,197,94,0.8)]">
-                                {level}
-                            </span>
+                <div className="stats-section">
+                    <div className="stats-grid">
+                        <div className="stat-row">
+                            <span className="stat-val">{stats.contacts}</span>
+                            <span className="stat-lbl">LEADS</span>
+                        </div>
+                        <div className="stat-row">
+                            <span className="stat-val">{stats.quality}%</span>
+                            <span className="stat-lbl">CONV%</span>
+                        </div>
+                        <div className="stat-row">
+                            <span className="stat-val">{stats.responses}</span>
+                            <span className="stat-lbl">RESP</span>
+                        </div>
+                        <div className="stat-row">
+                            <span className="stat-val">{stats.meetings}</span>
+                            <span className="stat-lbl">MEET</span>
                         </div>
                     </div>
                 </div>
-
-                {/* Name & Role */}
-                <div className="text-center w-full mt-1">
-                    <h3 className="text-sm font-bold text-white truncate w-full group-hover:text-accent transition-colors">
-                        {name}
-                    </h3>
-                    <p className="text-[10px] text-text-muted uppercase tracking-wider font-medium">
-                        {role}
-                    </p>
-                </div>
-
-                {/* XP Bar (Linear) */}
-                <div className="w-full mt-4 group/xp">
-                    <div className="flex justify-between text-[9px] text-text-muted mb-1 font-medium">
-                        <span className="group-hover/xp:text-white transition-colors">{xp.toLocaleString()} XP</span>
-                        <span>{nextLevelXp.toLocaleString()}</span>
-                    </div>
-                    <Progress value={(xp / nextLevelXp) * 100} variant="xp" className="h-1.5 bg-white/5" />
-                </div>
             </div>
-
-            {/* --- FOOTER (Mini Stats Funnel) --- */}
-            <div className="grid grid-cols-4 gap-px bg-white/5 border-t border-white/5">
-                <StatItem label="Leads" value={stats.contacts} />
-                <StatItem label="Resp" value={stats.responses} />
-                <StatItem label="Meet" value={stats.meetings} />
-                <StatItem label="Vendas" value={stats.sales} highlight />
-            </div>
-
-            {/* --- BADGES ROW --- */}
-            {badges.length > 0 && (
-                <div className="px-3 py-2 flex gap-1.5 items-center justify-center bg-black/20 backdrop-blur-sm">
-                    {badges.slice(0, 3).map((badge, i) => (
-                        <span
-                            key={i}
-                            className="text-[8px] px-2 py-0.5 rounded-full bg-accent/5 border border-accent/20 text-accent uppercase font-bold tracking-wider"
-                        >
-                            {badge}
-                        </span>
-                    ))}
-                </div>
-            )}
         </motion.div>
     );
 };
-
-// Helper Subcomponent
-const StatItem = ({ label, value, highlight = false }: { label: string, value: number, highlight?: boolean }) => (
-    <div className="bg-bg-surface/50 py-2 text-center group-hover:bg-bg-elevated transition-colors duration-300">
-        <div className="text-[9px] text-text-muted uppercase tracking-tight mb-0.5">{label}</div>
-        <div className={cn("font-display text-sm font-bold", highlight ? "text-neon-green shadow-green-glow" : "text-white")}>
-            {value}
-        </div>
-    </div>
-);

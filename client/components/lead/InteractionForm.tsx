@@ -41,13 +41,13 @@ export function InteractionForm({ leadId, onSuccess }: InteractionFormProps) {
     };
 
     return (
-        <div className="space-y-3 p-3 bg-muted/30 rounded-lg border border-border">
+        <div className="space-y-3 p-3 bg-[#222222] rounded-lg border border-white/5">
             <div className="flex gap-2 items-center">
                 <Select value={type} onValueChange={setType}>
-                    <SelectTrigger className="w-[140px] h-8 text-xs bg-background">
+                    <SelectTrigger className="w-[140px] h-8 text-xs bg-[#1C1C1C] border-white/10 text-white">
                         <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-[#1C1C1C] border-white/10 text-white">
                         <SelectItem value="NOTE">Nota</SelectItem>
                         <SelectItem value="CALL">Ligação</SelectItem>
                         <SelectItem value="WHATSAPP">WhatsApp</SelectItem>
@@ -55,7 +55,7 @@ export function InteractionForm({ leadId, onSuccess }: InteractionFormProps) {
                         <SelectItem value="MEETING">Reunião</SelectItem>
                     </SelectContent>
                 </Select>
-                <div className="text-xs text-muted-foreground ml-auto">
+                <div className="text-xs text-[#888888] ml-auto">
                     {new Date().toLocaleDateString('pt-BR')}
                 </div>
             </div>
@@ -63,10 +63,10 @@ export function InteractionForm({ leadId, onSuccess }: InteractionFormProps) {
                 value={content}
                 onChange={e => setContent(e.target.value)}
                 placeholder="Descreva o que aconteceu..."
-                className="min-h-[80px] text-sm bg-background resize-none focus-visible:ring-1"
+                className="min-h-[80px] text-sm bg-[#1C1C1C] border-white/10 text-white resize-none focus-visible:ring-1 focus-visible:ring-[#DECCA8]/50 placeholder:text-[#444444]"
             />
             <div className="flex justify-end">
-                <Button size="sm" className="h-8 text-xs" onClick={handleSubmit} disabled={loading || !content.trim()}>
+                <Button size="sm" className="h-8 text-xs bg-[#DECCA8] text-black hover:bg-[#DECCA8]/90" onClick={handleSubmit} disabled={loading || !content.trim()}>
                     <Send className="w-3 h-3 mr-2" />
                     Salvar
                 </Button>

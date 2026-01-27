@@ -1,5 +1,8 @@
 import prisma from '../prisma';
 import { LeadSanitizer } from './lead-sanitizer';
+import { GamificationService } from '../gamification/server';
+import { ACTION_POINTS } from '../gamification/config';
+import crypto from 'crypto';
 
 // Helper function for score calculation (kept internal or exported if needed)
 function calculateScore(lead: any): number {
@@ -21,6 +24,26 @@ function calculateScore(lead: any): number {
 }
 
 export const LeadsService = {
+    async getDashboardUsers() {
+        const users = await prisma.user.findMany({
+            // fetch all relevant users
+            // where: { OR: [{ role: 'admin' }, { role: 'seller' }] }
+            // For now fetch all to be safe and filter if needed, or just all.
+        });
+
+        return users.map(u => ({
+            key: u.email.split('@')[0].toLowerCase(), // 'joao', 'vitor'
+            name: u.name,
+            id: u.id, // Primary ID
+            avatar: u.avatar_url,
+            role: u.role,
+            xp: u.xp,
+            level: u.level,
+            ids: [u.id, u.supabase_uid].filter(Boolean),
+            names: [u.name, u.email, u.name.toLowerCase()].filter(Boolean)
+        }));
+    },
+
     async create(data: any) {
         // Extract contacts before sanitization (as sanitizer strips unknown fields)
         const { contacts, ...leadData } = data;
@@ -33,9 +56,13 @@ export const LeadsService = {
             sanitized.cnpj = `MANUAL-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
         }
 
+        const currentId = sanitized.id || (globalThis.crypto?.randomUUID?.() || crypto.randomUUID());
+
         const createData: any = {
             ...sanitized,
+            id: currentId,
             owner_id: data.owner_id || undefined, // Explicitly pass owner_id
+            updated_at: new Date(),
         };
 
         // Handle nested contacts creation
@@ -43,24 +70,35 @@ export const LeadsService = {
             createData.contacts = {
                 create: contacts.map((contact: any) => {
                     const { id, lead_id, ...contactFields } = contact;
-                    return contactFields;
+                    return {
+                        ...contactFields,
+                        id: (globalThis.crypto?.randomUUID?.() || crypto.randomUUID()),
+                        updated_at: new Date()
+                    };
                 })
             };
         }
 
-        const lead = await prisma.lead.create({
+        const lead = await prisma.leads.create({
             data: createData,
         });
 
         // Log creation as interaction for the feed
-        await prisma.interaction.create({
+        await prisma.interactions.create({
             data: {
+                id: (globalThis.crypto?.randomUUID?.() || crypto.randomUUID()),
                 lead_id: lead.id,
                 type: 'CREATE',
                 content: 'Lead criado manualmente',
-                user_id: lead.owner_id || data.owner || 'system'
+                user_id: lead.owner_id || data.owner || 'system',
+                updated_at: new Date()
             }
         });
+
+        // XP Reward
+        if (lead.owner_id) {
+            await GamificationService.addXP(lead.owner_id, 'LEAD_CREATED');
+        }
 
         return lead;
     },
@@ -68,7 +106,7 @@ export const LeadsService = {
     async createMany(leads: any[], userId?: string) {
         const ops = leads.map((lead: any) => {
             const data = { ...lead, deletedAt: null };
-            return prisma.lead.upsert({
+            return prisma.leads.upsert({
                 where: { cnpj: lead.cnpj },
                 create: data as any,
                 update: data as any,
@@ -79,14 +117,26 @@ export const LeadsService = {
 
         // Log import as a single interaction for the feed
         if (results.length > 0) {
-            await prisma.interaction.create({
+            await prisma.interactions.create({
                 data: {
+                    id: crypto.randomUUID(),
                     lead_id: results[0].id, // Link to first lead in batch
                     type: 'IMPORT',
                     content: `IMPORT:${results.length}`,
-                    user_id: userId || 'system'
+                    user_id: userId || 'system',
+                    updated_at: new Date()
                 }
             });
+        }
+
+        // XP Reward
+        if (userId && results.length > 0) {
+            // 5 XP per batch (as per config) * multiplier? 
+            // Or per lead?
+            // Let's assume Config logic handles it, or use count.
+            // Server.addXP takes 'BULK_IMPORT', which is 5. 
+            // If we want 5 * count, we pass count as multiplier.
+            await GamificationService.addXP(userId, 'BULK_IMPORT', results.length);
         }
 
         return { count: results.length };
@@ -161,17 +211,17 @@ export const LeadsService = {
         try {
             console.log('[LeadsService] Executing Prisma queries...');
             const [leads, total, joaoTotal, vitorTotal, unassignedTotal] = await Promise.all([
-                prisma.lead.findMany({
+                prisma.leads.findMany({
                     skip,
                     take: Number(limit),
                     where,
                     orderBy,
                     include: { contacts: { where: { is_primary: true } } }
                 }),
-                prisma.lead.count({ where }), // Total matching filters
-                prisma.lead.count({ where: { OR: [{ owner: 'joao' }, { owner: null }, { owner: '' }], deletedAt: null } }),
-                prisma.lead.count({ where: { owner: 'vitor', deletedAt: null } }),
-                prisma.lead.count({ where: { OR: [{ owner: null }, { owner: '' }], deletedAt: null } }),
+                prisma.leads.count({ where }), // Total matching filters
+                prisma.leads.count({ where: { OR: [{ owner: 'joao' }, { owner: null }, { owner: '' }], deletedAt: null } }),
+                prisma.leads.count({ where: { owner: 'vitor', deletedAt: null } }),
+                prisma.leads.count({ where: { OR: [{ owner: null }, { owner: '' }], deletedAt: null } }),
             ]);
             console.log(`[LeadsService] Queries success. Found ${leads.length} leads.`);
             return {
@@ -192,10 +242,10 @@ export const LeadsService = {
     },
 
     async findOne(id: string) {
-        return prisma.lead.findUnique({
+        return prisma.leads.findUnique({
             where: { id },
             include: {
-                segment: true,
+                Segment: true,
                 contacts: {
                     orderBy: [
                         { is_primary: 'desc' },
@@ -207,55 +257,55 @@ export const LeadsService = {
     },
 
     async remove(id: string) {
-        return prisma.lead.update({
+        return prisma.leads.update({
             where: { id },
             data: { deletedAt: new Date() }
         });
     },
 
     async removeMany(ids: string[]) {
-        return prisma.lead.updateMany({
+        return prisma.leads.updateMany({
             where: { id: { in: ids } },
             data: { deletedAt: new Date() }
         });
     },
 
     async restore(id: string) {
-        return prisma.lead.update({
+        return prisma.leads.update({
             where: { id },
             data: { deletedAt: null }
         });
     },
 
     async restoreMany(ids: string[]) {
-        return prisma.lead.updateMany({
+        return prisma.leads.updateMany({
             where: { id: { in: ids } },
             data: { deletedAt: null }
         });
     },
 
     async hardDelete(id: string) {
-        return prisma.lead.delete({
+        return prisma.leads.delete({
             where: { id }
         });
     },
 
     async findAllTrashed() {
-        return prisma.lead.findMany({
+        return prisma.leads.findMany({
             where: { NOT: { deletedAt: null } },
             orderBy: { deletedAt: 'desc' }
         });
     },
 
     async updateMany(ids: string[], updateData: any) {
-        return prisma.lead.updateMany({
+        return prisma.leads.updateMany({
             where: { id: { in: ids } },
             data: updateData,
         });
     },
 
     async disqualify(id: string) {
-        return prisma.lead.update({
+        return prisma.leads.update({
             where: { id },
             data: { status: 'DISQUALIFIED' }
         });
@@ -268,14 +318,17 @@ export const LeadsService = {
         // Use strict sanitizer for update
         const sanitizedData = LeadSanitizer.sanitizeForUpdate(data);
 
+        // Allow explicit userId override for attribution
+        if (data.userId) sanitizedData.userId = data.userId;
+
         // Defensive check: if no fields are left after sanitization, skip DB call
         if (Object.keys(sanitizedData).length === 0) {
             console.warn(`[LeadsService] Update called for ${id} but no valid fields were provided.`);
-            return prisma.lead.findUnique({ where: { id } });
+            return prisma.leads.findUnique({ where: { id } });
         }
 
         // Always fetch current lead for status change tracking
-        const currentLead = await prisma.lead.findUnique({
+        const currentLead = await prisma.leads.findUnique({
             where: { id },
             select: { extra_info: true, website_url: true, instagram_url: true, render_quality: true, status: true, owner: true, owner_id: true }
         });
@@ -296,25 +349,67 @@ export const LeadsService = {
 
         // Log status change as interaction
         if (currentLead && sanitizedData.status && currentLead.status !== sanitizedData.status) {
-            await prisma.interaction.create({
+            await prisma.interactions.create({
                 data: {
+                    id: crypto.randomUUID(),
                     lead_id: id,
                     type: 'STATUS_CHANGE',
                     content: `MOVETO:${sanitizedData.status}`, // Machine readable format
-                    user_id: sanitizedData.owner_id || currentLead.owner_id || 'system'
+                    user_id: sanitizedData.owner_id || currentLead.owner_id || 'system',
+                    updated_at: new Date()
                 }
             });
         }
 
-        return prisma.lead.update({
+        const updatedLead = await prisma.leads.update({
             where: { id },
             data: sanitizedData,
         });
+
+        // XP Triggers based on status change
+        if (currentLead && sanitizedData.status && currentLead.status !== sanitizedData.status) {
+            // Priority: Explicit Trigger Owner -> Lead Owner -> System
+            // We need to ensure the action is credited to the person PERFORMING IT if possible, 
+            // but usually credit goes to the lead owner.
+            const userToReward = sanitizedData.owner_id || currentLead.owner_id;
+
+            if (userToReward) {
+                // Map status to action
+                const newStatus = sanitizedData.status;
+
+                // STATUS MAPPING ABSTRACTION (Requested by User)
+                // "Step 1, 2, 3" -> Conceptual mapping to meaningful XP events
+                // NEW -> 
+                // ATTEMPTED -> Step 1 (Tentativa)
+                // CONTACTED -> Step 2 (Contato Realizado) -> LEAD_CONTACTED
+                // MEETING -> Step 3 (Reunião) -> LEAD_QUALIFIED
+                // SOLD -> Step 4 (Venda) -> LEAD_CONVERTED
+
+                if (newStatus === 'CONTACTED') {
+                    await GamificationService.addXP(userToReward, 'LEAD_CONTACTED');
+                } else if (newStatus === 'MEETING') {
+                    await GamificationService.addXP(userToReward, 'LEAD_QUALIFIED');
+                } else if (newStatus === 'SOLD') {
+                    await GamificationService.addXP(userToReward, 'LEAD_CONVERTED');
+                } else if (newStatus === 'WON') {
+                    // Deprecated or "Em Fechamento"
+                    await GamificationService.addXP(userToReward, 'TASK_COMPLETED');
+                }
+
+                // For future "Step X" logic if user implements custom columns:
+                if (newStatus.toLowerCase().includes('step 1')) await GamificationService.addXP(userToReward, 'TASK_COMPLETED');
+                if (newStatus.toLowerCase().includes('step 2')) await GamificationService.addXP(userToReward, 'LEAD_CONTACTED');
+                if (newStatus.toLowerCase().includes('step 3')) await GamificationService.addXP(userToReward, 'LEAD_QUALIFIED');
+                if (newStatus.toLowerCase().includes('step 4')) await GamificationService.addXP(userToReward, 'LEAD_CONVERTED');
+            }
+        }
+
+        return updatedLead;
     }
     ,
 
     async cleanupDuplicates() {
-        const allLeads = await prisma.lead.findMany({
+        const allLeads = await prisma.leads.findMany({
             where: { deletedAt: null },
             orderBy: { date_added: 'asc' }
         });
@@ -377,7 +472,7 @@ export const LeadsService = {
     },
 
 
-    async getStatsOverview(ownerId?: string) {
+    async getStatsOverview(ownerId?: string, minDate?: Date, maxDate?: Date) {
         const baseWhere: any = { deletedAt: null };
         if (ownerId) {
             baseWhere.OR = [
@@ -385,49 +480,87 @@ export const LeadsService = {
                 { owner_id: null }
             ];
         }
+        if (minDate) {
+            baseWhere.date_added = { gte: minDate };
+        }
+        if (maxDate) {
+            if (!baseWhere.date_added) baseWhere.date_added = {};
+            baseWhere.date_added.lte = maxDate;
+        }
+
+        // For interactions based stats (Sales, Money on Table), we should ideally filter by interaction date too
+        // But the current implementation aggregates on LEADS status.
+        // If we want "Sales in Period", we should look at interactions or date_sold. 
+        // Current implementation is "Leads currently in SOLD status, that were added in Period X". 
+        // This is a proxy. A better one: "Leads that moved to SOLD in Period X".
+        // However, for consistency with current logic, let's keep it simple first: Filter everything by Lead Creation Date?
+        // NO. "Sales this week" means "Leads sold this week", not "Leads created this week that are now sold".
+
+        // CORRECTION for Filters:
+        // Revenue/Sales -> Needs to filter by date of Sale (Interaction or Metadata)
+        // Pipeline -> Needs to be current snapshot (Active leads regardless of creation date? Or created in period?)
+        // Usually, Pipeline is "Current Snapshot". Sales is "Period Flow".
+
+        // Let's refine baseWhere for specific queries below instead of global baseWhere if possible.
+        // But typically dashboards filter "Data related to leads created in X" OR "Activities in X".
+        // Given the request "Adjust all statistics... analysis period", usually implies Activity.
+
+        // Let's stick to "Leads Created in Period" for now as the primary filter for "Volume", 
+        // and for Sales/Revenue try to filter by "Status Change Date" if possible, or fallback to Created.
+
+        // Actually, the previous implementation of getStatsOverview sums `contract_value` of leads with status `SOLD`.
+        // If we apply `date_added` filter, we only see revenue from leads created in that period. 
+        // This is often what marketing wants ("Cohort Analysis"). 
+        // Sales teams want "Closed in Period".
+
+        // For this sprint, to be safe and consistent with the "Filter" concept:
+        // We will apply the date filter to the LEAD CREATION DATE for the general counts.
+        // For REVENUE, we should try to find leads sold in that period. 
+
+        // SPRINT 11 DECISION: Apply filter to `date_added` for all lead-based counts.
 
         const [total, byStatus, byOwner, addedToday, addedThisWeek, addedThisMonth, revenueStats, pipelineStats, broadPipelineStats] = await Promise.all([
-            prisma.lead.count({ where: baseWhere }),
-            prisma.lead.groupBy({
+            prisma.leads.count({ where: baseWhere }),
+            prisma.leads.groupBy({
                 by: ['status'],
                 where: baseWhere,
                 _count: { status: true }
             }),
-            prisma.lead.groupBy({
+            prisma.leads.groupBy({
                 by: ['owner'],
                 where: baseWhere,
                 _count: { owner: true }
             }),
-            prisma.lead.count({
+            prisma.leads.count({
                 where: {
                     ...baseWhere,
                     date_added: { gte: new Date(new Date().setHours(0, 0, 0, 0)) }
                 }
             }),
-            prisma.lead.count({
+            prisma.leads.count({
                 where: {
                     ...baseWhere,
                     date_added: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) }
                 }
             }),
-            prisma.lead.count({
+            prisma.leads.count({
                 where: {
                     ...baseWhere,
                     date_added: { gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) }
                 }
             }),
             // Revenue (SOLD)
-            prisma.lead.aggregate({
+            prisma.leads.aggregate({
                 where: { ...baseWhere, status: 'SOLD' },
                 _sum: { contract_value: true }
             }),
             // Money on Table (MEETING + WON (Em Fechamento))
-            prisma.lead.aggregate({
+            prisma.leads.aggregate({
                 where: { ...baseWhere, status: { in: ['MEETING', 'WON'] } },
                 _sum: { contract_value: true }
             }),
             // Total Pipeline (Broadly)
-            prisma.lead.aggregate({
+            prisma.leads.aggregate({
                 where: { ...baseWhere, status: { in: ['NEW', 'ATTEMPTED', 'CONTACTED', 'MEETING', 'WON'] } },
                 _sum: { contract_value: true }
             })
@@ -455,7 +588,7 @@ export const LeadsService = {
     async getUpcomingMeetings(limit = 10) {
         // Fetch leads with scheduled follow-ups (interpreted as meetings/tasks)
         // Filter: next_followup_date >= NOW
-        const meetings = await prisma.lead.findMany({
+        const meetings = await prisma.leads.findMany({
             where: {
                 deletedAt: null,
                 next_followup_date: {
@@ -473,7 +606,7 @@ export const LeadsService = {
                 next_followup_date: true,
                 owner: true,
                 owner_id: true,
-                owner_user: {
+                User: {
                     select: {
                         name: true,
                         avatar_url: true
@@ -487,28 +620,28 @@ export const LeadsService = {
             id: m.id,
             title: m.trade_name || m.company_name || 'Lead sem nome',
             date: m.next_followup_date,
-            ownerName: m.owner_user?.name || m.owner || 'N/A',
-            ownerAvatar: m.owner_user?.avatar_url
+            ownerName: m.User?.name || m.owner || 'N/A',
+            ownerAvatar: m.User?.avatar_url
         }));
     },
 
-    async getConversionFunnel(minDate?: Date) {
+    async getConversionFunnel(minDate?: Date, maxDate?: Date) {
         const statuses = ['INBOX', 'NEW', 'ATTEMPTED', 'CONTACTED', 'MEETING', 'WON', 'LOST', 'DISQUALIFIED'];
 
         // Define our dashboard users
-        const users = [
-            { key: 'joao', name: 'João', ids: ['21d216a4-e8c9-464d-b486-0b4db827f5ba'], names: ['joao', 'João Vitor'] },
-            { key: 'bruno', name: 'Bruno', ids: ['0184fc53-a696-4ed6-b5e4-2391fd21b902'], names: ['bruno', 'Bruno'] },
-            { key: 'nitz', name: 'Nitz', ids: ['1e83c3b1-b8ed-4a59-a37b-4425947525ea'], names: ['nitz', 'Nitz'] }
-        ];
+        const users = await this.getDashboardUsers();
 
         // Fetch all non-deleted leads with owner info AND minDate filter
         const whereClause: any = { deletedAt: null };
         if (minDate) {
             whereClause.date_added = { gte: minDate };
         }
+        if (maxDate) {
+            if (!whereClause.date_added) whereClause.date_added = {};
+            whereClause.date_added.lte = maxDate;
+        }
 
-        const allLeads = await prisma.lead.findMany({
+        const allLeads = await prisma.leads.findMany({
             where: whereClause,
             select: { status: true, owner: true, owner_id: true }
         });
@@ -516,44 +649,55 @@ export const LeadsService = {
         // Initialize map
         const map: Record<string, any> = {};
         statuses.forEach(s => {
-            map[s] = { total: 0, joao: 0, bruno: 0, nitz: 0 };
+            map[s] = { total: 0 };
+            users.forEach(u => map[s][u.key] = 0);
         });
 
         const totalLeads = allLeads.length;
 
         allLeads.forEach(lead => {
             const s = lead.status;
-            if (!map[s]) map[s] = { total: 0, joao: 0, bruno: 0, nitz: 0 };
+            if (!map[s]) {
+                map[s] = { total: 0 };
+                users.forEach(u => map[s][u.key] = 0);
+            }
 
             map[s].total++;
 
             // Check which user owns this lead
+            let foundOwner = false;
             for (const user of users) {
                 const isOwner = (lead.owner_id && user.ids.includes(lead.owner_id)) ||
                     (lead.owner && user.names.some(n => n.toLowerCase() === lead.owner?.toLowerCase()));
 
                 if (isOwner) {
                     map[s][user.key]++;
-                    break; // Assume single owner
+                    foundOwner = true;
+                    break;
                 }
             }
         });
 
-        return statuses.map(status => ({
-            status,
-            count: map[status].total,
-            joao: map[status].joao,
-            bruno: map[status].bruno,
-            nitz: map[status].nitz,
-            percentage: totalLeads > 0 ? Math.round((map[status].total / totalLeads) * 100) : 0
-        }));
+        return statuses.map(status => {
+            const entry: any = {
+                status,
+                count: map[status].total,
+                percentage: totalLeads > 0 ? Math.round((map[status].total / totalLeads) * 100) : 0
+            };
+            users.forEach(u => {
+                entry[u.key] = map[status][u.key];
+            });
+            return entry;
+        });
     },
+
+
 
     async getTimelineStats(days = 30) {
         const startDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
 
         // Fetch added leads
-        const addedLeads = await prisma.lead.findMany({
+        const addedLeads = await prisma.leads.findMany({
             where: {
                 deletedAt: null,
                 date_added: { gte: startDate }
@@ -562,7 +706,7 @@ export const LeadsService = {
         });
 
         // Fetch all interactions (including STATUS_CHANGE)
-        const interactions = await prisma.interaction.findMany({
+        const interactions = await prisma.interactions.findMany({
             where: { date: { gte: startDate } },
             select: { date: true, type: true, content: true }
         });
@@ -626,19 +770,17 @@ export const LeadsService = {
         return finalized.sort((a: any, b: any) => a.date.localeCompare(b.date));
     },
 
-    async getPerformanceByOwner(minDate?: Date) {
-        // Define users
-        const users = [
-            { key: 'joao', name: 'João', ids: ['21d216a4-e8c9-464d-b486-0b4db827f5ba'], names: ['joao', 'João Vitor'] },
-            { key: 'bruno', name: 'Bruno', ids: ['0184fc53-a696-4ed6-b5e4-2391fd21b902'], names: ['bruno', 'Bruno'] },
-            { key: 'nitz', name: 'Nitz', ids: ['1e83c3b1-b8ed-4a59-a37b-4425947525ea'], names: ['nitz', 'Nitz'] }
-        ];
+    async getPerformanceByOwner(minDate?: Date, maxDate?: Date) {
+        // Fetch users dynamically
+        const users = await this.getDashboardUsers();
 
         const result: Record<string, any> = {};
+        const todayReset = new Date();
+        todayReset.setHours(0, 0, 0, 0);
 
-        // Parallel fetch for each user to ensure accuracy with complex OR conditions
+        // Parallel fetch for each user
         await Promise.all(users.map(async (user) => {
-            const userWhere: any = {
+            const userLeadWhere: any = {
                 OR: [
                     { owner_id: { in: user.ids } },
                     ...user.names.map(name => ({ owner: { equals: name, mode: 'insensitive' as const } }))
@@ -646,39 +788,189 @@ export const LeadsService = {
                 deletedAt: null
             };
 
-            // Apply date filter if provided (using date_added for general stats, or we could be specific per metric)
-            // For general 'Performance', it's best to filter by when the lead entered the system (for New Leads)
-            // But for 'Won', 'Contacted', etc. ideally we check the interaction date. 
-            // However, this method simplifies to "Leads added or modified in this period"? 
-            // To properly reset scores, we usually filter by "Actions happening after date".
-            // Since we don't have a robust interaction log for everything here, filtering by 'date_added' resets the "Pipeline".
-            if (minDate) {
-                userWhere.date_added = { gte: minDate };
-            }
+            const userFilter = {
+                OR: [
+                    { user_id: { in: user.ids } },
+                    ...user.names.map(name => ({ user_id: { equals: name, mode: 'insensitive' as const } }))
+                ]
+            };
 
-            const [total, won, contacted, meeting, added] = await Promise.all([
-                prisma.lead.count({ where: userWhere }),
-                prisma.lead.count({ where: { ...userWhere, status: 'WON' } }),
-                prisma.lead.count({ where: { ...userWhere, status: 'CONTACTED' } }),
-                prisma.lead.count({ where: { ...userWhere, status: 'MEETING' } }),
-                prisma.lead.count({ where: userWhere }) // 'total' is effectively 'added' or 'assigned', using same filter
+            const periodFilter: any = {};
+            if (minDate) periodFilter.date = { gte: minDate };
+            if (maxDate) {
+                if (!periodFilter.date) periodFilter.date = {};
+                periodFilter.date.lte = maxDate;
+            }
+            const todayFilter = { date: { gte: todayReset } };
+
+            const periodInteractionWhere = { AND: [userFilter, periodFilter] };
+            const todayInteractionWhere = { AND: [userFilter, todayFilter] };
+
+            // Metrics from INTERACTIONS (Actions)
+            const [
+                totalLeads,
+                addedPeriod, // Was addedToday, now added in Period
+                soldActions,
+                meetingActions,
+                contactActions,
+                xpTodayInteractions,
+                xpPeriodInteractions,
+                revenueData,
+                statusGroup
+            ] = await Promise.all([
+                // Total leads (inventory - Lifetime)
+                prisma.leads.count({ where: userLeadWhere }),
+
+                // Leads Added in Period (Leads New)
+                prisma.leads.count({
+                    where: {
+                        AND: [
+                            userLeadWhere,
+                            (minDate || maxDate) ? { date_added: { gte: minDate, lte: maxDate } } : { date_added: { gte: todayReset } }
+                        ] // Default to Today if no period? Or All Time? Let's default to Today if undefined to match old behavior, or handle in route
+                    }
+                }),
+
+                // Sales: STATUS_CHANGE to SOLD or WON in the period
+                prisma.interactions.count({
+                    where: {
+                        AND: [
+                            periodInteractionWhere,
+                            {
+                                type: 'STATUS_CHANGE',
+                                OR: [
+                                    { content: { contains: 'SOLD' } },
+                                    { content: { contains: 'WON' } },
+                                    { content: { contains: 'Venda' } },
+                                    { content: { contains: 'Step 4' } }
+                                ]
+                            }
+                        ]
+                    }
+                }),
+
+                // Meetings: MEETING type or STATUS_CHANGE to MEETING in the period
+                prisma.interactions.count({
+                    where: {
+                        AND: [
+                            periodInteractionWhere,
+                            {
+                                OR: [
+                                    { type: 'MEETING' },
+                                    { type: 'STATUS_CHANGE', content: { contains: 'MEETING' } },
+                                    { type: 'STATUS_CHANGE', content: { contains: 'Step 3' } }
+                                ]
+                            }
+                        ]
+                    }
+                }),
+
+                // Contacts: CALL, WHATSAPP, EMAIL or STATUS_CHANGE to CONTACTED in the period
+                prisma.interactions.count({
+                    where: {
+                        AND: [
+                            periodInteractionWhere,
+                            {
+                                OR: [
+                                    { type: { in: ['CALL', 'WHATSAPP', 'EMAIL', 'CONTACT'] } },
+                                    { type: 'STATUS_CHANGE', content: { contains: 'CONTACTED' } },
+                                    { type: 'STATUS_CHANGE', content: { contains: 'Step 2' } }
+                                ]
+                            }
+                        ]
+                    }
+                }),
+
+                // XP Today (Summing up actions)
+                prisma.interactions.findMany({
+                    where: todayInteractionWhere,
+                    select: { type: true, content: true }
+                }),
+
+                // XP Period
+                prisma.interactions.findMany({
+                    where: periodInteractionWhere,
+                    select: { type: true, content: true }
+                }),
+
+                // Revenue: SUM of contract_value for leads sold in the period
+                prisma.leads.aggregate({
+                    where: {
+                        ...userLeadWhere,
+                        status: 'SOLD',
+                    },
+                    _sum: { contract_value: true }
+                }),
+
+                // Status Counts (Snapshot for Player Card)
+                prisma.leads.groupBy({
+                    by: ['status'],
+                    where: userLeadWhere,
+                    _count: { status: true }
+                })
             ]);
 
+            // Map status counts
+            const statusMap: Record<string, number> = {};
+            const statusCounts = statusGroup || [];
+            statusCounts.forEach((s: any) => { statusMap[s.status] = s._count.status; });
+
+            // Calculate XP from interactions manually (since ACTION_POINTS is code-side)
+            const calculateXP = (ints: any[]) => {
+                return ints.reduce((acc, int) => {
+                    let xp = 0;
+                    if (int.type === 'STATUS_CHANGE' || int.type === 'MOVETO') {
+                        if (int.content.includes('SOLD') || int.content.includes('WON') || int.content.includes('Step 4')) xp = ACTION_POINTS.LEAD_CONVERTED;
+                        else if (int.content.includes('MEETING') || int.content.includes('Step 3')) xp = ACTION_POINTS.LEAD_QUALIFIED;
+                        else if (int.content.includes('CONTACTED') || int.content.includes('Step 2')) xp = ACTION_POINTS.LEAD_CONTACTED;
+                        else xp = 10; // Basic move
+                    } else if (int.type === 'MEETING' || int.type === 'QUALIFY') xp = ACTION_POINTS.LEAD_QUALIFIED;
+                    else if (['CALL', 'WHATSAPP', 'EMAIL', 'CONTACT'].includes(int.type)) xp = ACTION_POINTS.LEAD_CONTACTED;
+                    else if (int.type === 'CREATE') xp = ACTION_POINTS.LEAD_CREATED;
+                    else if (int.type === 'IMPORT') xp = (parseInt(int.content.split(':')[1]) || 1) * ACTION_POINTS.BULK_IMPORT;
+                    return acc + xp;
+                }, 0);
+            };
+
+            const xpToday = calculateXP(xpTodayInteractions);
+            const xpPeriod = calculateXP(xpPeriodInteractions);
+
+            // Use Snapshot Counts for "Card Stats" to match user expectation
+            // Responses = Leads in CONTACTED status
+            // Meeting = Leads in MEETING status
+            const currentContacted = statusMap['CONTACTED'] || 0;
+            const currentMeeting = statusMap['MEETING'] || 0;
+
             result[user.key] = {
-                total,
-                won,
-                contacted,
-                meeting,
-                added: total, // Using total as added count for now since userWhere already filters by owner
-                conversionRate: total > 0 ? Math.round((won / total) * 100) : 0
+                total: totalLeads,
+                addedToday: addedPeriod,
+                won: 0,
+                sold: soldActions,
+                contacted: currentContacted, // Use snapshot count
+                meeting: currentMeeting, // Use snapshot count
+                added: totalLeads, // Keep mapped to Total for Card
+                revenue: revenueData._sum.contract_value ? Number(revenueData._sum.contract_value) : 0,
+                conversionRate: totalLeads > 0 ? Math.round((soldActions / totalLeads) * 100) : 0,
+                xpToday,
+                xpPeriod,
+                score: Math.min(70 + (soldActions * 5) + (meetingActions * 2), 99), // Keep Score based on Activity
+                meta: {
+                    id: user.id,
+                    name: user.name,
+                    avatar: user.avatar,
+                    role: user.role,
+                    xp: user.xp,
+                    level: user.level
+                }
             };
         }));
 
         return result;
-    },
+    }
+    ,
 
     async getLeadsByState() {
-        const leads = await prisma.lead.findMany({
+        const leads = await prisma.leads.findMany({
             where: { deletedAt: null },
             select: { extra_info: true, uf: true }
         });
@@ -730,11 +1022,7 @@ export const LeadsService = {
         startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
         const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-        const users = [
-            { key: 'joao', name: 'João', ids: ['21d216a4-e8c9-464d-b486-0b4db827f5ba'], names: ['joao', 'João Vitor'] },
-            { key: 'bruno', name: 'Bruno', ids: ['0184fc53-a696-4ed6-b5e4-2391fd21b902'], names: ['bruno', 'Bruno'] },
-            { key: 'nitz', name: 'Nitz', ids: ['1e83c3b1-b8ed-4a59-a37b-4425947525ea'], names: ['nitz', 'Nitz'] }
-        ];
+        const users = await this.getDashboardUsers();
 
         const result: Record<string, any> = {};
 
@@ -753,16 +1041,16 @@ export const LeadsService = {
                 wonToday, wonWeek, wonMonth,
                 totalActive
             ] = await Promise.all([
-                prisma.lead.count({ where: { ...userWhere, last_contact_date: { gte: startOfDay } } }),
-                prisma.lead.count({ where: { ...userWhere, last_contact_date: { gte: startOfWeek } } }),
-                prisma.lead.count({ where: { ...userWhere, last_contact_date: { gte: startOfMonth } } }),
-                prisma.lead.count({ where: { ...userWhere, status: 'MEETING', next_followup_date: { gte: startOfDay, lt: new Date(startOfDay.getTime() + 86400000) } } }),
-                prisma.lead.count({ where: { ...userWhere, status: 'MEETING' } }), // Simplifying week/month meetings to total current in meeting for scoreboard clarity or actual scheduled? keeping as existing logic implies active status
-                prisma.lead.count({ where: { ...userWhere, status: 'MEETING' } }),
-                prisma.lead.count({ where: { ...userWhere, status: 'WON', last_contact_date: { gte: startOfDay } } }),
-                prisma.lead.count({ where: { ...userWhere, status: 'WON', last_contact_date: { gte: startOfWeek } } }),
-                prisma.lead.count({ where: { ...userWhere, status: 'WON', last_contact_date: { gte: startOfMonth } } }),
-                prisma.lead.count({ where: { ...userWhere, status: { notIn: ['WON', 'LOST'] } } }),
+                prisma.leads.count({ where: { ...userWhere, last_contact_date: { gte: startOfDay } } }),
+                prisma.leads.count({ where: { ...userWhere, last_contact_date: { gte: startOfWeek } } }),
+                prisma.leads.count({ where: { ...userWhere, last_contact_date: { gte: startOfMonth } } }),
+                prisma.leads.count({ where: { ...userWhere, status: 'MEETING', next_followup_date: { gte: startOfDay, lt: new Date(startOfDay.getTime() + 86400000) } } }),
+                prisma.leads.count({ where: { ...userWhere, status: 'MEETING' } }),
+                prisma.leads.count({ where: { ...userWhere, status: 'MEETING' } }),
+                prisma.leads.count({ where: { ...userWhere, status: 'WON', last_contact_date: { gte: startOfDay } } }),
+                prisma.leads.count({ where: { ...userWhere, status: 'WON', last_contact_date: { gte: startOfWeek } } }),
+                prisma.leads.count({ where: { ...userWhere, status: 'WON', last_contact_date: { gte: startOfMonth } } }),
+                prisma.leads.count({ where: { ...userWhere, status: { notIn: ['WON', 'LOST'] } } }),
             ]);
 
             result[user.key] = {
@@ -781,19 +1069,16 @@ export const LeadsService = {
         return result;
     },
 
+
+
     async getRecentActivity(limit = 15) {
-        const interactions = await prisma.interaction.findMany({
+        const interactions = await prisma.interactions.findMany({
             take: limit,
             orderBy: { date: 'desc' },
-            include: { lead: true }
+            include: { leads: true }
         });
 
-        // Define users map for resolution (Shared logic)
-        const users = [
-            { key: 'joao', name: 'João', ids: ['21d216a4-e8c9-464d-b486-0b4db827f5ba'], names: ['joao', 'João Vitor'] },
-            { key: 'bruno', name: 'Bruno', ids: ['0184fc53-a696-4ed6-b5e4-2391fd21b902'], names: ['bruno', 'Bruno'] },
-            { key: 'nitz', name: 'Nitz', ids: ['1e83c3b1-b8ed-4a59-a37b-4425947525ea'], names: ['nitz', 'Nitz'] }
-        ];
+        const users = await this.getDashboardUsers();
 
         return interactions.map((interaction: any) => {
             let type: 'conversion' | 'task' | 'streak' | 'lead' = 'task';
@@ -808,23 +1093,23 @@ export const LeadsService = {
 
             // Determine type and XP based on interaction
             if (interaction.type === 'STATUS_CHANGE') {
-                if (interaction.content.includes('WON') || interaction.content.includes('Venda')) {
+                if (interaction.content.includes('WON') || interaction.content.includes('SOLD') || interaction.content.includes('Venda')) {
                     type = 'conversion';
                     message = `${userName} fechou uma venda!`;
-                    xp = 1000;
+                    xp = ACTION_POINTS.LEAD_CONVERTED;
                 } else {
                     type = 'lead';
                     message = `${userName} moveu um lead`;
-                    xp = 25;
+                    xp = 25; // Base move
                 }
             } else if (interaction.type === 'MEETING') {
                 type = 'task';
                 message = `${userName} agendou uma reunião`;
-                xp = 300;
+                xp = ACTION_POINTS.LEAD_QUALIFIED;
             } else if (['CALL', 'WHATSAPP', 'EMAIL'].includes(interaction.type)) {
                 type = 'lead';
                 message = `${userName} realizou um contato`;
-                xp = 50;
+                xp = ACTION_POINTS.LEAD_CONTACTED;
             } else if (interaction.type === 'NOTE') {
                 type = 'lead';
                 message = `${userName} adicionou uma nota`;
@@ -833,11 +1118,16 @@ export const LeadsService = {
                 type = 'lead';
                 const count = interaction.content.split(':')[1] || 'vários';
                 message = `${userName} importou ${count} leads`;
-                xp = parseInt(count) * 10 || 50;
+                xp = parseInt(count) * ACTION_POINTS.BULK_IMPORT || 50;
             } else if (interaction.type === 'CREATE') {
                 type = 'lead';
                 message = `${userName} adicionou um lead`;
-                xp = 10;
+                xp = ACTION_POINTS.LEAD_CREATED;
+            } else if (interaction.type === 'LEVEL_UP') {
+                type = 'streak';
+                const level = interaction.content.split(':')[1];
+                message = `${userName} subiu para o nível ${level}!`;
+                xp = 0;
             }
 
             // Fallback for custom content
@@ -855,5 +1145,98 @@ export const LeadsService = {
                 userName
             };
         });
+    },
+
+    async deduplicate() {
+        console.log('🔄 Starting Lead Deduplication (Smart Merge)...');
+
+        // 1. Find potential duplicates (by email first)
+        const leadsWithEmails = await prisma.leads.findMany({
+            where: {
+                deletedAt: null,
+                email: { not: null, notIn: [''] }
+            },
+            select: { id: true, email: true, company_name: true, date_added: true }
+        });
+
+        const groups = new Map<string, string[]>();
+        leadsWithEmails.forEach(l => {
+            const key = l.email?.toLowerCase().trim();
+            if (key) {
+                if (!groups.has(key)) groups.set(key, []);
+                groups.get(key)!.push(l.id);
+            }
+        });
+
+        let totalMerged = 0;
+
+        for (const [email, ids] of groups.entries()) {
+            if (ids.length < 2) continue;
+
+            console.log(`Merging ${ids.length} leads for email: ${email}`);
+
+            // Find the Master Lead: The one with most interactions or the oldest
+            const candidates = await prisma.leads.findMany({
+                where: { id: { in: ids } },
+                include: {
+                    _count: {
+                        select: { interactions: true }
+                    }
+                },
+                orderBy: [
+                    { interactions: { _count: 'desc' } },
+                    { date_added: 'asc' }
+                ]
+            });
+
+            const master = candidates[0];
+            const duplicates = candidates.slice(1);
+
+            for (const dup of duplicates) {
+                // 1. Transfer Interactions
+                await prisma.interactions.updateMany({
+                    where: { lead_id: dup.id },
+                    data: { lead_id: master.id }
+                });
+
+                // 2. Transfer Contacts
+                await prisma.contacts.updateMany({
+                    where: { lead_id: dup.id },
+                    data: { lead_id: master.id }
+                });
+
+                // 3. Update Master fields if null
+                const updateData: any = {};
+                const fieldsToMerge: (keyof typeof master)[] = [
+                    'phone', 'website_url', 'cnpj', 'company_name', 'trade_name',
+                    'extra_info', 'uf', 'city', 'source',
+                    'instagram_url', 'decision_maker'
+                ];
+
+                fieldsToMerge.forEach(field => {
+                    if (!master[field] && dup[field]) {
+                        updateData[field] = dup[field];
+                    }
+                });
+
+                if (Object.keys(updateData).length > 0) {
+                    await prisma.leads.update({
+                        where: { id: master.id },
+                        data: updateData
+                    });
+                }
+
+                // 4. Soft Delete
+                await prisma.leads.update({
+                    where: { id: dup.id },
+                    data: { deletedAt: new Date() }
+                });
+
+                totalMerged++;
+            }
+        }
+
+        console.log(`✅ Deduplication complete. Merged ${totalMerged} leads.`);
+        return { totalMerged };
     }
 };

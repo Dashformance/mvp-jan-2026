@@ -45,7 +45,7 @@ interface ParsedLead {
     source?: string;
     owner_id?: string;
     stage_id?: string;
-    contacts?: Contact[];
+    contract_value?: string | number;
     // Duplicate detection fields (added client-side)
     _isDuplicate?: boolean;
     _matchReasons?: string[];
@@ -494,282 +494,296 @@ export function ImportWizard({ open, onOpenChange }: ImportWizardProps) {
                                             </Select>
                                         </div>
                                     </div>
-                                </div>
 
-                                <div className="flex items-center justify-between shrink-0 px-1">
-                                    <Label className="text-xs uppercase text-muted-foreground">Leads ({parsedLeads.length})</Label>
+                                    <div className="flex items-center justify-between shrink-0 px-1">
+                                        <div className="flex items-center gap-3">
+                                            <Label className="text-xs uppercase text-muted-foreground">Leads ({parsedLeads.length})</Label>
+                                            {duplicateCount > 0 && (
+                                                <div className="flex items-center gap-2 bg-orange-500/10 border border-orange-500/20 px-2 py-1 rounded-md">
+                                                    <AlertTriangle className="w-3 h-3 text-orange-400" />
+                                                    <span className="text-[10px] text-orange-300 font-medium uppercase">{duplicateCount} Duplicatas encontradas</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            {duplicateCount > 0 && (
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={() => {
+                                                        const filtered = parsedLeads.filter(l => !l._isDuplicate);
+                                                        setParsedLeads(filtered);
+                                                        setDuplicateCount(0);
+                                                        toast.success("Todas as duplicatas removidas da lista.");
+                                                    }}
+                                                    className="h-7 text-[10px] uppercase font-bold text-orange-400 hover:text-orange-300 hover:bg-orange-500/10"
+                                                >
+                                                    Limpar Duplicatas
+                                                </Button>
+                                            )}
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => setShowDuplicatesOnly(!showDuplicatesOnly)}
+                                                className={`h-7 text-[10px] uppercase font-bold ${showDuplicatesOnly ? 'text-amber-400 bg-amber-500/10' : 'text-muted-foreground'}`}
+                                            >
+                                                Ver Duplicatas
+                                            </Button>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
                                     <div className="space-y-3 pb-4">
-                                        {parsedLeads.map((lead, idx) => (
-                                            <div
-                                                key={idx}
-                                                className={`bg-white/5 border rounded-xl p-4 transition-all ${lead._isDuplicate ? 'border-orange-500/50 bg-orange-500/5' : editingLeadIndex === idx ? 'border-amber-500/50 bg-amber-500/5' : 'border-white/10 hover:border-white/20'}`}
-                                            >
-                                                <div className="flex items-start justify-between mb-3">
-                                                    <div className="flex items-center gap-2 flex-wrap">
-                                                        <Building2 className="w-4 h-4 text-amber-500" />
-                                                        <h4 className="font-medium text-white">{lead.company_name || 'Sem Nome'}</h4>
-                                                        {lead._isDuplicate && (
-                                                            <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-400 border border-orange-500/30" title={lead._matchReasons?.join(', ')}>
-                                                                <Copy className="w-3 h-3" />
-                                                                Duplicata
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                    <div className="flex items-center gap-1">
-                                                        {editingLeadIndex === idx ? (
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="sm"
-                                                                className="h-7 w-7 p-0 text-amber-400 hover:text-amber-300 hover:bg-amber-500/10"
-                                                                onClick={() => saveAndRecheck(idx)}
-                                                                title="Salvar e Validar"
-                                                            >
-                                                                <Save className="w-4 h-4" />
-                                                            </Button>
-                                                        ) : (
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="sm"
-                                                                className="h-7 w-7 p-0 text-muted-foreground hover:text-white"
-                                                                onClick={() => setEditingLeadIndex(idx)}
-                                                            >
-                                                                <Pencil className="w-3.5 h-3.5" />
-                                                            </Button>
-                                                        )}
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            className="h-7 w-7 p-0 text-muted-foreground hover:text-rose-400"
-                                                            onClick={() => removeLead(idx)}
+                                        {parsedLeads
+                                            .filter(l => showDuplicatesOnly ? l._isDuplicate : true)
+                                            .map((lead, idx) => {
+                                                // We need to keep track of the REAL index in the full list for updates/removal
+                                                const realIdx = parsedLeads.findIndex(pl => pl === lead);
+                                                if (editingLeadIndex === realIdx) {
+                                                    return (
+                                                        <div
+                                                            key={realIdx}
+                                                            className={`bg-white/5 border rounded-xl p-4 transition-all ${lead._isDuplicate ? 'border-orange-500/50 bg-orange-500/5' : editingLeadIndex === realIdx ? 'border-amber-500/50 bg-amber-500/5' : 'border-white/10 hover:border-white/20'}`}
                                                         >
-                                                            <X className="w-3.5 h-3.5" />
-                                                        </Button>
-                                                    </div>
-                                                </div>
+                                                            <div className="flex items-start justify-between mb-3">
+                                                                <div className="flex items-center gap-2 flex-wrap">
+                                                                    <Building2 className="w-4 h-4 text-amber-500" />
+                                                                    <h4 className="font-medium text-white">{lead.company_name || 'Sem Nome'}</h4>
+                                                                    {lead._isDuplicate && (
+                                                                        <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-400 border border-orange-500/30" title={lead._matchReasons?.join(', ')}>
+                                                                            <Copy className="w-3 h-3" />
+                                                                            Duplicata
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                                <div className="flex items-center gap-1">
+                                                                    {editingLeadIndex === realIdx ? (
+                                                                        <Button
+                                                                            variant="ghost"
+                                                                            size="sm"
+                                                                            className="h-7 w-7 p-0 text-amber-400 hover:text-amber-300 hover:bg-amber-500/10"
+                                                                            onClick={() => saveAndRecheck(realIdx)}
+                                                                            title="Salvar e Validar"
+                                                                        >
+                                                                            <Save className="w-4 h-4" />
+                                                                        </Button>
+                                                                    ) : (
+                                                                        <Button
+                                                                            variant="ghost"
+                                                                            size="sm"
+                                                                            className="h-7 w-7 p-0 text-muted-foreground hover:text-white"
+                                                                            onClick={() => setEditingLeadIndex(realIdx)}
+                                                                        >
+                                                                            <Pencil className="w-3.5 h-3.5" />
+                                                                        </Button>
+                                                                    )}
+                                                                    <Button
+                                                                        variant="ghost"
+                                                                        size="sm"
+                                                                        className="h-7 w-7 p-0 text-muted-foreground hover:text-rose-400"
+                                                                        onClick={() => removeLead(realIdx)}
+                                                                    >
+                                                                        <X className="w-3.5 h-3.5" />
+                                                                    </Button>
+                                                                </div>
+                                                            </div>
 
-                                                {editingLeadIndex === idx ? (
-                                                    <div className="space-y-3">
-                                                        {/* Row 1: Empresa */}
-                                                        <div className="space-y-1">
-                                                            <Label className="text-[10px] text-muted-foreground">Empresa</Label>
-                                                            <Input
-                                                                value={lead.company_name || ''}
-                                                                onChange={(e) => updateLead(idx, { company_name: e.target.value })}
-                                                                className="h-7 text-xs bg-white/5 border-white/10"
-                                                            />
-                                                        </div>
+                                                            {/* Row 1: Empresa */}
+                                                            <div className="space-y-1">
+                                                                <Label className="text-[10px] text-muted-foreground">Empresa</Label>
+                                                                <Input
+                                                                    value={lead.company_name || ''}
+                                                                    onChange={(e) => updateLead(realIdx, { company_name: e.target.value })}
+                                                                    className="h-7 text-xs bg-white/5 border-white/10"
+                                                                />
+                                                            </div>
 
-                                                        {/* Row 2: Cidade, UF, Endereço */}
-                                                        <div className="grid grid-cols-4 gap-2">
-                                                            <div className="space-y-1">
-                                                                <Label className="text-[10px] text-muted-foreground">Cidade</Label>
-                                                                <Input
-                                                                    value={lead.city || ''}
-                                                                    onChange={(e) => updateLead(idx, { city: e.target.value })}
-                                                                    className="h-7 text-xs bg-white/5 border-white/10"
-                                                                />
-                                                            </div>
-                                                            <div className="space-y-1">
-                                                                <Label className="text-[10px] text-muted-foreground">UF</Label>
-                                                                <Input
-                                                                    value={lead.uf || ''}
-                                                                    onChange={(e) => updateLead(idx, { uf: e.target.value })}
-                                                                    className="h-7 text-xs bg-white/5 border-white/10"
-                                                                    maxLength={2}
-                                                                />
-                                                            </div>
-                                                            <div className="col-span-2 space-y-1">
-                                                                <Label className="text-[10px] text-muted-foreground">Endereço</Label>
-                                                                <Input
-                                                                    value={lead.address || ''}
-                                                                    onChange={(e) => updateLead(idx, { address: e.target.value })}
-                                                                    className="h-7 text-xs bg-white/5 border-white/10"
-                                                                />
-                                                            </div>
-                                                        </div>
-                                                        {/* Row 3: Site, Instagram, Fonte */}
-                                                        <div className="grid grid-cols-3 gap-2">
-                                                            <div className="space-y-1">
-                                                                <Label className="text-[10px] text-muted-foreground">Site</Label>
-                                                                <Input
-                                                                    value={lead.website_url || ''}
-                                                                    onChange={(e) => updateLead(idx, { website_url: e.target.value })}
-                                                                    className="h-7 text-xs bg-white/5 border-white/10"
-                                                                />
-                                                            </div>
-                                                            <div className="space-y-1">
-                                                                <Label className="text-[10px] text-muted-foreground">Instagram</Label>
-                                                                <Input
-                                                                    value={lead.instagram_url || ''}
-                                                                    onChange={(e) => updateLead(idx, { instagram_url: e.target.value })}
-                                                                    className="h-7 text-xs bg-white/5 border-white/10"
-                                                                />
-                                                            </div>
-                                                            <div className="space-y-1">
-                                                                <Label className="text-[10px] text-muted-foreground">Fonte</Label>
-                                                                <Input
-                                                                    value={lead.source || ''}
-                                                                    onChange={(e) => updateLead(idx, { source: e.target.value })}
-                                                                    className="h-7 text-xs bg-white/5 border-white/10"
-                                                                />
-                                                            </div>
-                                                        </div>
-                                                        {/* Row 4: Observações */}
-                                                        <div className="space-y-1">
-                                                            <Label className="text-[10px] text-muted-foreground">Observações</Label>
-                                                            <Input
-                                                                value={lead.notes || ''}
-                                                                onChange={(e) => updateLead(idx, { notes: e.target.value })}
-                                                                className="h-7 text-xs bg-white/5 border-white/10"
-                                                            />
-                                                        </div>
-                                                        {/* Contatos (EDITABLE) */}
-                                                        <div className="pt-2 border-t border-white/10">
-                                                            <div className="flex items-center justify-between mb-2">
-                                                                <Label className="text-[10px] text-muted-foreground">Contatos ({lead.contacts?.length || 0})</Label>
-                                                            </div>
-                                                            <div className="space-y-3">
-                                                                {lead.contacts?.map((c: any, ci: number) => (
-                                                                    <div key={ci} className="grid grid-cols-12 gap-2 items-start bg-white/5 p-2 rounded-lg">
-                                                                        <div className="col-span-4 space-y-0.5">
-                                                                            <Input
-                                                                                placeholder="Nome"
-                                                                                value={c.name}
-                                                                                onChange={(e) => {
-                                                                                    const newContacts = [...(lead.contacts || [])];
-                                                                                    newContacts[ci] = { ...newContacts[ci], name: e.target.value };
-                                                                                    updateLead(idx, { contacts: newContacts });
-                                                                                }}
-                                                                                className="h-6 text-[10px] px-2 bg-transparent border-white/10"
-                                                                            />
-                                                                        </div>
-                                                                        <div className="col-span-3 space-y-0.5">
-                                                                            <Input
-                                                                                placeholder="Cargo"
-                                                                                value={c.role || ''}
-                                                                                onChange={(e) => {
-                                                                                    const newContacts = [...(lead.contacts || [])];
-                                                                                    newContacts[ci] = { ...newContacts[ci], role: e.target.value };
-                                                                                    updateLead(idx, { contacts: newContacts });
-                                                                                }}
-                                                                                className="h-6 text-[10px] px-2 bg-transparent border-white/10"
-                                                                            />
-                                                                        </div>
-                                                                        <div className="col-span-2 space-y-0.5">
-                                                                            <Input
-                                                                                placeholder="Tel"
-                                                                                value={c.phone || ''}
-                                                                                onChange={(e) => {
-                                                                                    const newContacts = [...(lead.contacts || [])];
-                                                                                    newContacts[ci] = { ...newContacts[ci], phone: e.target.value };
-                                                                                    updateLead(idx, { contacts: newContacts });
-                                                                                }}
-                                                                                className="h-6 text-[10px] px-2 bg-transparent border-white/10"
-                                                                            />
-                                                                        </div>
-                                                                        <div className="col-span-3 space-y-0.5">
-                                                                            <Input
-                                                                                placeholder="Email"
-                                                                                value={c.email || ''}
-                                                                                onChange={(e) => {
-                                                                                    const newContacts = [...(lead.contacts || [])];
-                                                                                    newContacts[ci] = { ...newContacts[ci], email: e.target.value };
-                                                                                    updateLead(idx, { contacts: newContacts });
-                                                                                }}
-                                                                                className="h-6 text-[10px] px-2 bg-transparent border-white/10"
-                                                                            />
-                                                                        </div>
-                                                                    </div>
-                                                                ))}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                ) : (
-                                                    <div className="space-y-3 text-sm">
-                                                        {/* Company Info Section */}
-                                                        <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-                                                            {/* REMOVED TRADE_NAME */}
-                                                            {(lead.city || lead.uf) && (
-                                                                <div className="flex items-center gap-2 text-muted-foreground">
-                                                                    <MapPin className="w-3.5 h-3.5 shrink-0" />
-                                                                    <span>{lead.city}{lead.uf ? ` - ${lead.uf}` : ''}</span>
+                                                            {/* Row 2: Cidade, UF, Endereço */}
+                                                            <div className="grid grid-cols-4 gap-2">
+                                                                <div className="space-y-1">
+                                                                    <Label className="text-[10px] text-muted-foreground">Cidade</Label>
+                                                                    <Input
+                                                                        value={lead.city || ''}
+                                                                        onChange={(e) => updateLead(realIdx, { city: e.target.value })}
+                                                                        className="h-7 text-xs bg-white/5 border-white/10"
+                                                                    />
                                                                 </div>
-                                                            )}
-                                                            {lead.address && (
-                                                                <div className="col-span-2 flex items-center gap-2 text-muted-foreground">
-                                                                    <MapPin className="w-3.5 h-3.5 shrink-0" />
-                                                                    <span className="text-xs truncate">{lead.address}</span>
+                                                                <div className="space-y-1">
+                                                                    <Label className="text-[10px] text-muted-foreground">UF</Label>
+                                                                    <Input
+                                                                        value={lead.uf || ''}
+                                                                        onChange={(e) => updateLead(realIdx, { uf: e.target.value })}
+                                                                        className="h-7 text-xs bg-white/5 border-white/10"
+                                                                        maxLength={2}
+                                                                    />
                                                                 </div>
-                                                            )}
-                                                            {lead.website_url && (
-                                                                <div className="flex items-center gap-2 text-muted-foreground">
-                                                                    <Globe className="w-3.5 h-3.5 shrink-0" />
-                                                                    <span className="truncate">{lead.website_url}</span>
+                                                                <div className="col-span-2 space-y-1">
+                                                                    <Label className="text-[10px] text-muted-foreground">Endereço</Label>
+                                                                    <Input
+                                                                        value={lead.address || ''}
+                                                                        onChange={(e) => updateLead(realIdx, { address: e.target.value })}
+                                                                        className="h-7 text-xs bg-white/5 border-white/10"
+                                                                    />
                                                                 </div>
-                                                            )}
-                                                            {lead.instagram_url && (
-                                                                <div className="flex items-center gap-2 text-muted-foreground">
-                                                                    <Instagram className="w-3.5 h-3.5 shrink-0" />
-                                                                    <span>{lead.instagram_url}</span>
-                                                                </div>
-                                                            )}
-                                                            {lead.source && (
-                                                                <div className="flex items-center gap-2 text-muted-foreground">
-                                                                    <FileText className="w-3.5 h-3.5 shrink-0" />
-                                                                    <span className="text-xs">Fonte: <span className="text-white">{lead.source}</span></span>
-                                                                </div>
-                                                            )}
-                                                        </div>
+                                                            </div>
 
-                                                        {/* Notes */}
-                                                        {lead.notes && (
-                                                            <div className="flex items-start gap-2 text-amber-500/80 bg-amber-500/5 rounded-lg p-2">
-                                                                <FileText className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-                                                                <span className="text-xs">{lead.notes}</span>
+                                                            {/* Row 3: Site, Instagram, Fonte */}
+                                                            <div className="grid grid-cols-3 gap-2">
+                                                                <div className="space-y-1">
+                                                                    <Label className="text-[10px] text-muted-foreground">Site</Label>
+                                                                    <Input
+                                                                        value={lead.website_url || ''}
+                                                                        onChange={(e) => updateLead(realIdx, { website_url: e.target.value })}
+                                                                        className="h-7 text-xs bg-white/5 border-white/10"
+                                                                    />
+                                                                </div>
+                                                                <div className="space-y-1">
+                                                                    <Label className="text-[10px] text-muted-foreground">Instagram</Label>
+                                                                    <Input
+                                                                        value={lead.instagram_url || ''}
+                                                                        onChange={(e) => updateLead(realIdx, { instagram_url: e.target.value })}
+                                                                        className="h-7 text-xs bg-white/5 border-white/10"
+                                                                    />
+                                                                </div>
+                                                                <div className="space-y-1">
+                                                                    <Label className="text-[10px] text-muted-foreground">Valor Estimado</Label>
+                                                                    <Input
+                                                                        value={lead.contract_value || ''}
+                                                                        onChange={(e) => updateLead(realIdx, { contract_value: e.target.value })}
+                                                                        className="h-7 text-xs bg-white/5 border-white/10"
+                                                                    />
+                                                                </div>
                                                             </div>
-                                                        )}
 
-                                                        {/* Contacts Section */}
-                                                        {lead.contacts && lead.contacts.length > 0 && (
-                                                            <div className="pt-2 border-t border-white/10">
-                                                                <p className="text-[10px] uppercase text-muted-foreground mb-2 flex items-center gap-1">
-                                                                    <User className="w-3 h-3" />
-                                                                    Contatos ({lead.contacts.length})
-                                                                </p>
-                                                                <div className="space-y-2">
-                                                                    {lead.contacts.map((c: any, cIdx: number) => (
-                                                                        <div key={cIdx} className={`flex flex-wrap items-center gap-x-3 gap-y-1 text-xs p-2 rounded-lg ${c.is_primary ? 'bg-emerald-500/10 border border-emerald-500/20' : 'bg-white/5'}`}>
-                                                                            <div className="flex items-center gap-1.5">
-                                                                                <User className={`w-3 h-3 ${c.is_primary ? 'text-emerald-400' : 'text-muted-foreground'}`} />
-                                                                                <span className="font-medium text-white">{c.name}</span>
-                                                                                {c.is_primary && <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400">Principal</span>}
+                                                            {/* Row 4: Contatos */}
+                                                            {lead.contacts && lead.contacts.length > 0 && (
+                                                                <div className="space-y-2 pt-2 border-t border-white/5">
+                                                                    <Label className="text-[10px] text-muted-foreground uppercase">Contatos Extraídos</Label>
+                                                                    <div className="space-y-2">
+                                                                        {lead.contacts.map((c, ci) => (
+                                                                            <div key={ci} className="flex flex-wrap gap-2 text-[10px]">
+                                                                                <span className="text-white font-medium">{c.name}</span>
+                                                                                {c.role && <span className="text-muted-foreground">• {c.role}</span>}
+                                                                                {c.phone && <span className="text-blue-400">{c.phone}</span>}
+                                                                                {c.email && <span className="text-purple-400">{c.email}</span>}
                                                                             </div>
-                                                                            {c.role && <span className="text-muted-foreground">• {c.role}</span>}
-                                                                            {c.phone && <span className="text-blue-400">{c.phone}</span>}
-                                                                            {c.email && <span className="text-purple-400">{c.email}</span>}
-                                                                        </div>
-                                                                    ))}
+                                                                        ))}
+                                                                    </div>
                                                                 </div>
-                                                            </div>
-                                                        )}
+                                                            )}
 
-                                                        <div className="flex justify-end pt-2 border-t border-white/5 mt-2">
-                                                            <Button
-                                                                size="sm"
-                                                                onClick={() => saveAndRecheck(idx)}
-                                                                className="h-7 text-xs bg-amber-500 hover:bg-amber-600 text-black font-medium gap-1"
-                                                            >
-                                                                <Check className="w-3 h-3" />
-                                                                Salvar e Validar
-                                                            </Button>
+                                                            <div className="flex justify-end pt-2 border-t border-white/5 mt-2">
+                                                                <Button
+                                                                    size="sm"
+                                                                    onClick={() => saveAndRecheck(realIdx)}
+                                                                    className="h-7 text-xs bg-amber-500 hover:bg-amber-600 text-black font-medium gap-1"
+                                                                >
+                                                                    <Check className="w-3 h-3" />
+                                                                    Salvar e Validar
+                                                                </Button>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                }
+                                                return (
+                                                    <div
+                                                        key={realIdx} // Added key here for the non-editing state
+                                                        className={`bg-white/5 border rounded-xl p-4 transition-all ${lead._isDuplicate ? 'border-orange-500/50 bg-orange-500/5' : 'border-white/10 hover:border-white/20'}`}
+                                                    >
+                                                        <div className="flex items-start justify-between mb-3">
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                <Building2 className="w-4 h-4 text-amber-500" />
+                                                                <h4 className="font-medium text-white">{lead.company_name || 'Sem Nome'}</h4>
+                                                                {lead._isDuplicate && (
+                                                                    <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-400 border border-orange-500/30" title={lead._matchReasons?.join(', ')}>
+                                                                        <Copy className="w-3 h-3" />
+                                                                        Duplicata
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                            <div className="flex items-center gap-1">
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="sm"
+                                                                    className="h-7 w-7 p-0 text-muted-foreground hover:text-white"
+                                                                    onClick={() => setEditingLeadIndex(realIdx)}
+                                                                >
+                                                                    <Pencil className="w-3.5 h-3.5" />
+                                                                </Button>
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="sm"
+                                                                    className="h-7 w-7 p-0 text-muted-foreground hover:text-rose-400"
+                                                                    onClick={() => removeLead(realIdx)}
+                                                                >
+                                                                    <X className="w-3.5 h-3.5" />
+                                                                </Button>
+                                                            </div>
+                                                        </div>
+                                                        <div className="space-y-3 text-sm">
+                                                            {/* Company Info Section */}
+                                                            <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                                                                {(lead.city || lead.uf) && (
+                                                                    <div className="flex items-center gap-2 text-muted-foreground">
+                                                                        <MapPin className="w-3.5 h-3.5 shrink-0" />
+                                                                        <span>{lead.city}{lead.uf ? ` - ${lead.uf}` : ''}</span>
+                                                                    </div>
+                                                                )}
+                                                                {lead.address && (
+                                                                    <div className="col-span-2 flex items-center gap-2 text-muted-foreground">
+                                                                        <MapPin className="w-3.5 h-3.5 shrink-0" />
+                                                                        <span className="text-xs truncate">{lead.address}</span>
+                                                                    </div>
+                                                                )}
+                                                                {lead.website_url && (
+                                                                    <div className="flex items-center gap-2 text-muted-foreground">
+                                                                        <Globe className="w-3.5 h-3.5 shrink-0" />
+                                                                        <span className="truncate">{lead.website_url}</span>
+                                                                    </div>
+                                                                )}
+                                                                {lead.instagram_url && (
+                                                                    <div className="flex items-center gap-2 text-muted-foreground">
+                                                                        <Instagram className="w-3.5 h-3.5 shrink-0" />
+                                                                        <span>{lead.instagram_url}</span>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+
+                                                            {/* Notes */}
+                                                            {lead.notes && (
+                                                                <div className="flex items-start gap-2 text-amber-500/80 bg-amber-500/5 rounded-lg p-2">
+                                                                    <FileText className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                                                                    <span className="text-xs">{lead.notes}</span>
+                                                                </div>
+                                                            )}
+
+                                                            {/* Contacts Section */}
+                                                            {lead.contacts && lead.contacts.length > 0 && (
+                                                                <div className="pt-2 border-t border-white/10">
+                                                                    <p className="text-[10px] uppercase text-muted-foreground mb-2 flex items-center gap-1">
+                                                                        <User className="w-3 h-3" />
+                                                                        Contatos ({lead.contacts.length})
+                                                                    </p>
+                                                                    <div className="space-y-2">
+                                                                        {lead.contacts.map((c: any, cIdx: number) => (
+                                                                            <div key={cIdx} className={`flex flex-wrap items-center gap-x-3 gap-y-1 text-xs p-2 rounded-lg ${c.is_primary ? 'bg-emerald-500/10 border border-emerald-500/20' : 'bg-white/5'}`}>
+                                                                                <div className="flex items-center gap-1.5">
+                                                                                    <User className={`w-3 h-3 ${c.is_primary ? 'text-emerald-400' : 'text-muted-foreground'}`} />
+                                                                                    <span className="font-medium text-white">{c.name}</span>
+                                                                                </div>
+                                                                                {c.role && <span className="text-muted-foreground">• {c.role}</span>}
+                                                                                {c.phone && <span className="text-blue-400">{c.phone}</span>}
+                                                                                {c.email && <span className="text-purple-400">{c.email}</span>}
+                                                                            </div>
+                                                                        ))}
+                                                                    </div>
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     </div>
-                                                )}
-                                            </div>
-                                        ))}
+                                                );
+                                            })}
                                     </div>
                                 </div>
                             </div>
@@ -884,7 +898,7 @@ export function ImportWizard({ open, onOpenChange }: ImportWizardProps) {
                         </>
                     )}
                 </DialogFooter>
-            </DialogContent>
-        </Dialog>
+            </DialogContent >
+        </Dialog >
     );
 }

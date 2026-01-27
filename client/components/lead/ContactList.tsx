@@ -180,8 +180,8 @@ export function ContactList({ leadId, initialContacts, onChange }: ContactListPr
                         <div
                             key={contact.id}
                             className={`p-3 rounded-lg border transition-colors relative group ${contact.is_primary
-                                ? "bg-accent/5 border-accent/20"
-                                : "bg-muted/30 border-white/5 hover:bg-muted/50"
+                                ? "bg-[#DECCA8]/5 border-[#DECCA8]/20"
+                                : "bg-[#1C1C1C] border-white/5 hover:bg-[#2A2A2A]"
                                 }`}
                         >
                             <div className="flex justify-between items-start mb-2">
