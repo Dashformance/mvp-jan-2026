@@ -52,8 +52,7 @@ export async function GET() {
                     index + 1,
                     owners.length,
                     5, // streak (placeholder)
-                    undefined,
-                    owner
+                    undefined
                 );
 
                 // Gerar iniciais
