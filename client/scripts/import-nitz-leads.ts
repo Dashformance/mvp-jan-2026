@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import { randomUUID } from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -74,6 +75,7 @@ async function main() {
                     status: 'NEW', // Keep it in Qualified Pipeline
                 },
                 create: {
+                    id: randomUUID(),
                     company_name: nome,
                     trade_name: nome,
                     cnpj: dummyCnpj,
