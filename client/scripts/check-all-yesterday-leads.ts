@@ -24,7 +24,7 @@ async function main() {
 
     console.log(`Total leads created yesterday: ${leads.length}`);
 
-    const ownerStats = {};
+    const ownerStats: Record<string, number> = {};
     leads.forEach(l => {
         const ownerEmail = l.User?.email || l.owner || 'UNASSIGNED';
         if (!ownerStats[ownerEmail]) ownerStats[ownerEmail] = 0;
