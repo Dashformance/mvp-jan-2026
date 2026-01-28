@@ -34,13 +34,13 @@ async function main() {
         let targetId = i.user_id;
 
         if (i.leads) {
-            targetId = i.leads.owner_id || (i.leads.owner ? nameMap.get(i.leads.owner.toLowerCase()) : null);
+            targetId = i.leads.owner_id || (i.leads.owner ? (nameMap.get(i.leads.owner.toLowerCase()) ?? null) : null);
         }
 
         // Catch-all: If it's João's lead (by looking at the list he mentioned or source)
         // In the image, OX Empreendimentos is likely his.
         if (!targetId && i.leads?.company_name?.includes('OX')) {
-            targetId = nameMap.get('joão vitor');
+            targetId = nameMap.get('joão vitor') ?? null;
         }
 
         if (targetId && targetId !== 'system') {
