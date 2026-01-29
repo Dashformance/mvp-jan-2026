@@ -164,6 +164,7 @@ export function KanbanBoard({
                                 onUpdateTitle={onUpdateTitle}
                                 onQuickContact={onQuickContact}
                                 onToggleFavorite={onToggleFavorite}
+                                isOverlay={true}
                             />
                         </div>
                     ) : null}

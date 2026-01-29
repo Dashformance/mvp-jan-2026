@@ -46,10 +46,11 @@ interface KanbanCardProps {
     onQuickContact?: (id: string) => void;
     onToggleFavorite?: (id: string, isStarred: boolean) => void;
     onDelete?: (id: string) => void;
+    isOverlay?: boolean;
 }
 
-export function KanbanCard({ lead, onEdit, onUpdateTitle, onDisqualify, onApprove, onQuickContact, onToggleFavorite, onDelete }: KanbanCardProps) {
-    const { attributes, listeners, setNodeRef, transform } = useDraggable({
+export function KanbanCard({ lead, onEdit, onUpdateTitle, onDisqualify, onApprove, onQuickContact, onToggleFavorite, onDelete, isOverlay }: KanbanCardProps) {
+    const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
         id: lead.id,
     });
 
@@ -77,6 +78,7 @@ export function KanbanCard({ lead, onEdit, onUpdateTitle, onDisqualify, onApprov
 
     const style = {
         transform: CSS.Translate.toString(transform),
+        opacity: isDragging && !isOverlay ? 0.4 : undefined,
     };
 
     const handleWhatsApp = (e: React.MouseEvent) => {
@@ -163,11 +165,11 @@ export function KanbanCard({ lead, onEdit, onUpdateTitle, onDisqualify, onApprov
                 className={`
                     cursor-grab active:cursor-grabbing 
                     bg-bg-elevated rounded-sm shadow-sm
-                    transition-all duration-150
-                    hover:bg-bg-hover hover:translate-y-[-2px]
+                    ${!isDragging && !isOverlay ? 'transition-all duration-150 hover:bg-bg-hover hover:translate-y-[-2px]' : ''}
+                    ${isOverlay ? 'shadow-2xl ring-2 ring-accent/50 rotate-1' : ''}
                     ${getScoreBorderClass()}
                 `}
-                onClick={() => !isEditingTitle && onEdit(lead)}
+                onClick={() => !isEditingTitle && !isDragging && onEdit(lead)}
             >
                 {/* Header Row */}
                 <CardHeader className="p-3 pb-2">

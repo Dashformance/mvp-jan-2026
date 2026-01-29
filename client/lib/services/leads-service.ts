@@ -376,8 +376,8 @@ export const LeadsService = {
         // Use strict sanitizer for update
         const sanitizedData = LeadSanitizer.sanitizeForUpdate(data);
 
-        // Allow explicit userId override for attribution
-        if (data.userId) sanitizedData.userId = data.userId;
+        // Capture performing user for attribution logs (do NOT pass to Prisma leads.update)
+        const performingUserId = data.userId;
 
         // Defensive check: if no fields are left after sanitization, skip DB call
         if (Object.keys(sanitizedData).length === 0) {
@@ -430,7 +430,7 @@ export const LeadsService = {
                     lead_id: id,
                     type: 'STATUS_CHANGE',
                     content: `MOVETO:${sanitizedData.status}`, // Machine readable format
-                    user_id: data.userId || sanitizedData.owner_id || currentLead.owner_id || 'system',
+                    user_id: performingUserId || sanitizedData.owner_id || currentLead.owner_id || 'system',
                     updated_at: new Date()
                 }
             });
