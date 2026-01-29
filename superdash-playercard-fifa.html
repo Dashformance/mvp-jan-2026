@@ -1,12 +1,15 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Superdash — Player Card FIFA Style</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700&display=swap"
+    rel="stylesheet">
   <style>
     * {
       margin: 0;
@@ -33,7 +36,7 @@
       position: relative;
       border-radius: 16px;
       overflow: hidden;
-      box-shadow: 
+      box-shadow:
         0 25px 50px rgba(0, 0, 0, 0.5),
         0 0 0 1px rgba(255, 255, 255, 0.1);
       transition: transform 0.3s ease, box-shadow 0.3s ease;
@@ -41,7 +44,7 @@
 
     .player-card:hover {
       transform: translateY(-8px) scale(1.02);
-      box-shadow: 
+      box-shadow:
         0 35px 70px rgba(0, 0, 0, 0.6),
         0 0 60px var(--card-glow);
     }
@@ -91,13 +94,11 @@
       left: 0;
       right: 0;
       bottom: 0;
-      background: repeating-linear-gradient(
-        -45deg,
-        transparent,
-        transparent 2px,
-        rgba(255, 255, 255, 0.03) 2px,
-        rgba(255, 255, 255, 0.03) 4px
-      );
+      background: repeating-linear-gradient(-45deg,
+          transparent,
+          transparent 2px,
+          rgba(255, 255, 255, 0.03) 2px,
+          rgba(255, 255, 255, 0.03) 4px);
       pointer-events: none;
       z-index: 1;
     }
@@ -237,7 +238,7 @@
       position: relative;
       width: 100%;
       height: 100%;
-      background: linear-gradient(180deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
       border-radius: 12px;
       display: flex;
       align-items: center;
@@ -351,6 +352,7 @@
     }
   </style>
 </head>
+
 <body>
 
   <!-- GOLD CARD -->
@@ -552,4 +554,5 @@
   </div>
 
 </body>
+
 </html>

@@ -408,27 +408,17 @@ export default function SuperDashPage() {
                                 Arena do Time
                             </h2>
                             <div className="flex items-center gap-4">
-                                <DateFilterToggle
-                                    value={selectedPeriod}
-                                    onChange={(p, r) => {
-                                        console.log('Changing period to:', p, r);
-                                        setSelectedPeriod(p);
-                                        if (r) setCustomRange(r);
-                                    }}
-                                    currentRange={customRange}
-                                />
-                                <span className="text-xs text-text-muted">{collaborators.length} jogadores</span>
+                                {/* Filters removed as per request */}
                             </div>
                         </div>
 
                         {/* Player Cards Grid */}
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
                             {collaborators.map((collab: any, index: number) => {
-                                // Cumulative Score: Use XP as base for performance-based rating (0-99)
-                                // We normalize XP relative to a high target (e.g. 5000 XP)
-                                const cumulativeScore = Math.min(Math.round((collab.xp / 5000) * 99), 99);
+                                // Use period-sensitive score from API, fallback to cumulative only if missing
+                                const displayScore = collab.score || Math.min(Math.round((collab.xp / 5000) * 99), 99);
 
-                                // Period Data still used for the badge and sub-stats
+                                // Period Data
                                 const cardData = generatePlayerCard(
                                     {
                                         leads: collab.stats.contacts,
@@ -438,26 +428,26 @@ export default function SuperDashPage() {
                                     },
                                     index + 1,
                                     collaborators.length,
-                                    5 // Mock streak for now
+                                    5
                                 );
 
                                 // Final Tier should be derived from the CUMULATIVE score + Ranking
-                                const tier = getTier(cumulativeScore, index + 1, collaborators.length);
+                                const tier = getTier(displayScore, index + 1, collaborators.length);
 
                                 return (
                                     <div key={collab.id} className="flex justify-center transform transition-all duration-500 hover:scale-105">
                                         <PlayerCard
                                             name={collab.name}
                                             initials={
-                                                collab.name.toLowerCase().includes('joao') ? 'JVG' :
-                                                    collab.name.toLowerCase().includes('bruno') ? 'BRV' :
-                                                        collab.name.toLowerCase().includes('vitor') ? 'VTZ' :
-                                                            collab.role.substring(0, 3).toUpperCase()
+                                                collab.name.toLowerCase().includes('joão') || collab.name.toLowerCase().includes('joao') ? 'JV' :
+                                                    collab.name.toLowerCase().includes('bruno') ? 'BR' :
+                                                        collab.name.toLowerCase().includes('vitor') ? 'VT' :
+                                                            collab.role.substring(0, 2).toUpperCase()
                                             }
                                             role={collab.role}
                                             avatar={collab.avatar}
                                             level={collab.level}
-                                            score={cumulativeScore}
+                                            score={displayScore}
                                             tier={tier}
                                             stats={cardData.stats}
                                             badge={cardData.badge}

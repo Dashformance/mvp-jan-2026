@@ -101,13 +101,8 @@ export async function GET(request: Request) {
             const xpToday = sStats.xpToday || 0;
             const xpPeriod = sStats.xpPeriod || 0;
 
-            // Score logic (Seasonal Performance Score)
-            let score = 70; // Base
-            if (sStats.conversionRate > 5) score += 10;
-            if (sStats.conversionRate > 10) score += 10;
-            if (sStats.added > 20) score += 10;
-            if (sStats.sold > 0) score += (sStats.sold * 5); // Points for Sales (SOLD)
-            if (score > 99) score = 99;
+            // Use the sophisticated score calculated by the service
+            const score = sStats.score || 70;
 
             // Revenue (Period specific)
             const revenue = sStats.revenue || 0;
@@ -141,11 +136,11 @@ export async function GET(request: Request) {
                 badges: sStats.sold > 5 ? ["Top Gun"] : [],
                 addedToday: sStats.addedToday,
                 stats: {
-                    contacts: sStats.addedToday, // Mapped to "Lds (Dia)" in UI
-                    responses: sStats.contacted, // Real interaction count
-                    meetings: sStats.meeting,
-                    sales: sStats.sold,
-                    revenue
+                    contacts: sStats.lifetimeTotal, // LEADS (Fixed 5-Day Window)
+                    responses: sStats.lifetimeResp, // RESP (Fixed 5-Day Window)
+                    meetings: sStats.lifetimeMeet, // MEET (Fixed 5-Day Window)
+                    sales: sStats.lifetimeSold, // VENDAS (Fixed 5-Day Window)
+                    revenue // Revenue (Fixed 5-Day Window)
                 },
                 funnel: userFunnel.slice(0, 4),
                 pace: Math.min(Math.round((sStats.contacted / 20) * 100), 100),
@@ -184,8 +179,13 @@ export async function GET(request: Request) {
         // 6. Fetch Activity Trend (Real-time or Period)
         let hourlyActions = [];
         try {
-            console.log(`[SuperDash API] Fetching trend for ${period}. Start: ${SEASON_START_DATE?.toISOString()} End: ${SEASON_END_DATE?.toISOString()}`);
-            hourlyActions = await LeadsService.getActivityTrend(SEASON_START_DATE, SEASON_END_DATE || now);
+            if (period === 'today') {
+                console.log(`[SuperDash API] Fetching 24h rolling activity trend...`);
+                hourlyActions = await LeadsService.getHourlyActivity();
+            } else {
+                console.log(`[SuperDash API] Fetching trend for ${period}. Start: ${SEASON_START_DATE?.toISOString()} End: ${SEASON_END_DATE?.toISOString()}`);
+                hourlyActions = await LeadsService.getActivityTrend(SEASON_START_DATE, SEASON_END_DATE || now);
+            }
         } catch (trendError) {
             console.error('[SuperDash API] Trend Error:', trendError);
             hourlyActions = []; // Fallback
@@ -197,7 +197,7 @@ export async function GET(request: Request) {
             timeData,
             calendar,
             feed,
-            hourlyActions
+            actionTrend: hourlyActions
         });
 
     } catch (error) {

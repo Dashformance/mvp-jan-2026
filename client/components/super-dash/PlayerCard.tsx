@@ -80,10 +80,14 @@ const tierConfig: Record<CardTier, {
 // Internal mapping for props discrepancy
 const mapStats = (stats: any) => {
     return {
-        leads: stats.leads ?? stats.contacts ?? 0,
+        leads: stats.leads ?? stats.contacts ?? stats.addedToday ?? 0,
         conversao: stats.conversao ?? stats.quality ?? 0,
-        respostas: stats.respostas ?? stats.responses ?? 0,
-        reunioes: stats.reunioes ?? stats.meetings ?? 0
+        respostas: stats.respostas ?? stats.responses ?? stats.contacted ?? 0,
+        reunioes: stats.reunioes ?? stats.meetings ?? stats.meeting ?? 0,
+        vendas: stats.vendas ?? stats.sales ?? stats.sold ?? 0,
+        convResp: stats.convResp ?? 0,
+        convMeet: stats.convMeet ?? 0,
+        convWon: stats.convWon ?? 0
     };
 };
 
@@ -123,13 +127,13 @@ export function PlayerCard({
 
     const getInitials = () => {
         const parts = name.trim().split(' ');
-        if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+        if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
         return name.substring(0, 2).toUpperCase();
     };
 
     const displayCode = getDisplayCode();
     const bannerName = getBannerName(name);
-    const initials = initialsProp || getInitials();
+    const initials = (initialsProp || getInitials()).substring(0, 2).toUpperCase(); // Strict 2 letters
 
     return (
         <div
@@ -140,7 +144,7 @@ export function PlayerCard({
             )}
             style={{
                 width: '240px',
-                height: '380px',
+                height: '360px',
                 position: 'relative',
                 borderRadius: '20px',
                 overflow: 'hidden',
@@ -202,31 +206,21 @@ export function PlayerCard({
                         fontSize: '13px',
                         fontWeight: 800,
                         color: config.accent,
-                        opacity: 0.8,
-                        marginTop: '2px'
+                        background: 'rgba(0,0,0,0.2)',
+                        backdropFilter: 'blur(4px)',
+                        padding: '2px 6px',
+                        borderRadius: '4px',
+                        marginTop: '2px',
+                        width: 'fit-content'
                     }}>
                         {displayCode}
                     </span>
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
-                    <div style={{ textAlign: 'right', fontSize: '9px', fontWeight: 700, color: 'rgba(255,255,255,0.5)' }}>
+                    <div style={{ textAlign: 'right', fontSize: '10px', fontWeight: 800, color: 'rgba(255,255,255,0.7)' }}>
                         <div>{period}</div>
                         <div>{edition}</div>
-                    </div>
-                    <div style={{
-                        width: '36px',
-                        height: '36px',
-                        borderRadius: '50%',
-                        background: 'rgba(0,0,0,0.3)',
-                        border: `2px solid ${config.accent}`,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '16px',
-                        boxShadow: `0 0 10px ${config.accent}44`
-                    }}>
-                        {badge}
                     </div>
                 </div>
             </div>
@@ -239,16 +233,16 @@ export function PlayerCard({
                         width: '100%',
                         height: '100%',
                         borderRadius: '16px',
-                        background: 'rgba(255,255,255,0.02)', // Slightly more visible glass (6%)
-                        backdropFilter: 'blur(12px)', // Stronger blur
-                        border: '1px solid rgba(255,255,255,0.15)',
-                        boxShadow: '0 4px 30px rgba(0, 0, 0, 0.1)', // Glass shadow
+                        background: 'rgba(255,255,255,0.01)', // Extremely subtle glass
+                        backdropFilter: 'blur(8px)', // Subtle blur
+                        border: '1px solid rgba(255,255,255,0.05)',
+                        boxShadow: '0 4px 30px rgba(0, 0, 0, 0.1)',
                         overflow: 'hidden',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center'
                     }}>
-                        {avatar ? (
+                        {(avatar && !avatar.includes('ui-avatars.com')) ? (
                             <img src={avatar} alt={name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                         ) : (
                             <span style={{ fontSize: '42px', fontWeight: 700, color: config.highlight, opacity: 0.9 }}>
@@ -282,12 +276,12 @@ export function PlayerCard({
             {/* BOTTOM SECTION - Solid Accent with Polygon Clip */}
             <div style={{
                 background: config.accent,
-                padding: '16px 0 20px',
+                padding: '12px 0 16px',
                 position: 'relative',
-                clipPath: 'polygon(0 15%, 8% 0, 92% 0, 100% 15%, 100% 100%, 0 100%)',
-                marginTop: '10px'
+                clipPath: 'polygon(0 10%, 8% 0, 92% 0, 100% 10%, 100% 100%, 0 100%)',
+                marginTop: '4px'
             }}>
-                <div style={{ textAlign: 'center', marginBottom: '8px' }}>
+                <div style={{ textAlign: 'center', marginBottom: '6px' }}>
                     <span style={{
                         fontSize: '18px',
                         fontWeight: 900,
@@ -298,17 +292,32 @@ export function PlayerCard({
                     </span>
                 </div>
 
-                {/* METRICS GRID 2x2 - Value and Label Side-by-Side */}
+                {/* METRICS GRID - 2 Rows for Absolute Totals */}
                 <div style={{
                     display: 'grid',
                     gridTemplateColumns: '1fr 1fr',
-                    gap: '10px 16px',
+                    gap: '4px 16px',
                     padding: '0 24px'
                 }}>
+                    {/* Rows 1 & 2: Absolute Activity Totals */}
                     <MetricItem value={stats.leads} label="LEADS" color={config.textColor} />
-                    <MetricItem value={`${stats.conversao}%`} label="CONV%" color={config.textColor} />
+                    <MetricItem value={stats.vendas} label="VENDAS" color={config.textColor} />
                     <MetricItem value={stats.respostas} label="RESP" color={config.textColor} />
                     <MetricItem value={stats.reunioes} label="MEET" color={config.textColor} />
+
+                    {/* Minimalist Divider - Hidden for now */}
+                    {/* <div style={{
+                        gridColumn: 'span 2',
+                        height: '1px',
+                        background: config.textColor,
+                        opacity: 0.15,
+                        margin: '4px 0'
+                    }} /> */}
+
+                    {/* Rows 3 & 4: Cohort Conversion Percentages - Hidden per user request */}
+                    {/* <MetricItem value={`${stats.convResp}%`} label="% RESP" color={config.textColor} />
+                    <MetricItem value={`${stats.convMeet}%`} label="% MEET" color={config.textColor} />
+                    <MetricItem value={`${stats.convWon}%`} label="% VENDA" color={config.textColor} /> */}
                 </div>
             </div>
         </div>

@@ -87,8 +87,8 @@ export function DateFilterToggle({ value, onChange, currentRange, className }: D
                                     </span>
                                 </button>
                             </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0 bg-bg-elevated border-border-subtle" align="end">
-                                <div className="p-3">
+                            <PopoverContent className="w-[320px] p-0 bg-bg-elevated border-border-subtle" align="end">
+                                <div className="p-3 flex justify-center">
                                     <CalendarComponent
                                         mode="range"
                                         selected={tempDate}

@@ -219,3 +219,8 @@
     letter-spacing: -0.02em;
   }
 }
+
+/* Calendar Fixes */
+.rdp-vhidden {
+  @apply sr-only;
+}
