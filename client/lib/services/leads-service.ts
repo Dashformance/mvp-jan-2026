@@ -924,6 +924,9 @@ export const LeadsService = {
                     { date_added: { gte: minDate || todayReset, lte: maxDate || now } }
                 ]
             };
+            const velocityCutoff = new Date();
+            velocityCutoff.setDate(velocityCutoff.getDate() - 5);
+            velocityCutoff.setHours(0, 0, 0, 0);
 
             const [
                 totalLeads,
@@ -939,7 +942,9 @@ export const LeadsService = {
                 lifetimeTotal,
                 lifetimeResp,
                 lifetimeMeet,
-                lifetimeSold
+                lifetimeSold,
+                leadsAddedLast5d,
+                scoreInteractionsCount
             ] = await Promise.all([
                 // Total leads (inventory - Lifetime)
                 prisma.leads.count({ where: userLeadWhere }),
@@ -1029,15 +1034,15 @@ export const LeadsService = {
                 // LEADS: All leads ever assigned
                 prisma.leads.count({ where: cardStatsWhere }),
 
-                // RESP: All leads ever assigned that ever reached >= CONTACTED
+                // RESP (Attempted/Contacted): All leads that moved past NEW
                 prisma.leads.count({
                     where: {
                         ...cardStatsWhere,
-                        status: { in: ['CONTACTED', 'MEETING', 'WON', 'SOLD'] }
+                        status: { in: ['ATTEMPTED', 'CONTACTED', 'MEETING', 'WON', 'SOLD'] }
                     }
                 }),
 
-                // MEET: All leads ever assigned that ever reached >= MEETING
+                // MEET: Leads currently in MEETING or beyond
                 prisma.leads.count({
                     where: {
                         ...cardStatsWhere,
@@ -1045,11 +1050,29 @@ export const LeadsService = {
                     }
                 }),
 
-                // SOLD: All leads ever assigned that are WON/SOLD
+                // SOLD: Leads currently WON/SOLD
                 prisma.leads.count({
                     where: {
                         ...cardStatsWhere,
                         status: { in: ['WON', 'SOLD'] }
+                    }
+                }),
+
+                // Velocity Bonus: Leads Added in last 5 days
+                prisma.leads.count({
+                    where: {
+                        ...cardStatsWhere,
+                        date_added: { gte: velocityCutoff }
+                    }
+                }),
+
+                // VELOCITY: Interactions in last 5 days
+                prisma.interactions.count({
+                    where: {
+                        AND: [
+                            userFilter,
+                            { date: { gte: velocityCutoff } }
+                        ]
                     }
                 })
             ]);
@@ -1079,54 +1102,36 @@ export const LeadsService = {
             const xpToday = calculateXP(xpTodayInteractions);
             const xpPeriod = calculateXP(xpPeriodInteractions);
 
-            // ADVANCED 3-PILLAR SCORE CALCULATION
-            // 1. Quality Pillar (Pipeline Weighted) - 40% Target
+            // PIPELINE FAIRNESS SCORE CALCULATION
+            // 1. Portfolio Quality Pillar (45% Weight Target)
             const wonCount = lifetimeSold;
             const meetOnly = lifetimeMeet - lifetimeSold;
-            const respOnly = lifetimeResp - lifetimeMeet;
+            const respOnly = Math.max(0, lifetimeResp - lifetimeMeet);
             const coldOnly = Math.max(0, lifetimeTotal - lifetimeResp);
-            const qualityScoreRaw = (wonCount * 50) + (meetOnly * 20) + (respOnly * 5) + (coldOnly * 1);
 
-            // 2. Velocity Pillar (Activity Cadence) - 30% Target
-            // Interactions in the last 5 days (Snapshot of momentum)
-            const velocityCutoff = new Date();
-            velocityCutoff.setDate(velocityCutoff.getDate() - 5);
-            velocityCutoff.setHours(0, 0, 0, 0);
+            const qualityScoreRaw = (wonCount * 150) + (meetOnly * 30) + (respOnly * 10) + (coldOnly * 1);
 
-            const scoreInteractionsCount = await prisma.interactions.count({
-                where: {
-                    AND: [
-                        userFilter,
-                        { date: { gte: velocityCutoff } }
-                    ]
-                }
-            });
-            const velocityScoreRaw = scoreInteractionsCount * 2;
+            // 2. Velocity Pillar (35% Weight Target)
+            const velocityScoreRaw = (scoreInteractionsCount * 3) + (leadsAddedLast5d * 10);
 
-            // 3. Revenue Impact Pillar - 30% Target
+            // 3. Revenue Impact Pillar (20% Weight Target)
             const totalRevenueValue = revenueData._sum.contract_value ? Number(revenueData._sum.contract_value) : 0;
-            const revenueScoreRaw = (totalRevenueValue / 1000) + (wonCount * 50);
+            const revenueScoreRaw = (totalRevenueValue / 500) + (wonCount * 100);
 
-            // Normalized Final Score
-            // Base Target for a "99" Rank: 1200 points total from pillars
+            // Normalized Final Score (Target 1000 pts for Rank 99)
             const combinedRaw = qualityScoreRaw + velocityScoreRaw + revenueScoreRaw;
-            const scoreTarget = 1200; // Adjusted for total history depth
+            const scoreTarget = 1000;
             const calcScore = Math.min(Math.round((combinedRaw / scoreTarget) * 100), 99);
 
             result[user.key] = {
-                total: totalLeads,
+                total: lifetimeTotal,
                 addedToday: addedInPeriod,
-                won: lifetimeSold, // Should this be period? Card says "Lifetime Totals", but logic might want period 'won'. Let's stick to returning what we have.
-                sold: soldActions, // Absolute sales in period
-                contacted: contactActions,
-                meeting: meetingActions,
-                added: totalLeads,
+                won: lifetimeSold,
+                sold: soldActions, // Absolute sales in period (for charts/logic)
+                contacted: lifetimeResp,
+                meeting: lifetimeMeet,
+                added: lifetimeTotal,
                 revenue: revenueData._sum.contract_value ? Number(revenueData._sum.contract_value) : 0,
-
-                // COHORT CONVERSION RATES (Deprecated / Removed)
-                cohortContacted: lifetimeResp, // Using Lifetime for display
-                cohortMeeting: lifetimeMeet, // Using Lifetime for display
-                cohortWon: lifetimeSold, // Using Lifetime for display
 
                 // Expose explicit Lifetime keys
                 lifetimeTotal,
