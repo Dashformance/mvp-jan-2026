@@ -61,19 +61,20 @@ export const ActionTrendChart: React.FC<ActionTrendChartProps> = ({ data, period
     };
 
     return (
-        <div className={cn("bg-bg-elevated/40 backdrop-blur-xl border border-white/5 rounded-3xl p-6 shadow-2xl overflow-hidden", className)}>
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-                <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center">
-                        <Activity className="w-5 h-5 text-accent" />
+
+        <div className={cn("bg-bg-elevated/40 backdrop-blur-xl border border-white/5 rounded-3xl p-4 shadow-2xl overflow-hidden h-full flex flex-col", className)}>
+            <div className="flex items-center justify-between gap-4 mb-2 shrink-0">
+                <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-accent/10 border border-accent/20 flex items-center justify-center">
+                        <Activity className="w-4 h-4 text-accent" />
                     </div>
                     <div>
-                        <h3 className="text-white font-bold text-base tracking-tight">Fluxo de Atividade</h3>
-                        <p className="text-[10px] text-text-muted uppercase tracking-widest font-medium opacity-60">{periodText}</p>
+                        <h3 className="text-white font-bold text-sm tracking-tight">Fluxo de Atividade</h3>
+                        <p className="text-[9px] text-text-muted uppercase tracking-widest font-medium opacity-60">AÇÕES NO PERÍODO</p>
                     </div>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2">
+                <div className="flex flex-wrap items-center gap-1.5">
                     {filters.map((f) => {
                         const isHidden = hiddenLines.has(f.id);
                         return (
@@ -81,14 +82,13 @@ export const ActionTrendChart: React.FC<ActionTrendChartProps> = ({ data, period
                                 key={f.id}
                                 onClick={() => toggleLine(f.id)}
                                 className={cn(
-                                    "flex items-center gap-2 px-3 py-1.5 rounded-full border text-[10px] font-bold transition-all duration-300 cursor-pointer",
+                                    "flex items-center gap-1.5 px-2 py-1 rounded-full border text-[9px] font-bold transition-all duration-300 cursor-pointer",
                                     isHidden
                                         ? "bg-transparent border-white/5 text-text-muted opacity-40 hover:opacity-60"
                                         : "bg-white/5 border-white/10 text-white shadow-lg"
                                 )}
                             >
                                 <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: isHidden ? '#555' : f.color }} />
-                                <f.icon className={cn("w-3 h-3", isHidden ? "opacity-30" : "opacity-70")} />
                                 <span>{f.label.toUpperCase()}</span>
                             </button>
                         );
@@ -96,7 +96,7 @@ export const ActionTrendChart: React.FC<ActionTrendChartProps> = ({ data, period
                 </div>
             </div>
 
-            <div className="h-[280px] w-full">
+            <div className="flex-1 w-full min-h-0">
                 <ResponsiveContainer width="100%" height="100%">
                     <AreaChart
                         data={data}
@@ -119,7 +119,8 @@ export const ActionTrendChart: React.FC<ActionTrendChartProps> = ({ data, period
                             axisLine={false}
                             dy={10}
                             tickFormatter={formatXAxis}
-                            interval={period === 'today' ? 2 : 'preserveStartEnd'}
+                            interval={data.length > 20 ? 'preserveStartEnd' : 0}
+                            minTickGap={15}
                         />
                         <YAxis
                             stroke="#444"

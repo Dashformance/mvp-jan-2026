@@ -26,14 +26,48 @@ export async function GET(request: Request) {
             case 'today':
                 SEASON_START_DATE = todayStart;
                 break;
-            case '7d':
-                SEASON_START_DATE = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+            case 'week':
+                // Semana começa na segunda-feira
+                const dayOfWeek = now.getDay();
+                const diffToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // domingo = 6 dias atrás
+                const monday = new Date(now);
+                monday.setDate(now.getDate() - diffToMonday);
+                monday.setHours(0, 0, 0, 0);
+                SEASON_START_DATE = monday;
+
+                // Fim da semana = domingo às 23:59
+                const sunday = new Date(monday);
+                sunday.setDate(monday.getDate() + 6);
+                sunday.setHours(23, 59, 59, 999);
+                SEASON_END_DATE = sunday;
                 break;
-            case '15d':
-                SEASON_START_DATE = new Date(now.getTime() - 15 * 24 * 60 * 60 * 1000);
+            case 'last-week':
+                // Semana Passada (Segunda a Domingo anteriores)
+                const currentDayOfWeek = now.getDay();
+                const diffToCurrentMonday = currentDayOfWeek === 0 ? 6 : currentDayOfWeek - 1;
+
+                const currentMonday = new Date(now);
+                currentMonday.setDate(now.getDate() - diffToCurrentMonday);
+
+                const lastWeekMonday = new Date(currentMonday);
+                lastWeekMonday.setDate(currentMonday.getDate() - 7);
+                lastWeekMonday.setHours(0, 0, 0, 0);
+                SEASON_START_DATE = lastWeekMonday;
+
+                const lastWeekSunday = new Date(lastWeekMonday);
+                lastWeekSunday.setDate(lastWeekMonday.getDate() + 6);
+                lastWeekSunday.setHours(23, 59, 59, 999);
+                SEASON_END_DATE = lastWeekSunday;
+                break;
+            case 'month':
+                // Mês Atual (MTD)
+                const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+                firstDay.setHours(0, 0, 0, 0);
+                SEASON_START_DATE = firstDay;
+                // SEASON_END_DATE = undefined -> Até agora
                 break;
             case 'total':
-                SEASON_START_DATE = new Date('2025-01-01T00:00:00-03:00'); // Assuming project start or reasonable beginning
+                SEASON_START_DATE = new Date('2026-01-06T00:00:00-03:00');
                 break;
             case 'custom':
                 if (customStart) {
@@ -47,7 +81,7 @@ export async function GET(request: Request) {
                 }
                 break;
             default:
-                SEASON_START_DATE = new Date('2025-01-01T00:00:00-03:00'); // Fallback to "all time" or season start
+                SEASON_START_DATE = new Date('2025-01-01T00:00:00-03:00');
                 break;
         }
 
@@ -151,9 +185,9 @@ export async function GET(request: Request) {
         // Overview - Use globalStats for sales (current lead status), collaborators for contacts/meetings (event-based)
         const overviewData = {
             totalLeads: globalStats?.total || 0,
-            totalSales: globalStats?.totalSales || 0, // CRITICAL: Use current lead status, NOT interaction events
-            totalMeetings: globalStats?.totalMeetings || collaborators.reduce((acc, c) => acc + c.stats.meetings, 0),
-            totalContacts: globalStats?.totalContacts || collaborators.reduce((acc, c) => acc + c.stats.contacts, 0),
+            totalSales: globalStats?.totalSales ?? Object.values(seasonalStats).reduce((acc: any, val: any) => acc + (val.won || 0), 0),
+            totalMeetings: globalStats?.totalMeetings ?? Object.values(seasonalStats).reduce((acc: any, val: any) => acc + (val.meeting || 0), 0),
+            totalContacts: globalStats?.totalContacts ?? Object.values(seasonalStats).reduce((acc: any, val: any) => acc + (val.contacted || 0), 0),
             conversionRate: globalStats?.total > 0 ? ((globalStats?.totalSales || 0) / globalStats.total * 100).toFixed(1) : 0,
             activeLeads: globalStats?.total || 0,
             growth: 0,

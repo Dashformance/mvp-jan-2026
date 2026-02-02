@@ -5,11 +5,11 @@ import { Calendar, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, isWithinInterval, addMonths, subMonths, getDay } from "date-fns";
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, isWithinInterval, addMonths, subMonths, getDay, startOfWeek, endOfWeek } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useState, useMemo } from "react";
 
-export type DatePeriod = 'today' | '7d' | '15d' | 'total' | 'custom';
+export type DatePeriod = 'today' | 'week' | 'last-week' | 'month' | 'total' | 'custom';
 
 interface DateFilterToggleProps {
     value: DatePeriod;
@@ -162,8 +162,9 @@ export function DateFilterToggle({ value, onChange, currentRange, className }: D
 
     const options: { id: DatePeriod; label: string }[] = [
         { id: 'today', label: 'Hoje' },
-        { id: '7d', label: '7 Dias' },
-        { id: '15d', label: '15 Dias' },
+        { id: 'week', label: 'Essa Semana' },
+        { id: 'last-week', label: 'Semana Passada' },
+        { id: 'month', label: 'Este Mês' },
         { id: 'total', label: 'Total' },
         { id: 'custom', label: 'Personalizado' },
     ];

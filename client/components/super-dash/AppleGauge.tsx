@@ -29,17 +29,16 @@ export function AppleGauge({ pace, quality, stats, className }: AppleGaugeProps)
     const colorData = getColorGradient(score);
 
     // SVG arc calculation for the gauge
-    const size = 200;
-    const strokeWidth = 12;
+    const size = 140; // Reduzido de 200
+    const strokeWidth = 10;
     const center = size / 2;
     const radius = center - strokeWidth;
     const circumference = 2 * Math.PI * radius;
-    const arcLength = circumference * 0.75; // 270 degrees
+    const arcLength = circumference * 0.75;
     const progress = (score / 100) * arcLength;
 
-    // Calculate the arc path
-    const startAngle = 135; // Start from bottom-left
-    const endAngle = 405; // End at bottom-right (270 degrees span)
+    const startAngle = 135;
+    const endAngle = 405;
 
     const polarToCartesian = (cx: number, cy: number, r: number, angle: number) => {
         const radians = ((angle - 90) * Math.PI) / 180;
@@ -60,19 +59,17 @@ export function AppleGauge({ pace, quality, stats, className }: AppleGaugeProps)
 
     return (
         <div className={cn(
-            "relative rounded-3xl bg-gradient-to-b from-[#1a1a1a] to-[#0a0a0a] p-8 border border-white/[0.04] shadow-2xl",
-            "backdrop-blur-xl overflow-hidden",
+            "relative rounded-3xl bg-gradient-to-b from-[#1a1a1a] to-[#0a0a0a] border border-white/[0.04] shadow-2xl",
+            "backdrop-blur-xl overflow-hidden h-full flex flex-row items-center justify-between p-6", // Flex Row layout
             className
         )}>
             {/* Subtle gradient overlay */}
             <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent pointer-events-none" />
 
-            {/* Main Gauge Container */}
-            <div className="flex flex-col items-center justify-center">
-                {/* Gauge SVG */}
-                <div className="relative" style={{ width: size, height: size }}>
-                    <svg width={size} height={size} className="transform -rotate-[0deg]">
-                        {/* Background track */}
+            {/* Left: Gauge SVG */}
+            <div className="flex flex-col items-center justify-center relative shrink-0">
+                <div style={{ width: size, height: size }} className="relative">
+                    <svg width={size} height={size}>
                         <path
                             d={describeArc(center, center, radius, startAngle, endAngle)}
                             fill="none"
@@ -80,15 +77,12 @@ export function AppleGauge({ pace, quality, stats, className }: AppleGaugeProps)
                             strokeWidth={strokeWidth}
                             strokeLinecap="round"
                         />
-
-                        {/* Progress arc with gradient */}
                         <defs>
                             <linearGradient id="gaugeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
                                 <stop offset="0%" stopColor={colorData.from} />
                                 <stop offset="100%" stopColor={colorData.to} />
                             </linearGradient>
                         </defs>
-
                         <path
                             d={describeArc(center, center, radius, startAngle, progressAngle)}
                             fill="none"
@@ -96,104 +90,68 @@ export function AppleGauge({ pace, quality, stats, className }: AppleGaugeProps)
                             strokeWidth={strokeWidth}
                             strokeLinecap="round"
                             className="transition-all duration-1000 ease-out"
-                            style={{
-                                filter: `drop-shadow(0 0 8px ${colorData.from}40)`,
-                            }}
+                            style={{ filter: `drop-shadow(0 0 8px ${colorData.from}40)` }}
                         />
-
-                        {/* Tick marks */}
-                        {[0, 25, 50, 75, 100].map((tick) => {
-                            const tickAngle = startAngle + (tick / 100) * (endAngle - startAngle);
-                            const innerPoint = polarToCartesian(center, center, radius - strokeWidth - 4, tickAngle);
-                            const outerPoint = polarToCartesian(center, center, radius - strokeWidth - 10, tickAngle);
-                            return (
-                                <line
-                                    key={tick}
-                                    x1={innerPoint.x}
-                                    y1={innerPoint.y}
-                                    x2={outerPoint.x}
-                                    y2={outerPoint.y}
-                                    stroke="rgba(255,255,255,0.15)"
-                                    strokeWidth={1.5}
-                                    strokeLinecap="round"
-                                />
-                            );
-                        })}
                     </svg>
 
-                    {/* Center content */}
+                    {/* Score Center */}
                     <div className="absolute inset-0 flex flex-col items-center justify-center">
-                        <span className="text-6xl font-bold text-white tracking-tighter font-mono">
+                        <span className="text-4xl font-bold text-white tracking-tighter font-mono">
                             {score}
                         </span>
-                        <span className="text-[10px] uppercase tracking-[0.2em] text-white/40 font-medium mt-1">
-                            Score Global
+                        <span className="text-[8px] uppercase tracking-[0.2em] text-white/40 font-medium mt-0.5">
+                            Score
                         </span>
                     </div>
                 </div>
 
                 {/* Status Badge */}
                 <div className={cn(
-                    "mt-4 px-5 py-1.5 rounded-full text-xs font-semibold tracking-wide",
-                    "bg-gradient-to-r border backdrop-blur-sm transition-all",
-                    score >= 80 && "from-emerald-500/10 to-emerald-600/5 border-emerald-500/20 text-emerald-400",
-                    score >= 60 && score < 80 && "from-blue-500/10 to-blue-600/5 border-blue-500/20 text-blue-400",
-                    score >= 40 && score < 60 && "from-amber-500/10 to-amber-600/5 border-amber-500/20 text-amber-400",
-                    score < 40 && "from-red-500/10 to-red-600/5 border-red-500/20 text-red-400",
+                    "mt-2 px-3 py-1 rounded-full text-[10px] font-semibold tracking-wide border backdrop-blur-sm",
+                    score >= 80 ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" :
+                        score >= 60 ? "bg-blue-500/10 border-blue-500/20 text-blue-400" :
+                            score >= 40 ? "bg-amber-500/10 border-amber-500/20 text-amber-400" :
+                                "bg-red-500/10 border-red-500/20 text-red-400"
                 )}>
                     {colorData.label}
                 </div>
+            </div>
 
-                {/* Dual Progress Bars */}
-                <div className="w-full mt-8 space-y-4">
-                    {/* Pace Bar */}
-                    <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-2 w-24">
-                            <Zap className="w-3.5 h-3.5 text-cyan-400" />
-                            <span className="text-[10px] uppercase tracking-wider text-white/50 font-medium">Ritmo</span>
+            {/* Right: Progress Bars */}
+            <div className="flex-1 pl-6 space-y-3">
+                {/* Pace Bar */}
+                <div>
+                    <div className="flex justify-between items-center mb-1">
+                        <div className="flex items-center gap-1.5">
+                            <Zap className="w-3 h-3 text-cyan-400" />
+                            <span className="text-[9px] uppercase tracking-wider text-white/50 font-medium">Ritmo</span>
                         </div>
-                        <div className="flex-1 h-1.5 bg-white/5 rounded-full overflow-hidden">
-                            <div
-                                className="h-full bg-gradient-to-r from-cyan-500 to-cyan-400 rounded-full transition-all duration-1000"
-                                style={{ width: `${pace}%` }}
-                            />
-                        </div>
-                        <span className="text-sm font-mono text-white/70 w-10 text-right">{pace}%</span>
+                        <span className="text-xs font-mono text-white/70">{pace}%</span>
                     </div>
-
-                    {/* Quality Bar */}
-                    <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-2 w-24">
-                            <TrendingUp className="w-3.5 h-3.5 text-purple-400" />
-                            <span className="text-[10px] uppercase tracking-wider text-white/50 font-medium">Qualidade</span>
-                        </div>
-                        <div className="flex-1 h-1.5 bg-white/5 rounded-full overflow-hidden">
-                            <div
-                                className="h-full bg-gradient-to-r from-purple-500 to-purple-400 rounded-full transition-all duration-1000"
-                                style={{ width: `${quality}%` }}
-                            />
-                        </div>
-                        <span className="text-sm font-mono text-white/70 w-10 text-right">{quality}%</span>
+                    <div className="h-1 bg-white/5 rounded-full overflow-hidden w-full">
+                        <div
+                            className="h-full bg-gradient-to-r from-cyan-500 to-cyan-400 rounded-full transition-all duration-1000"
+                            style={{ width: `${pace}%` }}
+                        />
                     </div>
                 </div>
 
-                {/* Stats Row */}
-                {stats && (
-                    <div className="w-full mt-8 grid grid-cols-3 gap-4">
-                        <div className="flex flex-col items-center p-3 rounded-2xl bg-white/[0.02] border border-white/[0.04]">
-                            <span className="text-2xl font-bold text-white font-mono">{stats.leads}</span>
-                            <span className="text-[9px] uppercase tracking-wider text-white/40 mt-1">Leads</span>
+                {/* Quality Bar */}
+                <div>
+                    <div className="flex justify-between items-center mb-1">
+                        <div className="flex items-center gap-1.5">
+                            <TrendingUp className="w-3 h-3 text-purple-400" />
+                            <span className="text-[9px] uppercase tracking-wider text-white/50 font-medium">Qualidade</span>
                         </div>
-                        <div className="flex flex-col items-center p-3 rounded-2xl bg-white/[0.02] border border-white/[0.04]">
-                            <span className="text-2xl font-bold text-white font-mono">{stats.meetings}</span>
-                            <span className="text-[9px] uppercase tracking-wider text-white/40 mt-1">Reuniões</span>
-                        </div>
-                        <div className="flex flex-col items-center p-3 rounded-2xl bg-white/[0.02] border border-white/[0.04]">
-                            <span className="text-2xl font-bold text-white font-mono">{stats.sales}</span>
-                            <span className="text-[9px] uppercase tracking-wider text-white/40 mt-1">Vendas</span>
-                        </div>
+                        <span className="text-xs font-mono text-white/70">{quality}%</span>
                     </div>
-                )}
+                    <div className="h-1 bg-white/5 rounded-full overflow-hidden w-full">
+                        <div
+                            className="h-full bg-gradient-to-r from-purple-500 to-purple-400 rounded-full transition-all duration-1000"
+                            style={{ width: `${quality}%` }}
+                        />
+                    </div>
+                </div>
             </div>
         </div>
     );

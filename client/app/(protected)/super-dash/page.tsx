@@ -45,8 +45,8 @@ export default function SuperDashPage() {
     const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
     const [isFullscreen, setIsFullscreen] = useState(false);
 
-    // Sprint 11: Date Filters
-    const [selectedPeriod, setSelectedPeriod] = useState<DatePeriod>('today');
+    // Sprint 11: Date Filters - Default: Essa Semana
+    const [selectedPeriod, setSelectedPeriod] = useState<DatePeriod>('week');
     const [customRange, setCustomRange] = useState<{ from: Date; to: Date } | undefined>();
 
     // Level Up State (Sprint 7)
@@ -221,45 +221,47 @@ export default function SuperDashPage() {
 
             <main className="flex-1 overflow-auto p-6 scrollbar-hide">
 
-                {/* SUPER HERO: Clock & Stats */}
-                <div className="mb-12 animate-in fade-in slide-in-from-top-10 duration-1000 flex justify-center">
-                    <LiveClock
-                        revenue={totalRevenue}
-                        contacts={totalContacts}
-                        meetings={totalMeetings}
-                        className="max-w-4xl border-white/10 shadow-[0_0_100px_rgba(0,0,0,0.5)]"
-                    />
+                {/* HERO SECTION: Clock + Filter em linha */}
+                <div className="mb-8 animate-in fade-in slide-in-from-top-10 duration-1000">
+                    <div className="flex items-start justify-between gap-6">
+                        {/* Clock - mais compacto à esquerda */}
+                        <div className="flex-1 max-w-2xl">
+                            <LiveClock
+                                revenue={totalRevenue}
+                                contacts={totalContacts}
+                                meetings={totalMeetings}
+                                className="border-white/10 shadow-lg"
+                            />
+                        </div>
+
+                        {/* Filter à direita */}
+                        <div className="shrink-0 pt-4">
+                            <DateFilterToggle
+                                value={selectedPeriod}
+                                onChange={(period, range) => {
+                                    setSelectedPeriod(period);
+                                    if (range) setCustomRange(range);
+                                }}
+                                currentRange={customRange}
+                            />
+                        </div>
+                    </div>
                 </div>
 
-                {/* FILTRO DE PERÍODO (ACIMA DO GAUGE/CHART) */}
-                <div className="flex justify-center mb-10">
-                    <DateFilterToggle
-                        value={selectedPeriod}
-                        onChange={(period, range) => {
-                            setSelectedPeriod(period);
-                            if (range) setCustomRange(range);
-                        }}
-                        currentRange={customRange}
-                    />
-                </div>
-
-                {/* TIER 1.5: Gauges & Trend Side by Side */}
-                <div className="grid grid-cols-12 gap-6 mb-12 animate-in fade-in slide-in-from-top-4 duration-700 delay-300">
-                    {/* Left: Apple Gauge (Velocímetro Minimalista) */}
-                    <div className="col-span-4">
+                {/* GAUGES & TREND Side by Side - mais compacto */}
+                <div className="grid grid-cols-12 gap-4 mb-6 animate-in fade-in slide-in-from-top-4 duration-700 delay-300">
+                    {/* Left: Apple Gauge (Velocímetro - proporção 3/12) */}
+                    <div className="col-span-3">
                         <AppleGauge
                             pace={teamPace}
                             quality={teamQuality}
-                            stats={{
-                                leads: totalContacts,
-                                meetings: totalMeetings,
-                                sales: overview.totalSales
-                            }}
+                            quality={teamQuality}
+                            className="h-[200px]"
                         />
                     </div>
 
-                    {/* Right: ActionTrendChart (Relatório) */}
-                    <div className="col-span-8">
+                    {/* Right: ActionTrendChart (Gráfico - proporção 9/12) */}
+                    <div className="col-span-9 h-[200px]">
                         <ActionTrendChart
                             data={data?.actionTrend || []}
                             period={selectedPeriod}
@@ -269,72 +271,65 @@ export default function SuperDashPage() {
 
 
 
-                {/* TIER 1: KPIs with Date Filter */}
-                <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-sm font-bold text-text-muted uppercase tracking-wider flex items-center gap-2">
-                        <Activity className="w-4 h-4 text-accent" />
-                        Métricas do Período
-                    </h2>
+                {/* KPIs Section - Grid mais compacto */}
+                <div className="flex items-center gap-2 mb-2">
+                    <Activity className="w-3 h-3 text-accent" />
+                    <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Métricas do Período</span>
                 </div>
-                <div className="grid grid-cols-6 gap-4 mb-8">
-                    {/* Big Revenue Card */}
+                <div className="grid grid-cols-6 gap-3 mb-6">
+                    {/* Big Revenue Card - Compacto */}
                     <motion.div
-                        initial={{ opacity: 0, y: 20 }}
+                        initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="col-span-1 bg-linear-to-br from-[#DECCA8]/10 to-bg-elevated border border-[#DECCA8]/20 rounded-2xl p-6 relative overflow-hidden group hover:border-[#DECCA8]/40 transition-all"
+                        className="col-span-1 bg-linear-to-br from-[#DECCA8]/10 to-bg-elevated border border-[#DECCA8]/20 rounded-xl p-4 relative overflow-hidden hover:border-[#DECCA8]/40 transition-all"
                     >
-                        {/* Sparkline Overlay */}
                         <div className="absolute bottom-0 right-0 opacity-20 pointer-events-none">
                             <Sparkline
                                 data={timeData.map((d: any) => d.sales * 2500)}
                                 color="#DECCA8"
-                                className="w-32 h-16"
+                                className="w-20 h-10"
                             />
                         </div>
-
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-[#DECCA8]/5 rounded-full blur-3xl" />
                         <div className="relative">
-                            <div className="flex items-center gap-2 text-[#DECCA8] mb-2">
-                                <DollarSign className="w-5 h-5" />
-                                <span className="text-[10px] uppercase tracking-wider font-bold">Receita Total</span>
+                            <div className="flex items-center gap-1.5 text-[#DECCA8] mb-1">
+                                <DollarSign className="w-4 h-4" />
+                                <span className="text-[9px] uppercase tracking-wider font-bold">Receita</span>
                             </div>
-                            <div className="font-display text-4xl font-black text-[#DECCA8] tracking-tight drop-shadow-lg">
+                            <div className="font-display text-2xl font-black text-[#DECCA8] tracking-tight">
                                 R$ {totalRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                             </div>
-                            <div className="mt-2 flex items-center gap-2 text-[10px] text-[#DECCA8]/80">
-                                <TrendingUp className="w-3 h-3" />
-                                +{overview.growth || 0}% vs período anterior
+                            <div className="mt-1 flex items-center gap-1 text-[9px] text-[#DECCA8]/70">
+                                <TrendingUp className="w-2.5 h-2.5" />
+                                +{overview.growth || 0}% vs anterior
                             </div>
                         </div>
                     </motion.div>
 
-                    {/* Money on Table Card */}
+                    {/* Money on Table Card - Compacto */}
                     <motion.div
-                        initial={{ opacity: 0, y: 20 }}
+                        initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.1 }}
-                        className="col-span-1 bg-linear-to-br from-neon-cyan/5 to-bg-elevated border border-neon-cyan/20 rounded-2xl p-6 relative overflow-hidden group hover:border-neon-cyan/40 transition-all"
+                        transition={{ delay: 0.05 }}
+                        className="col-span-1 bg-linear-to-br from-neon-cyan/5 to-bg-elevated border border-neon-cyan/20 rounded-xl p-4 relative overflow-hidden hover:border-neon-cyan/40 transition-all"
                     >
                         <div className="absolute bottom-0 right-0 opacity-20 pointer-events-none">
                             <Sparkline
-                                data={[10, 15, 8, 12, 20]} // Mock pipeline trend
+                                data={[10, 15, 8, 12, 20]}
                                 color="#00F0FF"
-                                className="w-32 h-16"
+                                className="w-20 h-10"
                             />
                         </div>
-
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-neon-cyan/5 rounded-full blur-3xl" />
                         <div className="relative">
-                            <div className="flex items-center gap-2 text-neon-cyan mb-2">
-                                <Zap className="w-5 h-5" />
-                                <span className="text-[10px] uppercase tracking-wider font-bold">Dinheiro na Mesa!</span>
+                            <div className="flex items-center gap-1.5 text-neon-cyan mb-1">
+                                <Zap className="w-4 h-4" />
+                                <span className="text-[9px] uppercase tracking-wider font-bold">Na Mesa</span>
                             </div>
-                            <div className="font-display text-4xl font-black text-white tracking-tight drop-shadow-lg">
+                            <div className="font-display text-2xl font-black text-white tracking-tight">
                                 R$ {totalMoneyOnTable.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                             </div>
-                            <div className="mt-2 flex items-center gap-2 text-[10px] text-neon-cyan/80 font-medium">
-                                <Activity className="w-3 h-3" />
-                                Reuniões + Em Fechamento
+                            <div className="mt-1 flex items-center gap-1 text-[9px] text-neon-cyan/70">
+                                <Activity className="w-2.5 h-2.5" />
+                                Reuniões + Fechamento
                             </div>
                         </div>
                     </motion.div>
@@ -373,12 +368,11 @@ export default function SuperDashPage() {
                         progressColor="bg-neon-purple"
                         xp={10}
                         subtext="Leads"
-                        sparklineData={[15, 20, 25, 30, 28, 35, 40]} // Mock contact trend
+                        sparklineData={[15, 20, 25, 30, 28, 35, 40]}
                     />
 
-                    {/* Money on Table (Pipeline) */}
                     <KPICard
-                        title="Em Pipeline"
+                        title="Pipeline"
                         value={`R$ ${totalPipeline > 1000 ? (totalPipeline / 1000).toFixed(0) + 'k' : totalPipeline}`}
                         icon={Target}
                         trend="Ativos"
@@ -386,8 +380,8 @@ export default function SuperDashPage() {
                         iconColor="text-neon-yellow"
                         progressColor="bg-neon-yellow"
                         xp={5}
-                        subtext={`${overview.activeLeads} leads locais`}
-                        sparklineData={[100, 98, 95, 92, 90, 88, 85]} // Mock active trend
+                        subtext={`${overview.activeLeads} leads`}
+                        sparklineData={[100, 98, 95, 92, 90, 88, 85]}
                     />
                 </div>
 

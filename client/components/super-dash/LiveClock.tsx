@@ -7,7 +7,7 @@ interface LiveClockProps {
     revenue: number;
     contacts: number;
     meetings: number;
-    className?: string; // Allow custom styling
+    className?: string;
 }
 
 export const LiveClock: React.FC<LiveClockProps> = ({ revenue, contacts, meetings, className }) => {
@@ -18,65 +18,61 @@ export const LiveClock: React.FC<LiveClockProps> = ({ revenue, contacts, meeting
         return () => clearInterval(timer);
     }, []);
 
-    // Format time parts
     const hours = time.getHours().toString().padStart(2, '0');
     const minutes = time.getMinutes().toString().padStart(2, '0');
     const seconds = time.getSeconds().toString().padStart(2, '0');
-
-    // Format date: "Segunda, 25 de Janeiro"
     const dateStr = time.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
 
     return (
-        <div className={cn("flex flex-col items-center justify-center p-8 rounded-3xl bg-linear-to-b from-bg-elevated/50 to-bg-deep border border-white/5 backdrop-blur-xl shadow-2xl w-full", className)}>
-
-            {/* Clock */}
-            <div className="relative mb-6">
-                <div className="font-display font-black text-9xl tracking-tighter text-white flex items-baseline gap-2 tabular-nums">
+        <div className={cn(
+            "flex items-center gap-6 p-5 rounded-2xl bg-linear-to-r from-bg-elevated/80 to-bg-deep/50 border border-white/5 backdrop-blur-xl",
+            className
+        )}>
+            {/* Clock - Compacto */}
+            <div className="flex flex-col items-center shrink-0 pr-6 border-r border-white/10">
+                <div className="font-display font-black text-6xl tracking-tighter text-white flex items-baseline gap-1 tabular-nums">
                     <span>{hours}</span>
-                    <span className="text-white/20 animate-pulse">:</span>
+                    <span className="text-white/30 animate-pulse">:</span>
                     <span>{minutes}</span>
-                    <span className="text-4xl text-white/40 ml-2 font-medium">{seconds}</span>
+                    <span className="text-2xl text-white/40 ml-1">{seconds}</span>
                 </div>
-                <div className="text-center text-text-muted uppercase tracking-[0.3em] font-medium text-sm mt-[-10px]">
+                <div className="text-center text-text-muted uppercase tracking-widest font-medium text-[10px] mt-1">
                     {dateStr}
                 </div>
             </div>
 
-            {/* Stats Container */}
-            <div className="flex flex-col items-center gap-2 w-full animate-in slide-in-from-bottom-4 duration-1000 delay-300">
-                {/* Revenue */}
-                <div className="flex flex-col items-center">
-                    <div className="flex items-center gap-2 text-[#DECCA8] mb-1">
-                        <DollarSign className="w-5 h-5" />
-                        <span className="text-xs uppercase tracking-wider font-bold">Faturamento Total</span>
+            {/* Revenue - Centro */}
+            <div className="flex flex-col items-center flex-1">
+                <div className="flex items-center gap-2 text-[#DECCA8] mb-1">
+                    <DollarSign className="w-4 h-4" />
+                    <span className="text-[10px] uppercase tracking-wider font-bold">Faturamento Total</span>
+                </div>
+                <div className="font-display text-4xl font-black text-[#DECCA8] tracking-tight">
+                    R$ {revenue.toLocaleString('pt-BR')}
+                </div>
+            </div>
+
+            {/* Stats Pills */}
+            <div className="flex items-center gap-3 shrink-0">
+                {/* Leads */}
+                <div className="flex flex-col items-center px-5 py-2.5 rounded-xl bg-neon-purple/10 border border-neon-purple/20">
+                    <div className="flex items-center gap-1.5 text-neon-purple mb-0.5">
+                        <Phone className="w-3 h-3" />
+                        <span className="text-[9px] uppercase tracking-wider font-bold">Leads</span>
                     </div>
-                    <div className="font-display text-6xl font-black text-[#DECCA8] tracking-tight drop-shadow-[0_0_30px_rgba(222,204,168,0.3)]">
-                        R$ {revenue.toLocaleString('pt-BR')}
+                    <div className="font-display text-2xl font-bold text-white">
+                        {contacts}
                     </div>
                 </div>
 
-                {/* Contacts & Meetings */}
-                <div className="flex items-center gap-4 mt-6">
-                    {/* Leads Contacted - Highlighted */}
-                    <div className="flex flex-col items-center px-8 py-3 rounded-2xl bg-neon-purple/10 border border-neon-purple/30 shadow-[0_0_20px_rgba(139,92,246,0.15)] animate-pulse-slow">
-                        <div className="flex items-center gap-2 text-neon-purple mb-1">
-                            <Phone className="w-4 h-4" />
-                            <span className="text-[10px] uppercase tracking-wider font-bold">Leads Contatados</span>
-                        </div>
-                        <div className="font-display text-3xl font-bold text-white">
-                            {contacts}
-                        </div>
+                {/* Reuniões */}
+                <div className="flex flex-col items-center px-5 py-2.5 rounded-xl bg-neon-cyan/10 border border-neon-cyan/20">
+                    <div className="flex items-center gap-1.5 text-neon-cyan mb-0.5">
+                        <Calendar className="w-3 h-3" />
+                        <span className="text-[9px] uppercase tracking-wider font-bold">Reuniões</span>
                     </div>
-
-                    {/* Scheduled Meetings - Added */}
-                    <div className="flex flex-col items-center px-6 py-3 rounded-2xl bg-neon-cyan/10 border border-neon-cyan/20">
-                        <div className="flex items-center gap-2 text-neon-cyan mb-1">
-                            <Calendar className="w-4 h-4" />
-                            <span className="text-[10px] uppercase tracking-wider font-bold">Reuniões Agendadas</span>
-                        </div>
-                        <div className="font-display text-3xl font-bold text-white">
-                            {meetings}
-                        </div>
+                    <div className="font-display text-2xl font-bold text-white">
+                        {meetings}
                     </div>
                 </div>
             </div>
