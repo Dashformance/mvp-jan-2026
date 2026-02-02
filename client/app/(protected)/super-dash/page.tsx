@@ -255,7 +255,6 @@ export default function SuperDashPage() {
                         <AppleGauge
                             pace={teamPace}
                             quality={teamQuality}
-                            quality={teamQuality}
                             className="h-[200px]"
                         />
                     </div>
