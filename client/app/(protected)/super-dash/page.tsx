@@ -4,7 +4,7 @@ import { useAuth } from "@/context/auth-context";
 import { ArrowLeft, Trophy, Target, Users, TrendingUp, Zap, Star, Shield, Filter, Maximize2, Minimize2, DollarSign, Phone, Calendar, Award, Flame, Activity } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { UserMenu } from "@/components/auth/UserMenu";
 import { motion, AnimatePresence } from "framer-motion";
 import { CircularProgressbar, buildStyles } from 'react-circular-progressbar';
@@ -12,6 +12,8 @@ import 'react-circular-progressbar/dist/styles.css';
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
+import useSWR from "swr";
+import { fetchWithAuth } from "@/lib/fetch-with-auth";
 
 // Gamification Components
 import { LevelProgress, StreakCounter, XPFeed, DailyQuestCard } from "@/components/gamification";
@@ -19,7 +21,7 @@ import { Leaderboard } from "@/components/arena/Leaderboard";
 import { LiveClock } from "@/components/super-dash/LiveClock";
 import { KPICard } from "@/components/super-dash/KPICard";
 import { TrendChart } from "@/components/super-dash/TrendChart";
-import { DualGauge } from "@/components/super-dash/DualGauge";
+import { AppleGauge } from "@/components/super-dash/AppleGauge";
 import { InsightAlert } from "@/components/super-dash/InsightAlert";
 import { Sparkline } from "@/components/super-dash/Sparkline";
 import { PlayerCard } from "@/components/super-dash/PlayerCard";
@@ -40,10 +42,8 @@ const MOCK_QUESTS = [
 
 export default function SuperDashPage() {
     const { profile, loading: authLoading } = useAuth();
-    const [data, setData] = useState<any>(null);
-    const [selectedUser, setSelectedUser] = useState<any>(null);
+    const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
     const [isFullscreen, setIsFullscreen] = useState(false);
-    const [loading, setLoading] = useState(true);
 
     // Sprint 11: Date Filters
     const [selectedPeriod, setSelectedPeriod] = useState<DatePeriod>('today');
@@ -52,16 +52,6 @@ export default function SuperDashPage() {
     // Level Up State (Sprint 7)
     const [showLevelUp, setShowLevelUp] = useState(false);
     const [levelUpData, setLevelUpData] = useState({ level: 5, name: 'João Vitor', avatar: '👨‍💼' });
-
-    // Simulate Level Up (Dev Tool)
-    const triggerLevelUp = () => {
-        setLevelUpData({
-            level: (selectedUser?.level || 4) + 1,
-            name: selectedUser?.name || 'Usuário',
-            avatar: selectedUser?.avatar || '👤'
-        });
-        setShowLevelUp(true);
-    };
 
     const toggleFullscreen = useCallback(() => {
         if (!document.fullscreenElement) {
@@ -77,57 +67,95 @@ export default function SuperDashPage() {
         return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
     }, []);
 
-    const fetchStats = useCallback(async () => {
-        try {
-            // Sprint 11: Add Query Params
-            const params = new URLSearchParams();
-            params.set('period', selectedPeriod);
-            if (selectedPeriod === 'custom' && customRange?.from && customRange?.to) {
-                params.set('startDate', customRange.from.toISOString());
-                params.set('endDate', customRange.to.toISOString());
-            }
+    // SWR Data Fetching
+    const params = new URLSearchParams();
+    params.set('period', selectedPeriod);
+    if (selectedPeriod === 'custom' && customRange?.from && customRange?.to) {
+        params.set('startDate', customRange.from.toISOString());
+        params.set('endDate', customRange.to.toISOString());
+    }
+    const apiUrl = `/api/super-dash/stats?${params.toString()}`;
 
-            const res = await fetch(`/api/super-dash/stats?${params.toString()}`);
-            if (!res.ok) {
-                console.error('[SuperDash] Fetch Error:', res.status, res.statusText);
-                if (res.status === 401) {
-                    console.log('Session expired, redirecting to login...');
-                    window.location.href = '/login';
-                    return;
-                }
-                throw new Error(`Failed to fetch stats: ${res.status}`);
-            }
-            const json = await res.json();
+    const { data: swrData, error: swrError, isLoading: swrLoading, mutate } = useSWR(
+        apiUrl,
+        (url) => fetchWithAuth(url).then(res => res.json())
+    );
 
-            if (json.collaborators && json.collaborators.length > 0) {
-                // Use functional update to avoid dependency on selectedUser
-                setSelectedUser((prevUser: any) => {
-                    if (prevUser) {
-                        const updatedUser = json.collaborators.find((c: any) => c.id === prevUser.id);
-                        return updatedUser || json.collaborators[0];
-                    }
-                    return json.collaborators[0];
-                });
-            }
-            setData(json); // Also update 'data' state which was used elsewhere
-        } catch (error) {
-            console.error("Failed to fetch superdash data", error);
-        } finally {
-            setLoading(false);
+    const data = swrData;
+    const loading = !swrData && swrLoading;
+
+    // Memoized Data to prevent infinite loops and improve performance
+    const collaborators = useMemo(() => Array.isArray(data?.collaborators) ? data.collaborators : [], [data?.collaborators]);
+
+    const selectedUser = useMemo(() => {
+        if (selectedUserId) {
+            return collaborators.find((c: any) => c.id === selectedUserId);
         }
-    }, [selectedPeriod, customRange]);
+        return collaborators[0];
+    }, [selectedUserId, collaborators]);
 
-    useEffect(() => {
-        if (!process.env.NEXT_PUBLIC_CAST_MODE) {
-            fetchStats();
-        }
+    const overview = useMemo(() => data?.overview || {
+        totalLeads: 0,
+        totalSales: 0,
+        conversionRate: 0,
+        activeLeads: 0,
+        growth: 0,
+        revenue: 0,
+        pipelineValue: 0,
+        moneyOnTable: 0
+    }, [data?.overview]);
 
-        // Polling interaction for real-time feel (every 30s)
-        const interval = setInterval(fetchStats, 30000);
-        return () => clearInterval(interval);
-    }, [fetchStats]);
+    const timeData = useMemo(() => data?.timeData || [
+        { name: 'Seg', sales: 0, meetings: 0 },
+        { name: 'Ter', sales: 0, meetings: 0 },
+        { name: 'Qua', sales: 0, meetings: 0 },
+        { name: 'Qui', sales: 0, meetings: 0 },
+        { name: 'Sex', sales: 0, meetings: 0 }
+    ], [data?.timeData]);
 
+    const totalRevenue = useMemo(() => overview.revenue || 0, [overview.revenue]);
+    const totalMoneyOnTable = useMemo(() => overview.moneyOnTable || 0, [overview.moneyOnTable]);
+    const totalPipeline = useMemo(() => overview.pipelineValue || 0, [overview.pipelineValue]);
 
+    // Use period-specific data from overview (already filtered by date)
+    const totalMeetings = useMemo(() => overview.totalMeetings || 0, [overview.totalMeetings]);
+    const totalContacts = useMemo(() => overview.totalContacts || 0, [overview.totalContacts]);
+
+    const leaderboardPlayers = useMemo(() => collaborators.map((c: any) => ({
+        id: c.id,
+        name: c.name,
+        role: c.role,
+        level: c.level,
+        xp: c.xp,
+        xpToday: c.xpToday,
+        sales: c.stats?.sales || 0,
+        avatar: c.avatar,
+        addedToday: c.addedToday
+    })), [collaborators]);
+
+    const teamPace = useMemo(() => collaborators.length > 0 ? Math.round(collaborators.reduce((acc: number, c: any) => acc + (c.pace || 0), 0) / collaborators.length) : 0, [collaborators]);
+    const teamQuality = useMemo(() => collaborators.length > 0 ? Math.round(collaborators.reduce((acc: number, c: any) => acc + (c.quality || 0), 0) / collaborators.length) : 0, [collaborators]);
+
+    const periodLabel = useMemo(() => {
+        const labels: Record<string, string> = {
+            today: 'HOJE',
+            '7d': '7D',
+            '15d': '15D',
+            total: 'TOTAL',
+            custom: 'CUSTOM'
+        };
+        return labels[selectedPeriod] || (selectedPeriod as string).toUpperCase();
+    }, [selectedPeriod]);
+
+    // Simulate Level Up (Dev Tool)
+    const triggerLevelUp = useCallback(() => {
+        setLevelUpData({
+            level: (selectedUser?.level || 4) + 1,
+            name: selectedUser?.name || 'Usuário',
+            avatar: selectedUser?.avatar || '👤'
+        });
+        setShowLevelUp(true);
+    }, [selectedUser]);
 
     if (authLoading || loading) return (
         <div className="min-h-screen bg-bg-deep flex items-center justify-center text-white">
@@ -143,57 +171,6 @@ export default function SuperDashPage() {
             </div>
         );
     }
-
-    const overview = data?.overview || {
-        totalLeads: 0,
-        totalSales: 0,
-        conversionRate: 0,
-        activeLeads: 0,
-        growth: 0,
-        revenue: 0,
-        pipelineValue: 0
-    };
-
-    const collaborators = Array.isArray(data?.collaborators) ? data.collaborators : [];
-
-    // Default zeroed time data if missing
-    const timeData = data?.timeData || [
-        { name: 'Seg', sales: 0, meetings: 0 },
-        { name: 'Ter', sales: 0, meetings: 0 },
-        { name: 'Qua', sales: 0, meetings: 0 },
-        { name: 'Qui', sales: 0, meetings: 0 },
-        { name: 'Sex', sales: 0, meetings: 0 }
-    ];
-
-    // Calculate totals
-    const totalRevenue = overview.revenue || 0;
-    const totalMoneyOnTable = overview.moneyOnTable || 0;
-    const totalPipeline = overview.pipelineValue || 0;
-    const totalMeetings = collaborators.reduce((sum: number, c: any) => sum + c.stats.meetings, 0);
-    const totalContacts = collaborators.reduce((sum: number, c: any) => sum + c.stats.contacts, 0);
-
-    // Leaderboard data
-    const leaderboardPlayers = collaborators.map((c: any) => ({
-        id: c.id,
-        name: c.name,
-        role: c.role,
-        level: c.level,
-        xp: c.xp,
-        xpToday: c.xpToday, // Real session XP
-        sales: c.stats.sales,
-        avatar: c.avatar,
-        addedToday: c.addedToday // New field
-    }));
-
-    const teamPace = collaborators.length > 0 ? Math.round(collaborators.reduce((acc: number, c: any) => acc + c.pace, 0) / collaborators.length) : 0;
-    const teamQuality = collaborators.length > 0 ? Math.round(collaborators.reduce((acc: number, c: any) => acc + c.quality, 0) / collaborators.length) : 0;
-
-    // Calculate Period Label for Cards
-    const periodLabel = selectedPeriod === 'today' ? 'HOJE' :
-        selectedPeriod === '7d' ? '7D' :
-            selectedPeriod === '15d' ? '15D' :
-                selectedPeriod === 'total' ? 'TOTAL' :
-                    selectedPeriod === 'custom' ? 'CUSTOM' : (selectedPeriod as string).toUpperCase();
 
     return (
         <div className="min-h-screen bg-bg-deep text-white flex flex-col overflow-hidden font-sans">
@@ -254,25 +231,51 @@ export default function SuperDashPage() {
                     />
                 </div>
 
-                {/* TIER 1.5: Gauges & Insight (Moved down) */}
-                <div className="flex flex-col items-center justify-center mb-8 gap-6 animate-in fade-in slide-in-from-top-4 duration-700 delay-300">
-                    <div className="flex items-center gap-8">
-                        <div className="scale-110 w-[400px] md:w-[600px]">
-                            <DualGauge
-                                pace={teamPace}
-                                quality={teamQuality}
-                                stats={{
-                                    leads: totalContacts,
-                                    meetings: totalMeetings,
-                                    sales: overview.totalSales
-                                }}
-                            />
-                        </div>
-                    </div>
-                    <InsightAlert pace={teamPace} quality={teamQuality} />
+                {/* FILTRO DE PERÍODO (ACIMA DO GAUGE/CHART) */}
+                <div className="flex justify-center mb-10">
+                    <DateFilterToggle
+                        value={selectedPeriod}
+                        onChange={(period, range) => {
+                            setSelectedPeriod(period);
+                            if (range) setCustomRange(range);
+                        }}
+                        currentRange={customRange}
+                    />
                 </div>
 
-                {/* TIER 1: KPIs */}
+                {/* TIER 1.5: Gauges & Trend Side by Side */}
+                <div className="grid grid-cols-12 gap-6 mb-12 animate-in fade-in slide-in-from-top-4 duration-700 delay-300">
+                    {/* Left: Apple Gauge (Velocímetro Minimalista) */}
+                    <div className="col-span-4">
+                        <AppleGauge
+                            pace={teamPace}
+                            quality={teamQuality}
+                            stats={{
+                                leads: totalContacts,
+                                meetings: totalMeetings,
+                                sales: overview.totalSales
+                            }}
+                        />
+                    </div>
+
+                    {/* Right: ActionTrendChart (Relatório) */}
+                    <div className="col-span-8">
+                        <ActionTrendChart
+                            data={data?.actionTrend || []}
+                            period={selectedPeriod}
+                        />
+                    </div>
+                </div>
+
+
+
+                {/* TIER 1: KPIs with Date Filter */}
+                <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-sm font-bold text-text-muted uppercase tracking-wider flex items-center gap-2">
+                        <Activity className="w-4 h-4 text-accent" />
+                        Métricas do Período
+                    </h2>
+                </div>
                 <div className="grid grid-cols-6 gap-4 mb-8">
                     {/* Big Revenue Card */}
                     <motion.div
@@ -300,7 +303,7 @@ export default function SuperDashPage() {
                             </div>
                             <div className="mt-2 flex items-center gap-2 text-[10px] text-[#DECCA8]/80">
                                 <TrendingUp className="w-3 h-3" />
-                                +{overview.growth}% vs mês anterior
+                                +{overview.growth || 0}% vs período anterior
                             </div>
                         </div>
                     </motion.div>
@@ -338,10 +341,10 @@ export default function SuperDashPage() {
 
                     {/* Other KPIs */}
                     <KPICard
-                        title="Vendas Mês"
+                        title="Vendas"
                         value={overview.totalSales}
                         icon={Trophy}
-                        trend="+12%"
+                        trend={overview.totalSales > 0 ? "+12%" : "0%"}
                         iconColor="text-accent"
                         progressColor="bg-accent"
                         xp={25}
@@ -353,11 +356,11 @@ export default function SuperDashPage() {
                         title="Reuniões"
                         value={totalMeetings}
                         icon={Calendar}
-                        trend="+5%"
+                        trend={totalMeetings > 0 ? "+5%" : "0%"}
                         iconColor="text-neon-cyan"
                         progressColor="bg-neon-cyan"
                         xp={50}
-                        subtext="Esta semana"
+                        subtext="No período"
                         sparklineData={timeData.map((d: any) => d.meetings)}
                     />
 
@@ -454,24 +457,19 @@ export default function SuperDashPage() {
                                             ranking={index + 1}
                                             period={periodLabel}
                                             edition={index === 0 ? "Top #1" : index < 3 ? "Elite" : "Pro"}
-                                            onClick={() => setSelectedUser(collab)}
+                                            onClick={() => setSelectedUserId(collab.id)}
                                         />
                                     </div>
                                 );
                             })}
                         </div>
 
-                        {/* Action Trend Chart - Real-time activities */}
-                        <ActionTrendChart
-                            data={data?.actionTrend || []}
-                            period={selectedPeriod}
-                            className="mt-6"
-                        />
+                        {/* Action Trend Chart moved to upper section - removing from here */}
                     </div>
 
                     {/* RIGHT: Gamification Sidebar */}
                     <div className="col-span-3 flex flex-col gap-4">
-                        <TeamCalendar meetings={data?.calendar || []} />
+                        <TeamCalendar meetings={data?.calendar || []} onMeetingChange={() => mutate()} />
                         <LevelProgress
                             levelInfo={{
                                 level: selectedUser?.level || 1,

@@ -18,6 +18,7 @@ function Calendar({
     return (
         <DayPicker
             showOutsideDays={showOutsideDays}
+            className={cn("p-3", className)}
             classNames={{
                 months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
                 month: "space-y-4",
@@ -35,20 +36,31 @@ function Calendar({
                 head_cell:
                     "text-muted-foreground rounded-md w-9 font-normal text-[0.8rem]",
                 row: "flex w-full mt-2",
-                cell: "h-9 w-9 text-center text-sm p-0 relative [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-outside)]:bg-accent/50 [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
+                cell: cn(
+                    "relative h-9 w-9 text-center text-sm p-0 focus-within:relative focus-within:z-20",
+                    // Range start styling
+                    "[&:has([aria-selected].day-range-start)]:rounded-l-full [&:has([aria-selected].day-range-start)]:bg-emerald-500/20",
+                    // Range end styling  
+                    "[&:has([aria-selected].day-range-end)]:rounded-r-full [&:has([aria-selected].day-range-end)]:bg-amber-500/20",
+                    // Range middle styling
+                    "[&:has([aria-selected])]:bg-accent/20",
+                    // First and last in row
+                    "first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md"
+                ),
                 day: cn(
                     buttonVariants({ variant: "ghost" }),
                     "h-9 w-9 p-0 font-normal aria-selected:opacity-100"
                 ),
-                day_range_end: "day-range-end",
+                day_range_start: "day-range-start bg-emerald-500 text-white hover:bg-emerald-500 hover:text-white focus:bg-emerald-500 focus:text-white rounded-full shadow-[0_0_10px_rgba(16,185,129,0.5)]",
+                day_range_end: "day-range-end bg-amber-500 text-black hover:bg-amber-500 hover:text-black focus:bg-amber-500 focus:text-black rounded-full shadow-[0_0_10px_rgba(245,158,11,0.5)]",
                 day_selected:
-                    "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
-                day_today: "bg-accent text-accent-foreground",
+                    "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground rounded-full",
+                day_today: "bg-accent/30 text-accent-foreground font-semibold",
                 day_outside:
                     "day-outside text-muted-foreground opacity-50 aria-selected:bg-accent/50 aria-selected:text-muted-foreground aria-selected:opacity-30",
                 day_disabled: "text-muted-foreground opacity-50",
                 day_range_middle:
-                    "aria-selected:bg-accent aria-selected:text-accent-foreground",
+                    "aria-selected:bg-accent/20 aria-selected:text-foreground rounded-none",
                 day_hidden: "invisible",
                 ...classNames,
             }}
@@ -63,3 +75,4 @@ function Calendar({
 Calendar.displayName = "Calendar"
 
 export { Calendar }
+

@@ -15,7 +15,7 @@ import { deduplicateLeadsAction } from "@/app/actions/deduplicate-leads";
 import { Eraser } from "lucide-react";
 import { useLeadImport } from "./hooks/use-lead-import";
 import { toast } from "sonner";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -117,6 +117,30 @@ export function KanbanView() {
         return params;
     };
 
+    // Memoized filter callbacks to prevent re-render loops
+    const handleFilterChange = useCallback((f: any) => {
+        setFilterBarState((prev: any) => ({ ...prev, ...f }));
+    }, [setFilterBarState]);
+
+    const handleClearAllFilters = useCallback(() => {
+        setFilterBarState({});
+    }, [setFilterBarState]);
+
+    const handleRemoveFilter = useCallback((key: string, val?: any) => {
+        setFilterBarState((prev: any) => {
+            const next = { ...prev };
+            if (key === 'status' || key === 'source') {
+                const arr = next[key] as string[] || [];
+                next[key] = arr.filter((v: string) => v !== val);
+                if (next[key].length === 0) delete next[key];
+            } else {
+                delete next[key as keyof typeof next];
+            }
+            return next;
+        });
+    }, [setFilterBarState]);
+
+
     return (
         <div className="h-full flex flex-col space-y-4">
             {/* Header Actions */}
@@ -192,26 +216,15 @@ export function KanbanView() {
             <div className="space-y-4">
                 <FilterBar
                     currentFilters={filterBarState}
-                    onFilterChange={(f) => setFilterBarState((prev: any) => ({ ...prev, ...f }))}
+                    onFilterChange={handleFilterChange}
                 />
                 <ActiveFilters
                     filters={filterBarState}
-                    onClearAll={() => setFilterBarState({})}
-                    onRemove={(key, val) => {
-                        setFilterBarState((prev: any) => {
-                            const next = { ...prev };
-                            if (key === 'status' || key === 'source') {
-                                const arr = next[key] as string[] || [];
-                                next[key] = arr.filter(v => v !== val);
-                                if (next[key].length === 0) delete next[key];
-                            } else {
-                                delete next[key as keyof typeof next];
-                            }
-                            return next;
-                        });
-                    }}
+                    onClearAll={handleClearAllFilters}
+                    onRemove={handleRemoveFilter}
                 />
             </div>
+
 
             {/* Main Content */}
             <div className="flex-1 min-h-0 relative">

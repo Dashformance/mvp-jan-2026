@@ -48,6 +48,7 @@ interface KanbanBoardProps {
     onRenameColumn?: (id: string, newTitle: string) => void;
     onToggleFavorite?: (id: string, isStarred: boolean) => void;
     onDelete?: (id: string) => void;
+    onUpdateMeetingType?: (id: string, currentType: string) => void;
 }
 
 export function KanbanBoard({
@@ -62,7 +63,8 @@ export function KanbanBoard({
     onAddLead,
     onRenameColumn,
     onToggleFavorite,
-    onDelete
+    onDelete,
+    onUpdateMeetingType
 }: KanbanBoardProps) {
     const [isAddingColumn, setIsAddingColumn] = useState(false);
     const [newColumnName, setNewColumnName] = useState("");
@@ -97,7 +99,7 @@ export function KanbanBoard({
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
         >
-            <div className="flex h-full min-h-0 gap-4 overflow-x-auto pb-4 bg-bg-deep custom-scrollbar">
+            <div className="flex h-full min-h-0 gap-4 overflow-x-auto pb-4 bg-[radial-gradient(circle_at_center,_var(--color-bg-elevated)_0%,_var(--color-bg-base)_100%)] custom-scrollbar">
                 {columns.map((col) => (
                     <KanbanColumn
                         key={col.id}
@@ -114,6 +116,7 @@ export function KanbanBoard({
                         onRenameColumn={onRenameColumn}
                         onToggleFavorite={onToggleFavorite}
                         onDelete={onDelete}
+                        onUpdateMeetingType={onUpdateMeetingType}
                     />
                 ))}
 

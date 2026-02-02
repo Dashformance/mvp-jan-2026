@@ -3,7 +3,7 @@
 import { useDroppable } from "@dnd-kit/core";
 import { KanbanCard } from "./KanbanCard";
 import { useState, useRef, useEffect } from "react";
-import { Plus } from "lucide-react";
+import { Plus, LayoutList } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -29,6 +29,7 @@ interface KanbanColumnProps {
     onRenameColumn?: (id: string, newTitle: string) => void;
     onToggleFavorite?: (id: string, isStarred: boolean) => void;
     onDelete?: (id: string) => void;
+    onUpdateMeetingType?: (id: string, currentType: string) => void;
 }
 
 export function KanbanColumn({
@@ -44,7 +45,8 @@ export function KanbanColumn({
     onAddLead,
     onRenameColumn,
     onToggleFavorite,
-    onDelete
+    onDelete,
+    onUpdateMeetingType
 }: KanbanColumnProps) {
     const { setNodeRef, isOver } = useDroppable({
         id: id,
@@ -123,23 +125,35 @@ export function KanbanColumn({
                 </div>
 
                 <div className="flex items-center gap-2 pl-2 shrink-0">
-                    {/* Total Value Badge */}
-                    {(() => {
-                        const totalValue = leads.reduce((sum, lead) => sum + (Number(lead.contract_value) || 0), 0);
-                        return totalValue > 0 && (
-                            <span className="font-display text-xs font-bold text-neon-green-soft bg-neon-green-bg px-2 py-0.5 rounded-full border border-neon-green/30">
-                                R$ {totalValue.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                    {/* Metrics Badge Group */}
+                    <div className="flex items-center gap-1.5 bg-bg-elevated/50 backdrop-blur-sm rounded-full px-2 py-0.5 border border-white/5 shadow-inner">
+                        {/* Avg Score */}
+                        {leads.length > 0 && (
+                            <span className="font-display text-[10px] font-bold text-accent/70 border-r border-white/10 pr-1.5" title="Média de Score">
+                                {Math.round(leads.reduce((sum, l) => sum + (l.score || 0), 0) / leads.length)} XP
                             </span>
-                        );
-                    })()}
-                    <span className="font-display text-xs font-bold text-text-muted bg-bg-elevated px-2 py-0.5 rounded-full border border-border-subtle">
+                        )}
+                        {/* Total Value */}
+                        {(() => {
+                            const totalValue = leads.reduce((sum, lead) => sum + (Number(lead.contract_value) || 0), 0);
+                            return totalValue > 0 ? (
+                                <span className="font-display text-[10px] font-bold text-neon-green-soft" title="Valor Total">
+                                    R$ {totalValue.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                                </span>
+                            ) : (
+                                <span className="font-display text-[10px] font-bold text-text-muted">R$ 0</span>
+                            );
+                        })()}
+                    </div>
+
+                    <span className="font-display text-[11px] font-bold text-white bg-accent/20 px-2 py-0.5 rounded-full border border-accent/30 shadow-[0_0_10px_rgba(212,197,165,0.1)]">
                         {leads.length}
                     </span>
                     {onAddLead && (
                         <Button
                             variant="ghost"
                             size="icon-sm"
-                            className="h-6 w-6 text-text-muted hover:text-white hover:bg-bg-hover"
+                            className="h-6 w-6 text-text-muted hover:text-accent hover:bg-white/5 transition-all"
                             onClick={() => onAddLead(id)}
                             title={`Adicionar lead em ${title}`}
                         >
@@ -152,8 +166,8 @@ export function KanbanColumn({
             {/* Droppable Content Area */}
             <div
                 ref={setNodeRef}
-                className={`flex-1 min-h-0 p-3 overflow-y-auto custom-scrollbar transition-all duration-150 ${isOver
-                    ? 'bg-accent-muted ring-1 ring-accent ring-inset'
+                className={`flex-1 min-h-0 p-3 overflow-y-auto custom-scrollbar transition-all duration-300 ease-out ${isOver
+                    ? 'bg-accent/5 ring-2 ring-accent/30 shadow-[inset_0_0_40px_rgba(212,197,165,0.05)] scale-[1.01]'
                     : ''
                     }`}
             >
@@ -169,13 +183,17 @@ export function KanbanColumn({
                             onQuickContact={onQuickContact}
                             onToggleFavorite={onToggleFavorite}
                             onDelete={onDelete}
+                            onUpdateMeetingType={onUpdateMeetingType}
                         />
                     ))}
                 </div>
 
                 {leads.length === 0 && (
-                    <div className="h-24 flex items-center justify-center text-text-muted text-xs uppercase tracking-wider border-2 border-dashed border-border-subtle rounded-lg bg-bg-elevated/30">
-                        Arraste leads aqui
+                    <div className="flex-1 flex flex-col items-center justify-center min-h-[150px] text-text-muted/40 opacity-50 space-y-3 animate-in fade-in zoom-in-95 duration-500">
+                        <div className="w-12 h-12 rounded-full bg-white/5 border border-white/5 flex items-center justify-center shadow-inner">
+                            <LayoutList className="w-6 h-6" />
+                        </div>
+                        <span className="text-[10px] uppercase font-bold tracking-[0.2em]">Sem leads</span>
                     </div>
                 )}
             </div>

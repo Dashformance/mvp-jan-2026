@@ -28,7 +28,9 @@ const ALLOWED_LEAD_FIELDS = new Set([
     'score',
     'source',
     'is_starred',
-    'segment_id'
+    'segment_id',
+    'meeting_type',
+    'meeting_status'
 ]);
 
 /**
@@ -222,6 +224,8 @@ export class LeadSanitizer {
         if (sanitized.uf !== undefined) sanitized.uf = this.toNullIfEmpty(sanitized.uf);
         if (sanitized.city !== undefined) sanitized.city = this.toNullIfEmpty(sanitized.city);
         if (sanitized.owner_id !== undefined) sanitized.owner_id = this.toNullIfEmpty(sanitized.owner_id);
+        if (sanitized.meeting_type !== undefined) sanitized.meeting_type = this.toNullIfEmpty(sanitized.meeting_type);
+        if (sanitized.meeting_status !== undefined) sanitized.meeting_status = this.toNullIfEmpty(sanitized.meeting_status);
         if (sanitized.contract_value !== undefined) {
             // Ensure it's a number or null
             const val = parseFloat(sanitized.contract_value);

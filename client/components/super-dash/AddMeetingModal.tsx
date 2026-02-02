@@ -6,16 +6,24 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { searchLeadsAction, scheduleMeeting } from '@/app/actions/meeting-actions';
-import { Calendar as CalendarIcon, Clock, Users, Loader2, Search, Plus } from 'lucide-react';
+import { Calendar as CalendarIcon, Clock, Users, Loader2, Search, Plus, Tag } from 'lucide-react';
 import { format } from 'date-fns';
 import { useGamification } from '@/hooks/useGamification';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue
+} from '@/components/ui/select';
 
 interface AddMeetingModalProps {
     isOpen: boolean;
     onClose: () => void;
+    onSuccess?: () => void;
 }
 
-export const AddMeetingModal: React.FC<AddMeetingModalProps> = ({ isOpen, onClose }) => {
+export const AddMeetingModal: React.FC<AddMeetingModalProps> = ({ isOpen, onClose, onSuccess }) => {
     const { addXP } = useGamification();
     const [loading, setLoading] = useState(false);
 
@@ -29,6 +37,7 @@ export const AddMeetingModal: React.FC<AddMeetingModalProps> = ({ isOpen, onClos
     const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'));
     const [time, setTime] = useState('10:00');
     const [participants, setParticipants] = useState('');
+    const [meetingType, setMeetingType] = useState('SCHEDULED');
 
     // Debounce search
     useEffect(() => {
@@ -69,11 +78,15 @@ export const AddMeetingModal: React.FC<AddMeetingModalProps> = ({ isOpen, onClos
             await scheduleMeeting({
                 leadId: selectedLead.id,
                 date: DateTime,
-                participants: participants.split(',').map(p => p.trim()).filter(Boolean)
+                participants: participants.split(',').map(p => p.trim()).filter(Boolean),
+                meetingType
             });
 
             // Gamification Trigger
             addXP('LEAD_QUALIFIED');
+
+            // Notify parent to revalidate data
+            onSuccess?.();
 
             onClose();
             // Reset
@@ -206,6 +219,39 @@ export const AddMeetingModal: React.FC<AddMeetingModalProps> = ({ isOpen, onClos
                             />
                             <Users className="w-4 h-4 text-gray-400 absolute left-3 top-3.5 pointer-events-none" />
                         </div>
+                    </div>
+
+                    {/* MEETING TYPE */}
+                    <div className="space-y-2">
+                        <Label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Tipo de Reunião</Label>
+                        <Select value={meetingType} onValueChange={setMeetingType}>
+                            <SelectTrigger className="w-full bg-white border-0 py-6 text-gray-900 font-bold shadow-sm rounded-xl">
+                                <div className="flex items-center gap-2">
+                                    <Tag className="w-4 h-4 text-gray-400" />
+                                    <SelectValue placeholder="Selecione o tipo" />
+                                </div>
+                            </SelectTrigger>
+                            <SelectContent className="bg-white border-gray-100 rounded-xl shadow-xl">
+                                <SelectItem value="CONFIRMATION" className="text-gray-700 font-medium hover:bg-gray-50 focus:bg-blue-50 focus:text-blue-600">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-2 h-2 rounded-full bg-amber-500" />
+                                        A confirmar reunião
+                                    </div>
+                                </SelectItem>
+                                <SelectItem value="FOLLOW_UP" className="text-gray-700 font-medium hover:bg-gray-50 focus:bg-blue-50 focus:text-blue-600">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-2 h-2 rounded-full bg-indigo-500" />
+                                        Follow up especial
+                                    </div>
+                                </SelectItem>
+                                <SelectItem value="SCHEDULED" className="text-gray-700 font-medium hover:bg-gray-50 focus:bg-blue-50 focus:text-blue-600">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                                        Reunião agendada
+                                    </div>
+                                </SelectItem>
+                            </SelectContent>
+                        </Select>
                     </div>
 
                     <DialogFooter className="mt-8">

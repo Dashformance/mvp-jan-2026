@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search, X, Filter, Check, Database } from "lucide-react";
@@ -57,15 +57,33 @@ export function FilterBar({ onFilterChange, currentFilters }: FilterBarProps) {
     const [selectedSources, setSelectedSources] = useState<string[]>(currentFilters?.source || []);
     const [view, setView] = useState<'mine' | 'all'>(currentFilters?.view || 'mine');
 
-    // Sync with external changes (e.g. from Table Filters)
+    // Sync with external changes (e.g. from Table Filters) - using JSON.stringify to prevent loops
+    const currentFiltersKey = JSON.stringify(currentFilters);
     useEffect(() => {
-        if (currentFilters) {
-            if (currentFilters.search !== undefined && currentFilters.search !== search) setSearch(currentFilters.search);
-            if (currentFilters.status && JSON.stringify(currentFilters.status) !== JSON.stringify(selectedStatuses)) setSelectedStatuses(currentFilters.status);
-            if (currentFilters.source && JSON.stringify(currentFilters.source) !== JSON.stringify(selectedSources)) setSelectedSources(currentFilters.source);
-            if (currentFilters.view && currentFilters.view !== view) setView(currentFilters.view);
-        }
-    }, [currentFilters]);
+        if (!currentFilters) return;
+
+        // Only update if actually different to prevent loops
+        const newSearch = currentFilters.search ?? "";
+        const newStatuses = currentFilters.status || [];
+        const newSources = currentFilters.source || [];
+        const newView = currentFilters.view || 'mine';
+
+        if (newSearch !== search) setSearch(newSearch);
+        if (JSON.stringify(newStatuses) !== JSON.stringify(selectedStatuses)) setSelectedStatuses(newStatuses);
+        if (JSON.stringify(newSources) !== JSON.stringify(selectedSources)) setSelectedSources(newSources);
+        if (newView !== view) setView(newView);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [currentFiltersKey]);
+
+    // Memoized notifyChange to prevent stale closures
+    const notifyChange = useCallback(() => {
+        onFilterChange({
+            search: search || undefined,
+            status: selectedStatuses.length > 0 ? selectedStatuses : undefined,
+            source: selectedSources.length > 0 ? selectedSources : undefined,
+            view: view
+        });
+    }, [onFilterChange, search, selectedStatuses, selectedSources, view]);
 
     // Debounce search
     useEffect(() => {
@@ -73,16 +91,8 @@ export function FilterBar({ onFilterChange, currentFilters }: FilterBarProps) {
             notifyChange();
         }, 500);
         return () => clearTimeout(timer);
-    }, [search, selectedStatuses, selectedSources, view]);
+    }, [search, selectedStatuses, selectedSources, view, notifyChange]);
 
-    const notifyChange = () => {
-        onFilterChange({
-            search: search || undefined,
-            status: selectedStatuses.length > 0 ? selectedStatuses : undefined,
-            source: selectedSources.length > 0 ? selectedSources : undefined,
-            view: view
-        });
-    };
 
     const toggleStatus = (id: string) => {
         setSelectedStatuses(prev =>
@@ -109,7 +119,7 @@ export function FilterBar({ onFilterChange, currentFilters }: FilterBarProps) {
             <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
-                    placeholder="Buscar por empresa, CNPJ ou contato..."
+                    placeholder="Buscar por nome, telefone, cidade ou contato..."
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     className="pl-9 bg-elevated border-subtle h-10 w-full"
@@ -129,8 +139,8 @@ export function FilterBar({ onFilterChange, currentFilters }: FilterBarProps) {
                 <button
                     onClick={() => setView('mine')}
                     className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${view === 'mine'
-                            ? 'bg-accent text-bg-void shadow-[0_0_15px_rgba(222,204,168,0.2)]'
-                            : 'text-text-muted hover:text-text-primary'
+                        ? 'bg-accent text-bg-void shadow-[0_0_15px_rgba(222,204,168,0.2)]'
+                        : 'text-text-muted hover:text-text-primary'
                         }`}
                 >
                     Meus Leads
@@ -138,8 +148,8 @@ export function FilterBar({ onFilterChange, currentFilters }: FilterBarProps) {
                 <button
                     onClick={() => setView('all')}
                     className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${view === 'all'
-                            ? 'bg-accent text-bg-void shadow-[0_0_15px_rgba(222,204,168,0.2)]'
-                            : 'text-text-muted hover:text-text-primary'
+                        ? 'bg-accent text-bg-void shadow-[0_0_15px_rgba(222,204,168,0.2)]'
+                        : 'text-text-muted hover:text-text-primary'
                         }`}
                 >
                     Todos

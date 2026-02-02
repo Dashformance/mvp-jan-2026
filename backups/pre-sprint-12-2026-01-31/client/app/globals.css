@@ -1,0 +1,226 @@
+@import "tailwindcss";
+
+@theme {
+  /* ============================================
+     DASHFORMANCE DESIGN SYSTEM v2.1
+     Theme: Sophisticated Minimalism (Matte Dark)
+     ============================================ */
+
+  /* Typography */
+  --font-sans: var(--font-sans), ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-display: var(--font-numbers), 'Space Grotesk', 'Inter', sans-serif;
+  --font-mono: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  /* === COLOR PALETTE: MATTE DARK (FINANCIAL TERMINAL) === */
+
+  /* Backgrounds */
+  --color-bg-void: #050505;
+  /* Deepest black */
+  --color-bg-base: #0A0A0A;
+  /* App background */
+  --color-bg-deep: #0F0F0F;
+  /* Section background */
+  --color-bg-card: #141414;
+  /* Cards (Matte) */
+  --color-bg-elevated: #1A1A1A;
+  /* Elevated elements */
+  --color-bg-surface: #222222;
+  /* Inputs/Secondary */
+  --color-bg-hover: #2A2A2A;
+  /* Subtle hover */
+  --color-bg-active: #333333;
+  /* Active state */
+
+  /* Borders & Dividers */
+  --color-border-subtle: #2A2A2A;
+  /* Solid Dark Grey */
+  --color-border-default: #333333;
+  --color-border-hover: #444444;
+
+  /* Glass Effects (Redefined as Solid/Matte) */
+  --color-glass-bg: #141414;
+  --color-glass-bg-hover: #1A1A1A;
+  --color-glass-border: #2A2A2A;
+  --glass-blur: 0px;
+
+  /* Champagne Accents (Matte) */
+  --color-accent: #D4C5A5;
+  /* Desaturated Gold */
+  --color-accent-light: #E0D4BA;
+  --color-accent-dark: #8F846B;
+  --color-accent-muted: #2A261F;
+  --color-accent-glow: transparent;
+
+  /* Functional Colors (Matte/Solid) */
+  --color-neon-green: #22C55E;
+  --color-neon-green-soft: #16A34A;
+  --color-neon-green-bg: #142819;
+  --color-neon-green-glow: transparent;
+
+  --color-neon-yellow: #EAB308;
+  --color-neon-yellow-soft: #CA8A04;
+  --color-neon-yellow-bg: #29220A;
+  --color-neon-yellow-glow: transparent;
+
+  --color-neon-orange: #F97316;
+  --color-neon-orange-bg: #291608;
+  --color-neon-orange-glow: transparent;
+
+  --color-neon-red: #EF4444;
+  --color-neon-red-soft: #DC2626;
+  --color-neon-red-bg: #290F0F;
+  --color-neon-red-glow: transparent;
+
+  --color-neon-cyan: #06B6D4;
+  --color-neon-cyan-soft: #0891B2;
+  --color-neon-cyan-bg: #082025;
+  --color-neon-cyan-glow: transparent;
+
+  --color-neon-purple: #A855F7;
+  --color-neon-purple-soft: #9333EA;
+  --color-neon-purple-bg: #1E1228;
+  --color-neon-purple-glow: transparent;
+
+  /* War Room Specific Gradients (Gauge - Solid Stops) */
+  --color-gauge-stop-1: #EF4444;
+  --color-gauge-stop-2: #F97316;
+  --color-gauge-stop-3: #EAB308;
+  --color-gauge-stop-4: #22C55E;
+
+  /* RPG Ranks (Metallic/Matte) */
+  --color-rank-bronze: #A67C52;
+  --color-rank-bronze-bg: #261D15;
+  --color-rank-silver: #A3A3A3;
+  --color-rank-silver-bg: #212121;
+  --color-rank-gold: #C29D46;
+  --color-rank-gold-bg: #29220F;
+  --color-rank-platinum: #94A3B8;
+  --color-rank-platinum-bg: #18202F;
+  --color-rank-diamond: #22D3EE;
+  --color-rank-diamond-bg: #0B242B;
+  --color-rank-icon: #D946EF;
+  --color-rank-icon-bg: #2A0F2E;
+
+  /* Typography Scale */
+  --text-7xl: 4.5rem;
+  --text-6xl: 3.75rem;
+  --text-5xl: 3rem;
+  --text-4xl: 2.25rem;
+
+  /* Spacing */
+  --spacing-1: 0.25rem;
+  --spacing-2: 0.5rem;
+  --spacing-3: 0.75rem;
+  --spacing-4: 1rem;
+  --spacing-6: 1.5rem;
+  --spacing-8: 2rem;
+
+  /* Radius (Tighter) */
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 6px;
+  --radius-xl: 8px;
+  --radius-2xl: 12px;
+  --radius-full: 9999px;
+
+  /* Layout Dimensions */
+  --sidebar-width: 240px;
+  --header-height: 64px;
+  --kanban-column-width: 320px;
+  --kanban-column-gap: 16px;
+  --kanban-card-gap: 12px;
+  --sheet-width: 540px;
+  --player-card-width: 280px;
+  --gauge-size-lg: 240px;
+
+  /* Text Colors */
+  --color-text-primary: #EDEDED;
+  --color-text-secondary: #A1A1A1;
+  --color-text-muted: #666666;
+  --color-text-disabled: #404040;
+  --color-text-inverse: #0F0F0F;
+
+  /* KPI Colors */
+  --color-kpi-leads: #06B6D4;
+  --color-kpi-meetings: #22C55E;
+  --color-kpi-sales: #EAB308;
+  --color-kpi-pipeline: #D4C5A5;
+
+  /* Animation Overrides (Disable Glows) */
+  --animate-pulse: none;
+  --animate-glow: none;
+}
+
+/* Base Layer */
+@layer base {
+  body {
+    @apply bg-bg-base text-text-primary antialiased selection:bg-accent/20 selection:text-white;
+    font-family: var(--font-sans);
+    background-image: none;
+    /* Clean matte background */
+  }
+
+  /* Custom Scrollbar - Minimal */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #333333;
+    border-radius: 9999px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #444444;
+  }
+}
+
+/* Custom Utilities */
+@layer utilities {
+  .glass {
+    background: var(--color-bg-elevated);
+    border: 1px solid var(--color-border-subtle);
+  }
+
+  .glass-hover:hover {
+    background: var(--color-bg-hover);
+    border-color: var(--color-border-default);
+  }
+
+  /* Override gradient text fallback */
+  .text-gradient-accent {
+    color: var(--color-accent);
+    background: none;
+    -webkit-text-fill-color: var(--color-accent);
+  }
+
+  /* Disable Shadows/Glows */
+  .glow-accent,
+  .glow-green,
+  .glow-yellow,
+  .glow-orange,
+  .glow-red,
+  .glow-cyan,
+  .glow-purple,
+  .shadow-glow-accent,
+  .shadow-neon-green-glow,
+  .shadow-neon-cyan-glow,
+  .shadow-neon-red-glow {
+    box-shadow: none;
+  }
+
+  .font-display {
+    font-family: var(--font-numbers), sans-serif;
+    letter-spacing: -0.02em;
+  }
+}
+
+/* Calendar Fixes */
+.rdp-vhidden {
+  @apply sr-only;
+}

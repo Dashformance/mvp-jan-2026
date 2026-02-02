@@ -27,6 +27,8 @@ export const metadata: Metadata = {
 };
 
 import { AuthProvider } from "@/context/auth-context";
+import { SessionMonitor } from "@/components/auth/SessionMonitor";
+import { SWRProvider } from "@/lib/swr-provider";
 
 export default function RootLayout({
   children,
@@ -36,14 +38,17 @@ export default function RootLayout({
   return (
     <html lang="pt-BR" className="dark">
       <body
-        className={`${inter.variable} ${jetbrainsMono.variable} ${spaceGrotesk.variable} antialiased bg-[#050505] text-white`}
+        className={`${inter.variable} ${jetbrainsMono.variable} ${spaceGrotesk.variable} antialiased bg-bg-void text-white`}
       >
         {/* Google Cast SDK */}
         <script src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1" defer></script>
 
         <AuthProvider>
-          {children}
-          <Toaster position="top-right" theme="dark" richColors closeButton />
+          <SWRProvider>
+            <SessionMonitor />
+            {children}
+            <Toaster position="top-right" theme="dark" richColors closeButton />
+          </SWRProvider>
         </AuthProvider>
       </body>
     </html>

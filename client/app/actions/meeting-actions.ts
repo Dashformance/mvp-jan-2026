@@ -37,6 +37,7 @@ export async function scheduleMeeting(data: {
     date: Date;
     description?: string;
     participants?: string[];
+    meetingType?: string;
 }) {
     try {
         // Fetch current extra_info to avoid wiping
@@ -48,6 +49,8 @@ export async function scheduleMeeting(data: {
             data: {
                 status: 'MEETING',
                 next_followup_date: data.date,
+                meeting_type: data.meetingType || 'SCHEDULED',
+                meeting_status: data.meetingType === 'CONFIRMATION' ? 'PENDING' : 'CONFIRMED',
                 extra_info: {
                     ...currentExtra,
                     participants: data.participants || [],
@@ -76,9 +79,10 @@ export async function createMeeting(data: {
     title: string;
     date: Date;
     participants: string[];
+    meetingType?: string;
 }) {
     try {
-        const { title, date, participants } = data;
+        const { title, date, participants, meetingType } = data;
 
         // Try to find a lead that matches the title
         let lead = await prisma.leads.findFirst({
@@ -100,6 +104,8 @@ export async function createMeeting(data: {
                     trade_name: title,
                     status: 'MEETING',
                     next_followup_date: date,
+                    meeting_type: meetingType || 'SCHEDULED',
+                    meeting_status: meetingType === 'CONFIRMATION' ? 'PENDING' : 'CONFIRMED',
                     extra_info: {
                         participants: participants || [],
                         created_via: 'calendar_modal'
@@ -113,6 +119,8 @@ export async function createMeeting(data: {
                 data: {
                     status: 'MEETING',
                     next_followup_date: date,
+                    meeting_type: meetingType || 'SCHEDULED',
+                    meeting_status: meetingType === 'CONFIRMATION' ? 'PENDING' : 'CONFIRMED',
                     extra_info: {
                         // @ts-ignore: Assuming extra_info is object
                         ...(lead.extra_info as object || {}),
@@ -156,3 +164,24 @@ export async function deleteMeeting(leadId: string) {
         return { success: false, error: 'Failed to delete meeting' };
     }
 }
+
+export async function updateMeetingStatus(leadId: string, type: string, status?: string) {
+    try {
+        if (!leadId) throw new Error('Lead ID is required');
+
+        await prisma.leads.update({
+            where: { id: leadId },
+            data: {
+                meeting_type: type,
+                meeting_status: status || (type === 'SCHEDULED' ? 'CONFIRMED' : 'PENDING')
+            }
+        });
+
+        revalidatePath('/super-dash');
+        return { success: true };
+    } catch (error) {
+        console.error('Failed to update meeting status:', error);
+        return { success: false, error: 'Failed to update meeting status' };
+    }
+}
+

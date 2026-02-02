@@ -1,6 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import { motion } from "framer-motion";
+import Image from "next/image";
 import { Trophy, Medal, Crown, TrendingUp, ChevronRight } from "lucide-react";
 
 /**
@@ -48,6 +50,25 @@ const MEDAL_STYLES = {
         text: 'text-amber-600'
     }
 };
+
+function LeaderboardAvatar({ avatar, name }: { avatar?: string, name: string }) {
+    const [error, setError] = useState(false);
+    const hasValidUrl = avatar && (avatar.startsWith('http') || avatar.startsWith('/'));
+
+    if (hasValidUrl && !error) {
+        return (
+            <Image
+                src={avatar!}
+                alt={name}
+                fill
+                className="object-cover"
+                onError={() => setError(true)}
+            />
+        );
+    }
+
+    return <span>{name.slice(0, 2).toUpperCase()}</span>;
+}
 
 export function Leaderboard({ players, currentUserId, className = "" }: LeaderboardProps) {
     // Sort by xpToday if available (Session ranking), otherwise global XP
@@ -108,21 +129,9 @@ export function Leaderboard({ players, currentUserId, className = "" }: Leaderbo
                                     : 'border border-border-subtle bg-bg-surface'
                                 }
                                 ${isTop3 && index === 0 ? 'text-yellow-400' : 'text-white'}
+                                relative
                             `}>
-                                {player.avatar && (player.avatar.startsWith('http') || player.avatar.startsWith('/')) ? (
-                                    <img
-                                        src={player.avatar}
-                                        alt={player.name}
-                                        className="w-full h-full object-cover"
-                                        onError={(e) => {
-                                            // Fallback to initials if image fails to load
-                                            (e.target as HTMLImageElement).style.display = 'none';
-                                            (e.target as HTMLImageElement).parentElement!.innerText = player.name.slice(0, 2).toUpperCase();
-                                        }}
-                                    />
-                                ) : (
-                                    <span>{player.avatar || player.name.slice(0, 2).toUpperCase()}</span>
-                                )}
+                                <LeaderboardAvatar avatar={player.avatar} name={player.name} />
                             </div>
 
                             {/* Name & Role */}

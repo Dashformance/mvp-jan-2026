@@ -66,8 +66,12 @@ export const GET = withApiErrorHandling(async (req: NextRequest) => {
         console.log(`[DEBUG] LeadsService returned ${leads?.data?.length} leads`);
 
         return NextResponse.json(leads);
-    } catch (error) {
+    } catch (error: any) {
         console.error("[DEBUG] Error inside GET /api/leads:", error);
+        // Ensure error is traceable
+        if (!error.message && typeof error === 'object') {
+            console.error("[DEBUG] Error object keys:", Object.keys(error));
+        }
         throw error;
     }
 });

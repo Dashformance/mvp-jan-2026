@@ -1,0 +1,121 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Segment {
+  id          String   @id
+  name        String
+  description String?
+  created_at  DateTime @default(now())
+  leads       leads[]
+}
+
+model User {
+  id            String   @id
+  name          String
+  email         String   @unique
+  password_hash String?
+  created_at    DateTime @default(now())
+  avatar_url    String?
+  role          String   @default("seller")
+  supabase_uid  String   @unique
+  xp            Int      @default(0)
+  level         Int      @default(1)
+  gamification  Json?    @default("{}")
+  leads         leads[]
+}
+
+model contacts {
+  id         String   @id
+  lead_id    String
+  name       String
+  role       String?
+  phone      String?
+  whatsapp   String?
+  email      String?
+  is_primary Boolean  @default(false)
+  notes      String?
+  created_at DateTime @default(now())
+  updated_at DateTime
+  leads      leads    @relation(fields: [lead_id], references: [id], onDelete: Cascade)
+}
+
+model interactions {
+  id         String   @id
+  lead_id    String?
+  content    String
+  type       String
+  date       DateTime @default(now())
+  user_id    String?
+  created_at DateTime @default(now())
+  updated_at DateTime
+  leads      leads?    @relation(fields: [lead_id], references: [id], onDelete: Cascade)
+
+  @@index([lead_id])
+}
+
+model leads {
+  id                 String         @id
+  company_name       String?
+  trade_name         String?
+  cnpj               String?        @unique
+  phone              String?
+  email              String?
+  decision_maker     String?
+  extra_info         Json?
+  segment_id         String?
+  status             String         @default("NEW")
+  priority           Int            @default(0)
+  date_added         DateTime       @default(now())
+  first_contact_date DateTime?
+  last_contact_date  DateTime?
+  next_followup_date DateTime?
+  notes              String?
+  owner              String?
+  deletedAt          DateTime?
+  score              Int            @default(0)
+  source             String?
+  city               String?
+  uf                 String?
+  instagram_url      String?
+  render_quality     String?
+  website_url        String?
+  updated_at         DateTime       @default(now())
+  is_starred         Boolean        @default(false)
+  owner_id           String?
+  contract_value     Decimal?       @default(0)
+  contacts           contacts[]
+  interactions       interactions[]
+  User               User?          @relation(fields: [owner_id], references: [id])
+  Segment            Segment?       @relation(fields: [segment_id], references: [id])
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model stages {
+  id         String   @id
+  name       String
+  phase      String
+  color      String?
+  icon       String?
+  position   Int      @default(0)
+  created_at DateTime @default(now())
+  updated_at DateTime
+}
+
+enum LeadStatus {
+  NEW
+  ATTEMPTED
+  CONTACTED
+  MEETING
+  WON
+  LOST
+  DISQUALIFIED
+  INBOX
+  SCREENING
+}

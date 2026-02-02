@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { LeadsService } from '@/lib/services/leads-service';
+import { AnalyticsService } from '@/lib/services/analytics-service';
 
 export async function GET(req: Request) {
     try {
@@ -14,7 +14,7 @@ export async function GET(req: Request) {
         // If not global and user is logged in, filter by their context
         const ownerId = isGlobal ? undefined : user?.id;
 
-        const stats = await LeadsService.getStatsOverview(ownerId);
+        const stats = await AnalyticsService.getStatsOverview(ownerId);
         return NextResponse.json(stats);
     } catch (error) {
         return NextResponse.json({ error: 'Failed to fetch overview stats' }, { status: 500 });

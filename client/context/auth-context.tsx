@@ -1,6 +1,6 @@
 "use client"
 
-import { createContext, useContext, useEffect, useState } from "react"
+import { createContext, useContext, useEffect, useState, useMemo, useCallback } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { type User, type Session } from "@supabase/supabase-js"
 import { useRouter } from "next/navigation"
@@ -29,9 +29,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [session, setSession] = useState<Session | null>(null)
     const [loading, setLoading] = useState(true)
     const router = useRouter()
-    const supabase = createClient()
 
-    const fetchProfile = async () => {
+    // Use useMemo to ensure we get a stable reference to supabase client
+    const supabase = useMemo(() => createClient(), [])
+
+    const fetchProfile = useCallback(async () => {
         try {
             const res = await fetch('/api/auth/me')
             if (res.ok) {
@@ -44,7 +46,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             console.error('Failed to fetch profile:', err)
             setProfile(null)
         }
-    }
+    }, [])
 
     useEffect(() => {
         if (!supabase) {
@@ -52,9 +54,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             return
         }
 
+        // Get initial session immediately
+        const initSession = async () => {
+            try {
+                const { data: { session: initialSession } } = await supabase.auth.getSession()
+                console.log('[Auth] Initial session:', initialSession ? 'present' : 'none')
+
+                setSession(initialSession)
+                setUser(initialSession?.user ?? null)
+
+                if (initialSession?.user) {
+                    await fetchProfile()
+                }
+            } catch (error) {
+                console.error('[Auth] Failed to get initial session:', error)
+            } finally {
+                setLoading(false)
+            }
+        }
+
+        initSession()
+
+        // Subscribe to auth state changes
         const {
             data: { subscription },
-        } = supabase.auth.onAuthStateChange(async (_event, session) => {
+        } = supabase.auth.onAuthStateChange(async (event: string, session: Session | null) => {
+            console.log(`[Auth] Event: ${event}`, session ? 'has session' : 'no session');
+
             setSession(session)
             setUser(session?.user ?? null)
 
@@ -64,49 +90,57 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 setProfile(null)
             }
 
-            setLoading(false)
+            // Handle token refresh
+            if (event === 'TOKEN_REFRESHED') {
+                console.log('✅ Token renovado automaticamente')
+            }
 
-            if (_event === 'SIGNED_OUT') {
+            if (event === 'SIGNED_OUT') {
                 router.push('/login')
             }
         })
 
         return () => subscription.unsubscribe()
-    }, [supabase]) // eslint-disable-line react-hooks/exhaustive-deps
+    }, [supabase, fetchProfile, router])
 
 
-    const signInWithGoogle = async () => {
-        if (!supabase) return
-        await supabase.auth.signInWithOAuth({
-            provider: "google",
-            options: {
-                redirectTo: `${window.location.origin}/api/auth/callback`,
-            },
-        })
-    }
-
-    const signInWithEmail = async (email: string, password: string) => {
-        if (!supabase) return { error: { message: "Supabase client not initialized" } }
-        const { error } = await supabase.auth.signInWithPassword({
-            email,
-            password,
-        })
-        if (!error) {
-            await fetchProfile()
-            router.push("/")
-        }
-        return { error }
-    }
-
-    const signOut = async () => {
-        if (!supabase) return
-        await supabase.auth.signOut()
-        setProfile(null)
-        router.push("/login")
-    }
+    const value = useMemo(() => ({
+        user,
+        profile,
+        session,
+        loading,
+        signInWithGoogle: async () => {
+            if (!supabase) return
+            await supabase.auth.signInWithOAuth({
+                provider: "google",
+                options: {
+                    redirectTo: `${window.location.origin}/api/auth/callback`,
+                },
+            })
+        },
+        signInWithEmail: async (email: string, password: string) => {
+            if (!supabase) return { error: { message: "Supabase client not initialized" } }
+            const { error } = await supabase.auth.signInWithPassword({
+                email,
+                password,
+            })
+            if (!error) {
+                // Force full page navigation to ensure cookies are sent correctly
+                window.location.href = "/"
+            }
+            return { error }
+        },
+        signOut: async () => {
+            if (!supabase) return
+            await supabase.auth.signOut()
+            setProfile(null)
+            router.push("/login")
+        },
+        refreshProfile: fetchProfile
+    }), [user, profile, session, loading, fetchProfile, router, supabase])
 
     return (
-        <AuthContext.Provider value={{ user, profile, session, loading, signInWithGoogle, signInWithEmail, signOut, refreshProfile: fetchProfile }}>
+        <AuthContext.Provider value={value}>
             {children}
         </AuthContext.Provider>
     )

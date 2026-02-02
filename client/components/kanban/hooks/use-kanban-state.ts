@@ -1,9 +1,12 @@
 "use client";
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { toast } from "sonner";
 import { PIPELINE_COLUMNS } from '../KanbanBoard';
 import { useGamification } from '@/hooks/useGamification';
+import useSWRInfinite from 'swr/infinite';
+import useSWR, { mutate } from 'swr';
+import { fetchWithAuth } from '@/lib/fetch-with-auth';
 
 const API_URL = "/api";
 
@@ -52,11 +55,7 @@ const defaultFilters = {
 };
 
 export function useKanbanState() {
-    const [leads, setLeads] = useState<any[]>([]);
-    const [loading, setLoading] = useState(false);
     const [columns, setColumns] = useState(PIPELINE_COLUMNS);
-    const [meta, setMeta] = useState<any>({});
-    const [page, setPage] = useState(1);
     const [filters, setFilters] = useState(defaultFilters);
     const [searchQuery, setSearchQuery] = useState('');
     const [viewMode, setViewMode] = useState<'list' | 'kanban'>('kanban');
@@ -84,57 +83,52 @@ export function useKanbanState() {
     const [isSheetOpen, setIsSheetOpen] = useState(false);
     const [selectedLeadForSheet, setSelectedLeadForSheet] = useState<any>(null);
 
-    const fetchLeads = useCallback(async (pageToFetch = 1, append = false) => {
-        setLoading(true);
-        try {
-            const limit = 200;
-            let url = `${API_URL}/leads?page=${pageToFetch}&limit=${limit}`;
+    // SWR Infinite Implementation - Memoized getKey to prevent infinite loops
+    const getKey = useCallback((pageIndex: number, previousPageData: any) => {
+        if (previousPageData && !previousPageData.data?.length) return null;
+        const limit = 50;
+        let url = `${API_URL}/leads?page=${pageIndex + 1}&limit=${limit}`;
 
-            // Append Advanced Filters
-            if (filterBarState.search) url += `&search=${encodeURIComponent(filterBarState.search)}`;
-            if (filterBarState.status && filterBarState.status.length > 0) url += `&status=${filterBarState.status.join(',')}`;
-            if (filterBarState.source && filterBarState.source.length > 0) url += `&source=${filterBarState.source.join(',')}`;
-            if (filterBarState.city) url += `&city=${encodeURIComponent(filterBarState.city)}`;
-            if (filterBarState.scoreMin !== undefined) url += `&scoreMin=${filterBarState.scoreMin}`;
-            if (filterBarState.scoreMax !== undefined) url += `&scoreMax=${filterBarState.scoreMax}`;
-            if (filterBarState.view) url += `&view=${filterBarState.view}`;
+        if (filterBarState.search) url += `&search=${encodeURIComponent(filterBarState.search)}`;
+        if (filterBarState.status && filterBarState.status.length > 0) url += `&status=${filterBarState.status.join(',')}`;
+        if (filterBarState.source && filterBarState.source.length > 0) url += `&source=${filterBarState.source.join(',')}`;
+        if (filterBarState.city) url += `&city=${encodeURIComponent(filterBarState.city)}`;
+        if (filterBarState.scoreMin !== undefined) url += `&scoreMin=${filterBarState.scoreMin}`;
+        if (filterBarState.scoreMax !== undefined) url += `&scoreMax=${filterBarState.scoreMax}`;
+        if (filterBarState.view) url += `&view=${filterBarState.view}`;
 
-            // Sorting
-            let sortField = 'date_added';
-            let sortOrder = 'desc';
+        let sortField = 'date_added';
+        let sortOrder = 'desc';
+        if (sortBy === 'alpha') { sortField = 'trade_name'; sortOrder = 'asc'; }
+        else if (sortBy === 'date_asc') { sortField = 'date_added'; sortOrder = 'asc'; }
+        else if (sortBy === 'date_desc') { sortField = 'date_added'; sortOrder = 'desc'; }
+        else if (sortBy === 'status') { sortField = 'status'; sortOrder = 'asc'; }
+        else if (sortBy === 'score') { sortField = 'score'; sortOrder = 'desc'; }
+        else if (sortBy === 'owner') { sortField = 'owner'; sortOrder = 'asc'; }
+        else if (sortBy === 'last_interaction') { sortField = 'last_contact_date'; sortOrder = 'desc'; }
 
-            if (sortBy === 'alpha') { sortField = 'trade_name'; sortOrder = 'asc'; }
-            else if (sortBy === 'date_asc') { sortField = 'date_added'; sortOrder = 'asc'; }
-            else if (sortBy === 'date_desc') { sortField = 'date_added'; sortOrder = 'desc'; }
-            else if (sortBy === 'status') { sortField = 'status'; sortOrder = 'asc'; }
-            else if (sortBy === 'score') { sortField = 'score'; sortOrder = 'desc'; }
-            else if (sortBy === 'owner') { sortField = 'owner'; sortOrder = 'asc'; }
-            else if (sortBy === 'last_interaction') { sortField = 'last_contact_date'; sortOrder = 'desc'; }
+        url += `&sortBy=${sortField}&sortOrder=${sortOrder}`;
+        return url;
+    }, [filterBarState.search, filterBarState.status, filterBarState.source, filterBarState.city, filterBarState.scoreMin, filterBarState.scoreMax, filterBarState.view, sortBy]);
 
-            url += `&sortBy=${sortField}&sortOrder=${sortOrder}`;
 
-            const res = await fetch(url);
-            const data = await res.json();
-            if (res.ok) {
-                setLeads(prev => append ? [...prev, ...(data.data || [])] : (data.data || []));
-                setMeta(data.meta || {});
-                setPage(pageToFetch);
-            } else {
-                console.error("Fetch leads failed", data);
-                setLeads([]);
-            }
-        } catch (err) {
-            console.error("Failed to fetch leads", err);
-            setLeads([]);
-        } finally {
-            setLoading(false);
+    const { data: pages, size, setSize, isValidating, isLoading: swrLoading, mutate: mutateLeads } = useSWRInfinite(
+        getKey,
+        (url) => fetchWithAuth(url).then(res => res.json()),
+        {
+            revalidateFirstPage: false,
+            persistSize: true
         }
-    }, [filterBarState, sortBy]);
+    );
+
+    const leads = useMemo(() => pages ? pages.flatMap(p => p.data || []) : [], [pages]);
+    const loading = !pages && swrLoading;
+    const meta = useMemo(() => pages && pages.length > 0 ? (pages[pages.length - 1].meta || {}) : {}, [pages]);
 
     const loadMore = useCallback(async () => {
-        if (loading || (meta.last_page && page >= meta.last_page)) return;
-        await fetchLeads(page + 1, true);
-    }, [page, meta.last_page, loading, fetchLeads]);
+        if (isValidating || (meta.last_page && size >= meta.last_page)) return;
+        setSize(size + 1);
+    }, [size, meta.last_page, isValidating, setSize]);
 
     // Initial Fetch & Columns
     useEffect(() => {
@@ -180,7 +174,7 @@ export function useKanbanState() {
             }
 
             // Fetch Leads
-            await fetchLeads(1);
+            mutateLeads();
 
             // Fetch Users
             try {
@@ -229,19 +223,27 @@ export function useKanbanState() {
         };
     }, []);
 
-    // Sync leads when params change
+    // Sync leads when params change - using stringified state to prevent object reference loops
+    const filterBarStateKey = JSON.stringify(filterBarState);
     useEffect(() => {
-        setPage(1);
-    }, [filterBarState, sortBy]);
+        setSize(1);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [filterBarStateKey, sortBy]);
 
-    useEffect(() => {
-        fetchLeads(page, page > 1);
-    }, [filterBarState, sortBy, page]);
 
 
     const updateLeadStatus = async (id: string, newStatus: string) => {
-        // Optimistic update
-        setLeads(prev => prev.map(l => l.id === id ? { ...l, status: newStatus } : l));
+        // Optimistic update via mutate
+        mutateLeads(
+            (prevPages: any[] | undefined) => {
+                if (!prevPages) return prevPages;
+                return prevPages.map(page => ({
+                    ...page,
+                    data: page.data.map((l: any) => l.id === id ? { ...l, status: newStatus } : l)
+                }));
+            },
+            false // no revalidate immediately
+        );
 
         try {
             const res = await fetch(`${API_URL}/leads/${id}`, {
@@ -265,7 +267,7 @@ export function useKanbanState() {
             toast.success("Status atualizado");
         } catch (e) {
             toast.error("Erro ao atualizar status");
-            fetchLeads(page); // Revert on error by refetching
+            mutateLeads(); // Revert on error by refetching
         }
     };
 
@@ -275,9 +277,6 @@ export function useKanbanState() {
             const method = isNew ? 'POST' : 'PATCH';
             const url = isNew ? `${API_URL}/leads` : `${API_URL}/leads/${lead.id}`;
 
-            // Remove 'id' if it is 'new' to avoid sending it to backend if backend doesn't like it, 
-            // though Prisma usually ignores ID on create if strictly typed, but safer to clean.
-            // But if we used 'new' as ID for UI, we should cleanup.
             const { id, ...leadData } = lead;
             const body = isNew ? leadData : lead;
 
@@ -290,16 +289,21 @@ export function useKanbanState() {
             if (res.ok) {
                 const updated = await res.json();
                 if (isNew) {
-                    setLeads(prev => [updated, ...prev]);
+                    mutateLeads(); // Simpler to refetch for new items
                     const result = addXP('LEAD_CREATED');
                     toast.success(`Lead criado com sucesso! (+${result.xpGained} XP)`);
                 } else {
-                    setLeads(prev => prev.map(l => l.id === lead.id ? updated : l));
+                    mutateLeads(
+                        (prevPages: any[] | undefined) => {
+                            if (!prevPages) return prevPages;
+                            return prevPages.map(page => ({
+                                ...page,
+                                data: page.data.map((l: any) => l.id === lead.id ? updated : l)
+                            }));
+                        },
+                        false
+                    );
                     toast.success("Lead atualizado");
-                    // Also update status if changed during edit
-                    if (updated.status && updated.status !== lead.status) {
-                        setLeads(prev => prev.map(l => l.id === lead.id ? { ...l, status: updated.status } : l));
-                    }
                 }
             } else {
                 const errorData = await res.json().catch(() => ({ error: 'Unknown API error' }));
@@ -314,7 +318,17 @@ export function useKanbanState() {
 
     const toggleFavorite = async (id: string, isStarred: boolean) => {
         // Optimistic
-        setLeads(prev => prev.map(l => l.id === id ? { ...l, is_starred: isStarred } : l));
+        mutateLeads(
+            (prevPages: any[] | undefined) => {
+                if (!prevPages) return prevPages;
+                return prevPages.map(page => ({
+                    ...page,
+                    data: page.data.map((l: any) => l.id === id ? { ...l, is_starred: isStarred } : l)
+                }));
+            },
+            false
+        );
+
         try {
             const res = await fetch(`${API_URL}/leads/${id}`, {
                 method: 'PATCH',
@@ -325,14 +339,23 @@ export function useKanbanState() {
             toast.success(isStarred ? "Lead favoritado!" : "Removido dos favoritos");
         } catch (e) {
             toast.error("Erro ao atualizar favorito");
-            fetchLeads(page);
+            mutateLeads();
         }
     };
 
     const quickContact = async (id: string) => {
         const now = new Date().toISOString();
         // Optimistic
-        setLeads(prev => prev.map(l => l.id === id ? { ...l, last_contact_date: now } : l));
+        mutateLeads(
+            (prevPages: any[] | undefined) => {
+                if (!prevPages) return prevPages;
+                return prevPages.map(page => ({
+                    ...page,
+                    data: page.data.map((l: any) => l.id === id ? { ...l, last_contact_date: now } : l)
+                }));
+            },
+            false
+        );
 
         try {
             const res = await fetch(`${API_URL}/interactions`, {
@@ -351,7 +374,7 @@ export function useKanbanState() {
             toast.success(`Interação registrada! (+${result.xpGained} XP)`);
         } catch (e) {
             toast.error("Erro ao registrar interação");
-            fetchLeads(page);
+            mutateLeads();
         }
     };
 
@@ -359,7 +382,16 @@ export function useKanbanState() {
         if (!confirm("Tem certeza que deseja excluir?")) return;
         try {
             await fetch(`${API_URL}/leads/${id}`, { method: 'DELETE' });
-            setLeads(prev => prev.filter((l: any) => l.id !== id));
+            mutateLeads(
+                (prevPages: any[] | undefined) => {
+                    if (!prevPages) return prevPages;
+                    return prevPages.map(page => ({
+                        ...page,
+                        data: page.data.filter((l: any) => l.id !== id)
+                    }));
+                },
+                false
+            );
             setSelectedLeads(prev => {
                 const next = new Set(prev);
                 next.delete(id);
@@ -371,9 +403,49 @@ export function useKanbanState() {
         }
     };
 
+    const updateMeetingType = async (id: string, currentType: string) => {
+        // Cycle: null -> FOLLOW_UP -> CONFIRMATION -> SCHEDULED -> null
+        let nextType: string | null = null;
+        if (!currentType) nextType = 'FOLLOW_UP';
+        else if (currentType === 'FOLLOW_UP') nextType = 'CONFIRMATION';
+        else if (currentType === 'CONFIRMATION') nextType = 'SCHEDULED';
+        else nextType = null;
+
+        // Optimistic update
+        mutateLeads(
+            (prevPages: any[] | undefined) => {
+                if (!prevPages) return prevPages;
+                return prevPages.map(page => ({
+                    ...page,
+                    data: page.data.map((l: any) => l.id === id ? { ...l, meeting_type: nextType } : l)
+                }));
+            },
+            false
+        );
+
+        try {
+            const res = await fetch(`${API_URL}/leads/${id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ meeting_type: nextType })
+            });
+            if (!res.ok) throw new Error("Failed");
+
+            if (nextType) {
+                const label = nextType === 'FOLLOW_UP' ? 'Follow Up Especial' :
+                    nextType === 'CONFIRMATION' ? 'A Confirmar' : 'Confirmada';
+                toast.success(`Status alterado para: ${label}`);
+            } else {
+                toast.info("Status de reunião resetado");
+            }
+        } catch (e) {
+            toast.error("Erro ao atualizar status");
+            mutateLeads();
+        }
+    };
+
     const bulkUpdateLeads = async (ids: string[], data: any) => {
         try {
-            setLoading(true);
             const res = await fetch(`${API_URL}/leads/batch`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
@@ -383,15 +455,22 @@ export function useKanbanState() {
             if (res.ok) {
                 toast.success(`${ids.length} leads atualizados com sucesso`);
                 // Optimistic update
-                setLeads(prev => prev.map(l => ids.includes(l.id) ? { ...l, ...data } : l));
+                mutateLeads(
+                    (prevPages: any[] | undefined) => {
+                        if (!prevPages) return prevPages;
+                        return prevPages.map(page => ({
+                            ...page,
+                            data: page.data.map((l: any) => ids.includes(l.id) ? { ...l, ...data } : l)
+                        }));
+                    },
+                    false
+                );
                 setSelectedLeads(new Set());
             } else {
                 throw new Error("Failed");
             }
         } catch (err) {
             toast.error("Erro ao atualizar leads em massa");
-        } finally {
-            setLoading(false);
         }
     };
 
@@ -414,7 +493,6 @@ export function useKanbanState() {
 
     const cleanupDuplicates = async () => {
         try {
-            setLoading(true);
             const res = await fetch(`${API_URL}/leads/cleanup-duplicates`, { method: 'POST' });
             const data = await res.json();
             if (res.ok) {
@@ -424,14 +502,12 @@ export function useKanbanState() {
                 } else {
                     toast.info(`Nenhuma duplicata encontrada.`);
                 }
-                fetchLeads(page);
+                mutateLeads();
             } else {
                 throw new Error("Falha ao limpar duplicatas");
             }
         } catch (error) {
             toast.error("Erro ao limpar duplicatas.");
-        } finally {
-            setLoading(false);
         }
     };
 
@@ -460,7 +536,6 @@ export function useKanbanState() {
 
     return {
         leads,
-        setLeads,
         columns,
         setColumns,
         loading,
@@ -470,19 +545,19 @@ export function useKanbanState() {
         setSearchQuery,
         viewMode,
         setViewMode,
-        fetchLeads,
         updateLeadStatus,
         updateLead,
         toggleFavorite,
         quickContact,
         deleteLead,
         bulkUpdateLeads,
+        updateMeetingType,
         selectedLeads,
         toggleSelectLead,
         selectAllLeads,
         meta,
-        page,
-        setPage,
+        page: size,
+        setPage: setSize,
         loadMore,
         filterBarState,
         setFilterBarState,

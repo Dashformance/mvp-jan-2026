@@ -1,6 +1,7 @@
-'use client';
+"use client";
 
 import { cn } from '@/lib/utils';
+import Image from 'next/image';
 
 // ===== TYPES =====
 export type CardTier = 'gold' | 'diamond' | 'platinum' | 'emerald' | 'bronze';
@@ -243,7 +244,7 @@ export function PlayerCard({
                         justifyContent: 'center'
                     }}>
                         {(avatar && !avatar.includes('ui-avatars.com')) ? (
-                            <img src={avatar} alt={name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            <Image src={avatar} alt={name} fill className="object-cover" />
                         ) : (
                             <span style={{ fontSize: '42px', fontWeight: 700, color: config.highlight, opacity: 0.9 }}>
                                 {initials}

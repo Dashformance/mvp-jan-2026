@@ -6,7 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Phone, Mail, MessageCircle, ExternalLink, User, Check, X, Pencil, Star } from "lucide-react";
+import { Phone, Mail, MessageCircle, ExternalLink, User, Check, X, Pencil, Star, Sparkles } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { useState, useRef, useEffect } from "react";
 
 /**
@@ -35,6 +36,8 @@ interface Lead {
     owner?: string;
     is_starred?: boolean;
     contract_value?: number | string;
+    meeting_type?: string;
+    meeting_status?: string;
 }
 
 interface KanbanCardProps {
@@ -46,10 +49,11 @@ interface KanbanCardProps {
     onQuickContact?: (id: string) => void;
     onToggleFavorite?: (id: string, isStarred: boolean) => void;
     onDelete?: (id: string) => void;
+    onUpdateMeetingType?: (id: string, currentType: string) => void;
     isOverlay?: boolean;
 }
 
-export function KanbanCard({ lead, onEdit, onUpdateTitle, onDisqualify, onApprove, onQuickContact, onToggleFavorite, onDelete, isOverlay }: KanbanCardProps) {
+export function KanbanCard({ lead, onEdit, onUpdateTitle, onDisqualify, onApprove, onQuickContact, onToggleFavorite, onDelete, onUpdateMeetingType, isOverlay }: KanbanCardProps) {
     const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
         id: lead.id,
     });
@@ -120,20 +124,25 @@ export function KanbanCard({ lead, onEdit, onUpdateTitle, onDisqualify, onApprov
         }
     };
 
-    // Score-based styling (DS v2.0)
     const score = lead.score || 0;
-    const getScoreBorderClass = () => {
-        if (score >= 85) return "border-l-4 border-l-neon-green-soft";
-        if (score >= 60) return "border-l-4 border-l-neon-yellow-soft";
-        if (score > 0) return "border-l-4 border-l-neon-red-soft";
-        return "";
+
+    // RPG Tier Mapping (Sprint 12 Arena)
+    const getTierConfig = () => {
+        if (score >= 90) return { label: "LEGENDARY", class: "tier-legendary", badge: "bg-amber-500/20 text-amber-400 border-amber-500/50" };
+        if (score >= 75) return { label: "DIAMOND", class: "tier-diamond", badge: "bg-cyan-500/20 text-cyan-400 border-cyan-500/50" };
+        if (score >= 60) return { label: "GOLD", class: "border-l-4 border-l-amber-500", badge: "bg-amber-500/10 text-amber-500 border-amber-500/30" };
+        if (score >= 40) return { label: "SILVER", class: "border-l-4 border-l-slate-400", badge: "bg-slate-500/10 text-slate-400 border-slate-500/30" };
+        return { label: "BRONZE", class: "border-l-4 border-l-orange-800", badge: "bg-orange-900/10 text-orange-800 border-orange-800/30" };
     };
 
-    const getScoreBadgeClass = () => {
-        if (score >= 85) return "bg-neon-green-bg text-neon-green-soft border-neon-green/30";
-        if (score >= 70) return "bg-neon-cyan-bg text-neon-cyan-soft border-neon-cyan/30";
-        if (score >= 55) return "bg-neon-yellow-bg text-neon-yellow-soft border-neon-yellow/30";
-        return "bg-bg-surface text-text-muted border-border-subtle";
+    const tier = getTierConfig();
+
+    // Didactic Coach Logic
+    const getCoachHint = () => {
+        if (lead.status === 'NEW' && !lead.decision_maker) return "Identifique o decisor para acelerar a qualificação.";
+        if (lead.status === 'MEETING' && !lead.contract_value) return "Tente estimar o valor do contrato durante a reunião.";
+        if (lead.score && lead.score > 80 && lead.status !== 'WON') return "Lead quente! Priorize o fechamento ainda hoje.";
+        return "Mantenha o histórico atualizado para melhor precisão da IA.";
     };
 
     // Last contact label
@@ -164,10 +173,13 @@ export function KanbanCard({ lead, onEdit, onUpdateTitle, onDisqualify, onApprov
             <Card
                 className={`
                     cursor-grab active:cursor-grabbing 
-                    bg-bg-elevated rounded-sm shadow-sm
-                    ${!isDragging && !isOverlay ? 'transition-all duration-150 hover:bg-bg-hover hover:translate-y-[-2px]' : ''}
+                    bg-bg-elevated/40 backdrop-blur-md rounded-sm shadow-sm
+                    ${!isDragging && !isOverlay ? 'transition-all duration-300 hover:bg-white/5 hover:translate-y-[-2px] hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)]' : ''}
                     ${isOverlay ? 'shadow-2xl ring-2 ring-accent/50 rotate-1' : ''}
-                    ${getScoreBorderClass()}
+                    ${lead.is_starred
+                        ? 'border-amber-500/50 shadow-[0_0_15px_rgba(245,158,11,0.15)] ring-1 ring-amber-500/20'
+                        : 'border-white/5'}
+                    ${tier.class}
                 `}
                 onClick={() => !isEditingTitle && !isDragging && onEdit(lead)}
             >
@@ -199,18 +211,29 @@ export function KanbanCard({ lead, onEdit, onUpdateTitle, onDisqualify, onApprov
                                     {lead.trade_name || lead.company_name}
                                 </CardTitle>
                             )}
-
                             {/* Contact Name */}
                             <div className="flex items-center gap-1 mt-1 text-xs">
                                 {displayName ? (
-                                    <span className="flex items-center gap-1 text-accent font-medium truncate">
-                                        <User className="w-3 h-3 shrink-0" />
-                                        {displayName}
-                                    </span>
+                                    <>
+                                        <span className="flex items-center gap-1 text-accent font-medium truncate">
+                                            <User className="w-3 h-3 shrink-0" />
+                                            {displayName}
+                                        </span>
+                                        {phoneDigits.length >= 4 && (
+                                            <span className="text-[10px] text-text-muted bg-bg-surface px-1 rounded border border-border-subtle font-display ml-auto shrink-0">
+                                                *{phoneDigits.slice(-4)}
+                                            </span>
+                                        )}
+                                    </>
                                 ) : displayPhone ? (
-                                    <span className="flex items-center gap-1 text-text-muted truncate">
+                                    <span className="flex items-center gap-1 text-text-muted truncate w-full">
                                         <Phone className="w-3 h-3 shrink-0" />
                                         {maskedPhone}
+                                        {phoneDigits.length >= 4 && (
+                                            <span className="text-[10px] text-text-muted bg-bg-surface px-1 rounded border border-border-subtle font-display ml-auto shrink-0">
+                                                *{phoneDigits.slice(-4)}
+                                            </span>
+                                        )}
                                     </span>
                                 ) : (
                                     <span className="text-text-disabled italic">Sem contato</span>
@@ -223,14 +246,14 @@ export function KanbanCard({ lead, onEdit, onUpdateTitle, onDisqualify, onApprov
                             <Button
                                 variant="ghost"
                                 size="icon-sm"
-                                className={`h-6 w-6 ${lead.is_starred ? 'text-accent' : 'text-text-muted hover:text-accent'}`}
+                                className={`h-6 w-6 ${lead.is_starred ? 'text-amber-400' : 'text-text-muted hover:text-accent'}`}
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     onToggleFavorite?.(lead.id, !lead.is_starred);
                                 }}
                                 title={lead.is_starred ? "Remover dos favoritos" : "Adicionar aos favoritos"}
                             >
-                                <Star className={`w-3.5 h-3.5 ${lead.is_starred ? 'fill-accent' : ''}`} />
+                                <Star className={`w-3.5 h-3.5 ${lead.is_starred ? 'fill-amber-400 shadow-sm' : ''}`} />
                             </Button>
 
                             {onApprove && (
@@ -282,24 +305,35 @@ export function KanbanCard({ lead, onEdit, onUpdateTitle, onDisqualify, onApprov
 
                 {/* Content */}
                 <CardContent className="p-3 pt-0">
-                    {/* Score + Quick Contact Row */}
                     <div className="flex justify-between items-center mb-2">
-                        <div className="flex gap-2 items-center">
-                            {score > 0 && (
+                        <div className="flex gap-1.5 flex-wrap items-center">
+                            {/* Meeting Sub-status */}
+                            {lead.status === 'MEETING' && (
                                 <Badge
                                     variant="outline"
-                                    className={`font-display text-[10px] h-5 px-2 font-bold ${getScoreBadgeClass()}`}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        onUpdateMeetingType?.(lead.id, lead.meeting_type || '');
+                                    }}
+                                    className={cn(
+                                        "h-6 px-2 font-black uppercase text-[9px] tracking-wider transition-all duration-300 cursor-pointer hover:scale-105 active:scale-95 shadow-sm",
+                                        "bg-white border-white/20 text-[#1C1C1C]",
+                                        !lead.meeting_type && "opacity-60 grayscale-[0.5]"
+                                    )}
                                 >
-                                    {score} pts
-                                </Badge>
-                            )}
-                            {/* Contract Value Badge */}
-                            {lead.contract_value && Number(lead.contract_value) > 0 && (
-                                <Badge
-                                    variant="outline"
-                                    className="font-display text-[10px] h-5 px-2 font-bold bg-neon-green-bg text-neon-green border-neon-green/30"
-                                >
-                                    R$ {Number(lead.contract_value).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                                    {/* Status Dot */}
+                                    <div className={cn(
+                                        "w-2 h-2 rounded-full mr-2 shadow-[0_0_8px_rgba(0,0,0,0.1)]",
+                                        !lead.meeting_type ? "bg-slate-400" :
+                                            lead.meeting_type === 'FOLLOW_UP' ? "bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.4)]" :
+                                                lead.meeting_type === 'CONFIRMATION' ? "bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.4)]" :
+                                                    "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]"
+                                    )} />
+
+                                    {!lead.meeting_type ? 'Agendamento' :
+                                        lead.meeting_type === 'FOLLOW_UP' ? 'Follow Up Especial' :
+                                            lead.meeting_type === 'CONFIRMATION' ? 'A Confirmar' :
+                                                'Confirmada'}
                                 </Badge>
                             )}
                         </div>
@@ -366,6 +400,6 @@ export function KanbanCard({ lead, onEdit, onUpdateTitle, onDisqualify, onApprov
                     </div>
                 </CardContent>
             </Card>
-        </div>
+        </div >
     );
 }

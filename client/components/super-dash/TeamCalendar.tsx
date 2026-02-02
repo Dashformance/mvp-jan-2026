@@ -1,4 +1,7 @@
+"use client";
+
 import React, { useState } from 'react';
+import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Calendar as CalendarIcon, Clock, Plus, ChevronLeft, ChevronRight, Trash2, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -8,6 +11,7 @@ import {
 } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { AddMeetingModal } from './AddMeetingModal';
+import { MeetingDetailModal } from './MeetingDetailModal';
 import { Button } from '@/components/ui/button';
 
 interface Meeting {
@@ -16,15 +20,19 @@ interface Meeting {
     date: string | Date;
     ownerName: string;
     ownerAvatar?: string;
+    meetingType?: string;
 }
 
 interface TeamCalendarProps {
     meetings: Meeting[];
     className?: string;
+    onMeetingChange?: () => void;
 }
 
-export const TeamCalendar: React.FC<TeamCalendarProps> = ({ meetings = [], className }) => {
+export const TeamCalendar: React.FC<TeamCalendarProps> = ({ meetings = [], className, onMeetingChange }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [selectedMeetingForDetail, setSelectedMeetingForDetail] = useState<any>(null);
+    const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
     const [selectedDate, setSelectedDate] = useState<Date>(new Date());
     const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
 
@@ -41,6 +49,12 @@ export const TeamCalendar: React.FC<TeamCalendarProps> = ({ meetings = [], class
         const ownerName = m.ownerName || (m as any).owner_user?.name || (m as any).owner?.name || 'N/A';
         const ownerAvatar = m.ownerAvatar || (m as any).owner_user?.avatar_url || (m as any).owner?.avatar_url;
 
+        // Handle Meeting Type (from Prisma)
+        const meetingType = m.meetingType || (m as any).meeting_type || 'SCHEDULED';
+        const meetingStatus = (m as any).meeting_status || 'PENDING';
+        const leadStatus = (m as any).lead_status || 'NEW';
+        const notes = (m as any).notes || '';
+
         return {
             ...m,
             id: m.id,
@@ -48,7 +62,11 @@ export const TeamCalendar: React.FC<TeamCalendarProps> = ({ meetings = [], class
             date: rawDate,
             dateObj,
             ownerName,
-            ownerAvatar
+            ownerAvatar,
+            meetingType,
+            meeting_status: meetingStatus,
+            lead_status: leadStatus,
+            notes
         };
     });
 
@@ -70,6 +88,20 @@ export const TeamCalendar: React.FC<TeamCalendarProps> = ({ meetings = [], class
 
     // Check availability
     const getMeetingCount = (day: Date) => parsedMeetings.filter(m => isSameDay(m.dateObj, day)).length;
+
+    // Get priority color for a day (Amber > Green > Indigo)
+    const getDayDotColor = (day: Date): string => {
+        const dayMeetings = parsedMeetings.filter(m => isSameDay(m.dateObj, day));
+        if (dayMeetings.length === 0) return '';
+
+        // Priority: FOLLOW_UP (Red) > CONFIRMATION (Yellow) > SCHEDULED (Emerald/Blue)
+        const hasFollowUp = dayMeetings.some(m => m.meetingType === 'FOLLOW_UP');
+        const hasConfirmation = dayMeetings.some(m => m.meetingType === 'CONFIRMATION');
+
+        if (hasFollowUp) return 'bg-red-500';
+        if (hasConfirmation) return 'bg-amber-500';
+        return 'bg-emerald-500'; // Default (SCHEDULED)
+    };
 
     const nextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
     const prevMonth = () => setCurrentMonth(subMonths(currentMonth, 1));
@@ -151,8 +183,8 @@ export const TeamCalendar: React.FC<TeamCalendarProps> = ({ meetings = [], class
                                     <span className="text-xs">{format(dayItem, 'd')}</span>
                                     {hasMeetings && (
                                         <span className={cn(
-                                            "absolute bottom-1.5 w-1 h-1 rounded-full",
-                                            isSelected ? "bg-[#D4C39C]" : "bg-[#D4C39C]" // Gold dot
+                                            "absolute bottom-1.5 w-1.5 h-1.5 rounded-full",
+                                            getDayDotColor(dayItem)
                                         )} />
                                     )}
                                 </button>
@@ -169,7 +201,7 @@ export const TeamCalendar: React.FC<TeamCalendarProps> = ({ meetings = [], class
                         </span>
                         {selectedMeetings.length > 0 && (
                             <span className="text-[10px] font-bold bg-gray-200/80 text-gray-600 px-2.5 py-1 rounded-full">
-                                {selectedMeetings.length} reuniões
+                                {selectedMeetings.length} {selectedMeetings.length === 1 ? 'evento' : 'eventos'}
                             </span>
                         )}
                     </div>
@@ -177,7 +209,15 @@ export const TeamCalendar: React.FC<TeamCalendarProps> = ({ meetings = [], class
                     <AnimatePresence mode='popLayout'>
                         {selectedMeetings.length > 0 ? (
                             selectedMeetings.map((meeting, idx) => (
-                                <MeetingCard key={meeting.id} meeting={meeting} index={idx} />
+                                <MeetingCard
+                                    key={meeting.id}
+                                    meeting={meeting}
+                                    index={idx}
+                                    onClick={() => {
+                                        setSelectedMeetingForDetail(meeting);
+                                        setIsDetailModalOpen(true);
+                                    }}
+                                />
                             ))
                         ) : (
                             <motion.div
@@ -195,7 +235,14 @@ export const TeamCalendar: React.FC<TeamCalendarProps> = ({ meetings = [], class
                 </div>
             </motion.div>
 
-            <AddMeetingModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+            <AddMeetingModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSuccess={onMeetingChange} />
+
+            <MeetingDetailModal
+                isOpen={isDetailModalOpen}
+                onClose={() => setIsDetailModalOpen(false)}
+                meeting={selectedMeetingForDetail}
+                onUpdate={onMeetingChange}
+            />
         </>
     );
 };
@@ -203,7 +250,7 @@ export const TeamCalendar: React.FC<TeamCalendarProps> = ({ meetings = [], class
 import { deleteMeeting } from '@/app/actions/meeting-actions';
 import { toast } from 'sonner';
 
-const MeetingCard = ({ meeting, index }: { meeting: any, index: number }) => {
+const MeetingCard = ({ meeting, index, onClick }: { meeting: any, index: number, onClick: () => void }) => {
     const [isDeleting, setIsDeleting] = useState(false);
 
     const handleDelete = async (e: React.MouseEvent) => {
@@ -225,6 +272,40 @@ const MeetingCard = ({ meeting, index }: { meeting: any, index: number }) => {
         }
     };
 
+    const getMeetingBgColor = (type: string, status?: string) => {
+        if (status === 'CONFIRMED') return 'bg-emerald-500';
+        switch (type) {
+            case 'FOLLOW_UP': return 'bg-red-500';
+            case 'CONFIRMATION': return 'bg-amber-400';
+            case 'SCHEDULED': return 'bg-emerald-500';
+            default: return 'bg-gray-900';
+        }
+    };
+
+    const getMeetingTextColor = (type: string, status?: string) => {
+        if (status === 'CONFIRMED') return 'text-white';
+        switch (type) {
+            case 'FOLLOW_UP': return 'text-white';
+            case 'CONFIRMATION': return 'text-amber-950'; // High contrast for yellow
+            case 'SCHEDULED': return 'text-white';
+            default: return 'text-white';
+        }
+    };
+
+    const getMeetingMutedTextColor = (type: string, status?: string) => {
+        if (status === 'CONFIRMED') return 'text-emerald-100';
+        switch (type) {
+            case 'FOLLOW_UP': return 'text-red-100';
+            case 'CONFIRMATION': return 'text-amber-800/80';
+            case 'SCHEDULED': return 'text-emerald-100';
+            default: return 'text-gray-400';
+        }
+    };
+
+    const meetingBgClass = getMeetingBgColor(meeting.meetingType, meeting.meeting_status);
+    const meetingTextClass = getMeetingTextColor(meeting.meetingType, meeting.meeting_status);
+    const meetingMutedTextClass = getMeetingMutedTextColor(meeting.meetingType, meeting.meeting_status);
+
     return (
         <motion.div
             layout
@@ -232,37 +313,49 @@ const MeetingCard = ({ meeting, index }: { meeting: any, index: number }) => {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ delay: index * 0.05, type: "spring", stiffness: 300, damping: 25 }}
-            className="flex items-center bg-white rounded-2xl p-4 shadow-sm border border-black/[0.03] hover:shadow-md transition-all group cursor-pointer relative overflow-hidden"
+            onClick={onClick}
+            className={cn(
+                "flex items-center rounded-2xl p-4 shadow-lg transition-all group cursor-pointer relative overflow-hidden border-none",
+                meetingBgClass,
+                meetingTextClass
+            )}
         >
-            {/* Accent Strip */}
-            <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#D4C39C]" />
+            {/* Accent light effect */}
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl pointer-events-none" />
 
             {/* Time */}
-            <div className="flex flex-col min-w-[3.5rem] border-r border-gray-100 pr-4 mr-4">
-                <span className="text-xl font-black text-[#1C1C1C] tracking-tight">
+            <div className={cn("flex flex-col min-w-14 border-r pr-4 mr-4",
+                meeting.meetingType === 'CONFIRMATION' && meeting.meeting_status !== 'CONFIRMED' ? "border-amber-950/10" : "border-white/20"
+            )}>
+                <span className="text-xl font-black tracking-tight">
                     {format(meeting.dateObj, 'HH:mm')}
                 </span>
-                <span className="text-[10px] text-gray-400 font-bold uppercase mt-1">
-                    {format(meeting.dateObj, 'EEE', { locale: ptBR })}
-                </span>
+                {/* Visible Status Tag beside time */}
+                <div className={cn(
+                    "px-1 py-0.5 rounded-[4px] text-[8px] font-black uppercase tracking-tighter mt-1 text-center border-b-2 shadow-sm",
+                    meeting.meetingType === 'FOLLOW_UP' && meeting.meeting_status !== 'CONFIRMED' ? "bg-red-600 text-white border-red-700" :
+                        meeting.meetingType === 'CONFIRMATION' && meeting.meeting_status !== 'CONFIRMED' ? "bg-amber-500 text-amber-950 border-amber-600" :
+                            "bg-emerald-600 text-white border-emerald-700"
+                )}>
+                    {meeting.meetingType === 'FOLLOW_UP' && meeting.meeting_status !== 'CONFIRMED' ? 'F-UP' :
+                        meeting.meetingType === 'CONFIRMATION' && meeting.meeting_status !== 'CONFIRMED' ? 'CONF' : 'OK'}
+                </div>
             </div>
 
             {/* Info */}
             <div className="flex-1 overflow-hidden">
-                <h4 className="text-base font-bold text-[#1C1C1C] truncate group-hover:text-[#D4C39C] transition-colors">
+                <h4 className="text-base font-black truncate group-hover:translate-x-1 transition-transform">
                     {meeting.title}
                 </h4>
-                <div className="flex items-center gap-2 mt-1.5">
+                {/* Secondary status text removed as we moved it to the side */}
+                <div className="flex items-center gap-2 mt-1">
                     {meeting.ownerName && (
-                        <div className="flex items-center gap-1.5 bg-gray-50 px-2 py-1 rounded-md">
-                            {meeting.ownerAvatar ? (
-                                <img src={meeting.ownerAvatar} alt={meeting.ownerName} className="w-4 h-4 rounded-full border border-gray-100" />
-                            ) : (
-                                <div className="w-4 h-4 rounded-full bg-[#1C1C1C] flex items-center justify-center text-[8px] text-[#D4C39C] font-bold">
-                                    {meeting.ownerName[0]}
-                                </div>
-                            )}
-                            <span className="text-[10px] text-gray-500 font-bold truncate max-w-[80px]">{meeting.ownerName.split(' ')[0]}</span>
+                        <div className={cn("flex items-center gap-1.5 px-2 py-0.5 rounded-md",
+                            meeting.meetingType === 'CONFIRMATION' && meeting.meeting_status !== 'CONFIRMED' ? "bg-amber-500/20" : "bg-white/10"
+                        )}>
+                            <span className={cn("text-[9px] font-black truncate max-w-[80px] uppercase tracking-wider", meetingTextClass)}>
+                                {meeting.ownerName.split(' ')[0]}
+                            </span>
                         </div>
                     )}
                 </div>
@@ -272,7 +365,10 @@ const MeetingCard = ({ meeting, index }: { meeting: any, index: number }) => {
             <button
                 onClick={handleDelete}
                 disabled={isDeleting}
-                className="opacity-0 group-hover:opacity-100 p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-all"
+                className={cn(
+                    "opacity-0 group-hover:opacity-100 p-2 rounded-full transition-all",
+                    meeting.meetingType === 'CONFIRMATION' && meeting.meeting_status !== 'CONFIRMED' ? "text-amber-950 hover:bg-amber-500/30" : "text-white hover:bg-white/20"
+                )}
                 title="Remover da agenda"
             >
                 <Trash2 className="w-4 h-4" />

@@ -22,6 +22,7 @@ interface GameActions {
     // XP Actions
     addXP: (actionType: ActionType, multiplier?: number) => XPResult;
     setXP: (xp: number) => void;
+    syncWithProfile: (xp: number, level: number) => void;
 
     // Combo Actions
     incrementCombo: () => void;
@@ -140,6 +141,13 @@ export const useGameStore = create<GameStore>()(
             setXP: (xp: number) => {
                 const newLevel = calculateLevel(xp);
                 set({ totalXP: xp, level: newLevel });
+            },
+
+            /**
+             * Sincroniza o estado local com os dados do servidor
+             */
+            syncWithProfile: (xp: number, level: number) => {
+                set({ totalXP: xp, level: level });
             },
 
             /**

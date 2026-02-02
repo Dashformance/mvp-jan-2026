@@ -37,13 +37,17 @@ export async function updateSession(request: NextRequest) {
             }
         )
 
-        // IMPORTANT: Avoid writing any logic between createServerClient and
-        // supabase.auth.getUser(). A simple mistake could make it very hard to debug
-        // issues with users being randomly logged out.
-
+        // IMPORTANT: This call will refresh the session if needed
+        // getUser() is preferred over getSession() as it validates the token with Supabase
         const {
             data,
+            error
         } = await supabase.auth.getUser()
+
+        if (error) {
+            console.log('[Middleware] Auth error:', error.message)
+        }
+
         const user = data?.user
 
         if (
@@ -69,4 +73,5 @@ export async function updateSession(request: NextRequest) {
 
     return supabaseResponse
 }
+
 

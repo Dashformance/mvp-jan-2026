@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { LeadsService } from '@/lib/services/leads-service';
+import { AnalyticsService } from '@/lib/services/analytics-service';
 
 export const dynamic = 'force-dynamic';
 
@@ -51,45 +51,42 @@ export async function GET(request: Request) {
                 break;
         }
 
-        console.log(`[SuperDash API] Fetching stats for period: ${period}. Start: ${SEASON_START_DATE.toISOString()}`);
+        const seasonStartString = SEASON_START_DATE instanceof Date && !isNaN(SEASON_START_DATE.getTime())
+            ? SEASON_START_DATE.toISOString()
+            : 'Invalid Date';
+        console.log(`[SuperDash API] Fetching stats for period: ${period}. Start: ${seasonStartString}`);
 
-        // 1. Fetch LIFE TIME DATA (For Revenue - Optional: Make strict if needed)
-        // For SuperDash filters, usually we want "Revenue in Period", so we should pass the date too.
-        // But "Level" and "XP" are lifetime concepts in RPG. We should be careful.
-        // DECISION: 
-        // - RPG Stats (Level, Total XP) -> Lifetime (Constant)
-        // - Performance Stats (Sales, Meetings, XP Today) -> Period (Filtered)
-
-        const lifetimeStats = await LeadsService.getPerformanceByOwner(); // Used for Fallback Levels/XP
-
-        // 2. Fetch SEASONAL DATA (Filtered by Date)
+        // 1. Fetch ALL DATA in parallel for maximum performance
         let funnel: any[] = [];
         let seasonalStats: any = {};
         let regionDistribution: any = [];
-        let globalStats: any = { revenue: 0, pipelineValue: 0 };
+        let globalStats: any = { revenue: 0, pipelineValue: 0, moneyOnTable: 0 };
         let calendar: any[] = [];
+        let feed: any[] = [];
+        let hourlyActions: any[] = [];
 
         try {
-            [funnel, seasonalStats, regionDistribution, globalStats, calendar] = await Promise.all([
-                LeadsService.getConversionFunnel(SEASON_START_DATE).catch(e => { console.error('Funnel error:', e); return []; }),
-                LeadsService.getPerformanceByOwner(SEASON_START_DATE, SEASON_END_DATE).catch(e => { console.error('Seasonal stats error:', e); return {}; }),
-                LeadsService.getLeadsByState().catch(e => { console.error('Regions error:', e); return []; }),
-                LeadsService.getStatsOverview(undefined, SEASON_START_DATE, SEASON_END_DATE).catch(e => { console.error('Overview stats error:', e); return { revenue: 0, pipelineValue: 0 }; }),
-                LeadsService.getUpcomingMeetings(100).catch(e => { console.error('Calendar error:', e); return []; })
+            const results = await Promise.all([
+                AnalyticsService.getConversionFunnel(SEASON_START_DATE).catch(e => { console.error('Funnel error:', e); return []; }),
+                AnalyticsService.getPerformanceByOwner(SEASON_START_DATE, SEASON_END_DATE).catch(e => { console.error('Seasonal stats error:', e); return {}; }),
+                AnalyticsService.getLeadsByState().catch(e => { console.error('Regions error:', e); return []; }),
+                AnalyticsService.getStatsOverview(undefined, SEASON_START_DATE, SEASON_END_DATE).catch(e => { console.error('Overview stats error:', e); return { revenue: 0, pipelineValue: 0, moneyOnTable: 0 }; }),
+                AnalyticsService.getUpcomingMeetings(100).catch(e => { console.error('Calendar error:', e); return []; }),
+                AnalyticsService.getRecentActivity(20).catch(e => { console.error('Feed error:', e); return []; }),
+                (period === 'today'
+                    ? AnalyticsService.getActivityTrend(todayStart, now)
+                    : AnalyticsService.getActivityTrend(SEASON_START_DATE, SEASON_END_DATE || now)
+                ).catch(e => { console.error('Trend error:', e); return []; })
             ]);
+            [funnel, seasonalStats, regionDistribution, globalStats, calendar, feed, hourlyActions] = results;
         } catch (err) {
-            console.error('Critical Promise.all failure:', err);
+            console.error('[SuperDash API] Critical Promise.all failure:', err);
         }
 
         // Map "PerformanceByOwner" to "Collaborators"
         const collaborators = Object.entries(seasonalStats).map(([key, data]: [string, any]) => {
             const sStats = data;
             const meta = sStats.meta || {};
-
-            // Use LIFETIME stats for Level/XP if not in seasonal (though leads-service returns strict meta)
-            // Correction: sStats.meta contains the USER info which is consistent. 
-            // However, sStats.xp is "Period XP" or "Global XP"? 
-            // In getPerformanceByOwner, meta.xp is Global. sStats.xpPeriod is Date Range XP.
 
             // XP from Database (Persistent - Lifetime)
             const globalXp = meta.xp || 0;
@@ -108,19 +105,22 @@ export async function GET(request: Request) {
             const revenue = sStats.revenue || 0;
 
             // Funnel (Seasonal)
-            const userFunnel = funnel.map(stage => {
+            const userFunnel = Array.isArray(funnel) ? funnel.map(stage => {
                 const stageObj = stage as any;
                 return {
                     stage: stage.status,
                     value: stageObj[key] || 0,
                     rate: 0
                 };
-            });
+            }) : [];
 
             const maxContacted = Math.max(...userFunnel.map(s => s.value), 1);
             userFunnel.forEach(f => {
                 f.rate = Math.round((f.value / maxContacted) * 100);
             });
+
+            // Lifetime Stats from Gamification (Pre-calculated by script)
+            const lifetime = (meta.gamification as any)?.lifetime || {};
 
             return {
                 id: meta.id || key,
@@ -130,40 +130,39 @@ export async function GET(request: Request) {
                 level,
                 xp: globalXp, // Always show Global XP for progress bar
                 xpToday,
-                xpPeriod, // XP Gained in this period (can be used for ranking if requested)
+                xpPeriod, // XP Gained in this period
                 nextLevelXp,
-                score,
-                badges: sStats.sold > 5 ? ["Top Gun"] : [],
-                addedToday: sStats.addedToday,
+                score: level, // User requested Level to be the "Big Number"
+                badges: (sStats.won || 0) > 5 ? ["Top Gun"] : [],
+                addedToday: sStats.addedToday || 0,
                 stats: {
-                    contacts: sStats.lifetimeTotal, // LEADS (Fixed 5-Day Window)
-                    responses: sStats.lifetimeResp, // RESP (Fixed 5-Day Window)
-                    meetings: sStats.lifetimeMeet, // MEET (Fixed 5-Day Window)
-                    sales: sStats.lifetimeSold, // VENDAS (Fixed 5-Day Window)
-                    revenue // Revenue (Fixed 5-Day Window)
+                    contacts: lifetime.leads ?? (sStats.total || 0), // "LEADS" on card = Total Owned/Active
+                    responses: lifetime.responses ?? (sStats.contacted || 0), // "RESP" = Total Responses
+                    meetings: lifetime.meetings ?? (sStats.meeting || 0), // "MEET" = Total Meetings
+                    sales: lifetime.sales ?? (sStats.won || 0), // "VENDAS" = Total Sales
+                    revenue
                 },
                 funnel: userFunnel.slice(0, 4),
-                pace: Math.min(Math.round((sStats.contacted / 20) * 100), 100),
-                quality: sStats.conversionRate
+                pace: Math.min(Math.round(((sStats.contacted || 0) / 20) * 100), 100),
+                quality: sStats.conversionRate || 0
             };
         });
 
-        // Overview
-        const totalSalesSeasonal = collaborators.reduce((acc, c) => acc + c.stats.sales, 0);
-        const activeLeadsSeasonal = collaborators.reduce((acc, c) => acc + c.stats.contacts, 0);
-
-        const overview = {
-            totalLeads: activeLeadsSeasonal,
-            totalSales: totalSalesSeasonal,
-            conversionRate: activeLeadsSeasonal > 0 ? ((totalSalesSeasonal / activeLeadsSeasonal) * 100).toFixed(1) : 0,
-            activeLeads: activeLeadsSeasonal,
+        // Overview - Use globalStats for sales (current lead status), collaborators for contacts/meetings (event-based)
+        const overviewData = {
+            totalLeads: globalStats?.total || 0,
+            totalSales: globalStats?.totalSales || 0, // CRITICAL: Use current lead status, NOT interaction events
+            totalMeetings: globalStats?.totalMeetings || collaborators.reduce((acc, c) => acc + c.stats.meetings, 0),
+            totalContacts: globalStats?.totalContacts || collaborators.reduce((acc, c) => acc + c.stats.contacts, 0),
+            conversionRate: globalStats?.total > 0 ? ((globalStats?.totalSales || 0) / globalStats.total * 100).toFixed(1) : 0,
+            activeLeads: globalStats?.total || 0,
             growth: 0,
-            revenue: globalStats.revenue,
-            moneyOnTable: globalStats.moneyOnTable,
-            pipelineValue: globalStats.pipelineValue
+            revenue: globalStats?.revenue || 0,
+            moneyOnTable: globalStats?.moneyOnTable || 0,
+            pipelineValue: globalStats?.pipelineValue || 0
         };
 
-        // Time Data (Mock - TODO: Make real with getTimelineStats(days) if needed)
+        // Time Data (Mock)
         const timeData = [
             { name: 'Seg', sales: 0, meetings: 0 },
             { name: 'Ter', sales: 0, meetings: 0 },
@@ -172,36 +171,23 @@ export async function GET(request: Request) {
             { name: 'Sex', sales: 0, meetings: 0 },
         ];
 
-        // 5. Fetch Activity Feed (Real) - Limit by date? Usually Feed is just "Recent", regardless of filter.
-        // Let's keep feed recent.
-        const feed = await LeadsService.getRecentActivity(20);
-
-        // 6. Fetch Activity Trend (Real-time or Period)
-        let hourlyActions = [];
-        try {
-            if (period === 'today') {
-                console.log(`[SuperDash API] Fetching 24h rolling activity trend...`);
-                hourlyActions = await LeadsService.getHourlyActivity();
-            } else {
-                console.log(`[SuperDash API] Fetching trend for ${period}. Start: ${SEASON_START_DATE?.toISOString()} End: ${SEASON_END_DATE?.toISOString()}`);
-                hourlyActions = await LeadsService.getActivityTrend(SEASON_START_DATE, SEASON_END_DATE || now);
-            }
-        } catch (trendError) {
-            console.error('[SuperDash API] Trend Error:', trendError);
-            hourlyActions = []; // Fallback
-        }
+        // (Feed and ActionTrend now fetched in parallel above)
 
         return NextResponse.json({
-            overview,
-            collaborators: collaborators.sort((a, b) => b.score - a.score),
+            overview: overviewData,
+            collaborators: collaborators.sort((a, b) => (b.score || 0) - (a.score || 0)),
             timeData,
             calendar,
             feed,
             actionTrend: hourlyActions
         });
 
-    } catch (error) {
-        console.error('Superdash Stats Error:', error);
-        return NextResponse.json({ error: 'Failed to fetch superdash stats' }, { status: 500 });
+    } catch (error: any) {
+        console.error('[SuperDash API] Crash Error:', error);
+        return NextResponse.json({
+            error: 'Failed to fetch superdash stats',
+            message: error.message,
+            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        }, { status: 500 });
     }
 }

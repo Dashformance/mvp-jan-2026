@@ -58,6 +58,10 @@ model interactions {
   leads      leads?    @relation(fields: [lead_id], references: [id], onDelete: Cascade)
 
   @@index([lead_id])
+  @@index([user_id])
+  @@index([type])
+  @@index([date])
+  @@index([lead_id, date])
 }
 
 model leads {
@@ -90,10 +94,19 @@ model leads {
   is_starred         Boolean        @default(false)
   owner_id           String?
   contract_value     Decimal?       @default(0)
+  meeting_type       String?        // EX: 'CONFIRMATION', 'FOLLOW_UP', 'SCHEDULED'
+  meeting_status     String?        // EX: 'PENDING', 'CONFIRMED'
   contacts           contacts[]
   interactions       interactions[]
   User               User?          @relation(fields: [owner_id], references: [id])
   Segment            Segment?       @relation(fields: [segment_id], references: [id])
+
+  @@index([status])
+  @@index([owner_id])
+  @@index([deletedAt])
+  @@index([date_added])
+  @@index([owner_id, status])
+  @@index([deletedAt, status, owner_id])
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
@@ -104,8 +117,10 @@ model stages {
   color      String?
   icon       String?
   position   Int      @default(0)
+  is_win_stage  Boolean  @default(false)
+  is_lost_stage Boolean  @default(false)
   created_at DateTime @default(now())
-  updated_at DateTime
+  updated_at DateTime @updatedAt
 }
 
 enum LeadStatus {

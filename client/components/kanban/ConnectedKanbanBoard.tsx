@@ -10,6 +10,7 @@ export function ConnectedKanbanBoard() {
         updateLeadStatus,
         openLeadSheet,
         updateLead,
+        updateMeetingType,
         updateLeadStatus: disqualifyLead, // Alias
         updateLeadStatus: approveLead, // Alias 
         quickContact,
@@ -55,6 +56,7 @@ export function ConnectedKanbanBoard() {
             }}
             onToggleFavorite={toggleFavorite}
             onDelete={deleteLead}
+            onUpdateMeetingType={updateMeetingType}
         />
     );
 }

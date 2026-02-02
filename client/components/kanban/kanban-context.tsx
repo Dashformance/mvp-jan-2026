@@ -20,6 +20,7 @@ export interface KanbanContextType {
     fetchLeads: (page?: number) => Promise<void>;
     updateLeadStatus: (id: string, newStatus: string) => Promise<void>;
     updateLead: (lead: any) => Promise<void>;
+    updateMeetingType: (id: string, currentType: string) => Promise<void>;
     toggleFavorite: (id: string, isStarred: boolean) => Promise<void>;
     quickContact: (id: string) => Promise<void>;
     deleteLead: (id: string) => Promise<void>;

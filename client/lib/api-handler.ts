@@ -31,6 +31,12 @@ export function withApiErrorHandling(handler: ApiHandler): ApiHandler {
             return response;
         } catch (error: any) {
             console.error(`[API] ${method} ${url} | ID: ${requestId} | Failed`, error);
+            console.error(`[API] Error name: ${error.name}, message: ${error.message}, code: ${error.code}`);
+
+            // Log full error for Prisma validation errors
+            if (error instanceof Prisma.PrismaClientValidationError) {
+                console.error(`[API] Full Prisma Validation Error:`, error.message);
+            }
 
             let status = 500;
             let errorType: ErrorResponse['error']['type'] = 'UNKNOWN';
@@ -67,7 +73,10 @@ export function withApiErrorHandling(handler: ApiHandler): ApiHandler {
                 status = 400;
                 errorType = 'PRISMA_VALIDATION';
                 errorMessage = 'Invalid database input';
-                errorDetails = error.message.split('\n').filter(l => l.includes('Unknown argument') || l.includes('Invalid'));
+                errorDetails = {
+                    fullError: error.message,
+                    parsed: error.message.split('\n').filter(l => l.includes('Unknown argument') || l.includes('Invalid') || l.includes('Unknown field'))
+                };
             }
             // Handle JSON parsing errors
             else if (error instanceof SyntaxError) {
