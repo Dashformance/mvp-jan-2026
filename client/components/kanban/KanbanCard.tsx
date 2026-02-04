@@ -70,8 +70,15 @@ export function KanbanCard({ lead, onEdit, onUpdateTitle, onDisqualify, onApprov
     const maskedPhone = phoneDigits.length >= 4 ? `...${phoneDigits.slice(-4)}` : displayPhone;
     const displayEmail = primaryContact?.email || lead.email;
 
+    // Use refs to track previous values to avoid unnecessary updates if object ref changes but values don't
+    const prevTitleRef = useRef(lead.trade_name || lead.company_name);
+
     useEffect(() => {
-        setTitleValue(lead.trade_name || lead.company_name);
+        const newTitle = lead.trade_name || lead.company_name;
+        if (newTitle !== prevTitleRef.current) {
+            setTitleValue(newTitle);
+            prevTitleRef.current = newTitle;
+        }
     }, [lead.trade_name, lead.company_name]);
 
     useEffect(() => {

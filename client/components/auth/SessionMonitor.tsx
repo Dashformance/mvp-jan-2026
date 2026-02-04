@@ -48,7 +48,6 @@ export function SessionMonitor() {
 
         return () => {
             clearTimeout(warningTimeout);
-            setHasWarned(false);
         };
     }, [session, hasWarned]);
 

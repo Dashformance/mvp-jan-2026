@@ -232,7 +232,7 @@ export function useKanbanState() {
 
 
 
-    const updateLeadStatus = async (id: string, newStatus: string) => {
+    const updateLeadStatus = useCallback(async (id: string, newStatus: string) => {
         // Optimistic update via mutate
         mutateLeads(
             (prevPages: any[] | undefined) => {
@@ -269,9 +269,9 @@ export function useKanbanState() {
             toast.error("Erro ao atualizar status");
             mutateLeads(); // Revert on error by refetching
         }
-    };
+    }, [mutateLeads, addXP]);
 
-    const updateLead = async (lead: any) => {
+    const updateLead = useCallback(async (lead: any) => {
         try {
             const isNew = !lead.id || lead.id === 'new';
             const method = isNew ? 'POST' : 'PATCH';
@@ -314,9 +314,9 @@ export function useKanbanState() {
             toast.error(lead.id === 'new' ? "Erro ao criar lead" : `Erro ao atualizar lead: ${e.message}`);
             console.error(e);
         }
-    };
+    }, [mutateLeads, addXP]);
 
-    const toggleFavorite = async (id: string, isStarred: boolean) => {
+    const toggleFavorite = useCallback(async (id: string, isStarred: boolean) => {
         // Optimistic
         mutateLeads(
             (prevPages: any[] | undefined) => {
@@ -341,9 +341,9 @@ export function useKanbanState() {
             toast.error("Erro ao atualizar favorito");
             mutateLeads();
         }
-    };
+    }, [mutateLeads]);
 
-    const quickContact = async (id: string) => {
+    const quickContact = useCallback(async (id: string) => {
         const now = new Date().toISOString();
         // Optimistic
         mutateLeads(
@@ -376,9 +376,9 @@ export function useKanbanState() {
             toast.error("Erro ao registrar interação");
             mutateLeads();
         }
-    };
+    }, [mutateLeads, addXP]);
 
-    const deleteLead = async (id: string) => {
+    const deleteLead = useCallback(async (id: string) => {
         if (!confirm("Tem certeza que deseja excluir?")) return;
         try {
             await fetch(`${API_URL}/leads/${id}`, { method: 'DELETE' });
@@ -401,9 +401,9 @@ export function useKanbanState() {
         } catch (err) {
             toast.error("Erro ao excluir lead");
         }
-    };
+    }, [mutateLeads]);
 
-    const updateMeetingType = async (id: string, currentType: string) => {
+    const updateMeetingType = useCallback(async (id: string, currentType: string) => {
         // Cycle: null -> FOLLOW_UP -> CONFIRMATION -> SCHEDULED -> null
         let nextType: string | null = null;
         if (!currentType) nextType = 'FOLLOW_UP';
@@ -442,9 +442,9 @@ export function useKanbanState() {
             toast.error("Erro ao atualizar status");
             mutateLeads();
         }
-    };
+    }, [mutateLeads]);
 
-    const bulkUpdateLeads = async (ids: string[], data: any) => {
+    const bulkUpdateLeads = useCallback(async (ids: string[], data: any) => {
         try {
             const res = await fetch(`${API_URL}/leads/batch`, {
                 method: 'PATCH',
@@ -472,26 +472,26 @@ export function useKanbanState() {
         } catch (err) {
             toast.error("Erro ao atualizar leads em massa");
         }
-    };
+    }, [mutateLeads]);
 
-    const toggleSelectLead = (id: string) => {
+    const toggleSelectLead = useCallback((id: string) => {
         setSelectedLeads(prev => {
             const next = new Set(prev);
             if (next.has(id)) next.delete(id);
             else next.add(id);
             return next;
         });
-    };
+    }, []);
 
-    const selectAllLeads = () => {
+    const selectAllLeads = useCallback(() => {
         if (selectedLeads.size === leads.length) {
             setSelectedLeads(new Set());
         } else {
             setSelectedLeads(new Set(leads.map(l => l.id)));
         }
-    };
+    }, [selectedLeads.size, leads]);
 
-    const cleanupDuplicates = async () => {
+    const cleanupDuplicates = useCallback(async () => {
         try {
             const res = await fetch(`${API_URL}/leads/cleanup-duplicates`, { method: 'POST' });
             const data = await res.json();
@@ -509,9 +509,9 @@ export function useKanbanState() {
         } catch (error) {
             toast.error("Erro ao limpar duplicatas.");
         }
-    };
+    }, [mutateLeads]);
 
-    const openLeadSheet = (lead?: any) => {
+    const openLeadSheet = useCallback((lead?: any) => {
         if (lead) {
             setSelectedLeadForSheet(lead);
         } else {
@@ -527,12 +527,12 @@ export function useKanbanState() {
             });
         }
         setIsSheetOpen(true);
-    };
+    }, []);
 
-    const closeLeadSheet = () => {
+    const closeLeadSheet = useCallback(() => {
         setIsSheetOpen(false);
         setSelectedLeadForSheet(null);
-    };
+    }, []);
 
     return {
         leads,

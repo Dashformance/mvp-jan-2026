@@ -297,6 +297,11 @@ export const LeadsService = {
         const sourceExtra = (source.extra_info as any) || {};
         updateData.extra_info = { ...sourceExtra, ...targetExtra };
 
+        // Ensure star status is preserved in merge
+        if (source.is_starred && !target.is_starred) {
+            updateData.is_starred = true;
+        }
+
         if (Object.keys(updateData).length > 0) {
             await prisma.leads.update({
                 where: { id: targetId },
@@ -491,7 +496,10 @@ export const LeadsService = {
                     });
 
                     let targetLead: any;
-                    if (withUserNotes.length > 0) {
+                    if (group.some(l => l.is_starred)) {
+                        // Prioritize starred leads
+                        targetLead = group.find(l => l.is_starred);
+                    } else if (withUserNotes.length > 0) {
                         // Prioritize lead with user notes
                         targetLead = withUserNotes[0];
                     } else {
@@ -590,6 +598,7 @@ export const LeadsService = {
                     }
                 },
                 orderBy: [
+                    { is_starred: 'desc' }, // Favoritos primeiro!
                     { interactions: { _count: 'desc' } },
                     { date_added: 'asc' }
                 ]
