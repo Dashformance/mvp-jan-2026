@@ -371,7 +371,7 @@ export const LeadsService = {
         // Always fetch current lead for status change tracking and ownership protection
         const currentLead = await prisma.leads.findUnique({
             where: { id },
-            select: { extra_info: true, website_url: true, instagram_url: true, render_quality: true, status: true, owner: true, owner_id: true }
+            select: { extra_info: true, website_url: true, instagram_url: true, render_quality: true, status: true, owner: true, owner_id: true, is_starred: true }
         });
 
         if (!currentLead) return null;
@@ -644,6 +644,33 @@ export const LeadsService = {
 
         console.log(`✅ Deduplication complete. Merged ${totalMerged} leads.`);
         return { totalMerged };
+    },
+
+    async getDuplicateCount() {
+        const leadsWithEmails = await prisma.leads.findMany({
+            where: {
+                deletedAt: null,
+                email: { not: null, notIn: [''] }
+            },
+            select: { email: true }
+        });
+
+        const counts = new Map<string, number>();
+        leadsWithEmails.forEach(l => {
+            const key = l.email?.toLowerCase().trim();
+            if (key) {
+                counts.set(key, (counts.get(key) || 0) + 1);
+            }
+        });
+
+        let duplicates = 0;
+        for (const count of counts.values()) {
+            if (count > 1) {
+                duplicates += (count - 1);
+            }
+        }
+
+        return { count: duplicates };
     },
 
     // Analytical methods moved to AnalyticsService

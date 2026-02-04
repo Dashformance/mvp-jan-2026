@@ -12,6 +12,7 @@ import { LeadSheet } from "../lead/LeadSheet";
 import { ImportReviewDialog } from "../ImportReviewDialog";
 import { TrashSheet } from "../TrashSheet";
 import { deduplicateLeadsAction } from "@/app/actions/deduplicate-leads";
+import { getDuplicateCountAction } from "@/app/actions/get-duplicate-count";
 import { Eraser } from "lucide-react";
 import { useLeadImport } from "./hooks/use-lead-import";
 import { toast } from "sonner";
@@ -68,6 +69,23 @@ export function KanbanView() {
     const [importDialogOpen, setImportDialogOpen] = useState(false);
     const [isDeduplicating, setIsDeduplicating] = useState(false);
     const [deduplicateConfirmOpen, setDeduplicateConfirmOpen] = useState(false);
+    const [duplicateCount, setDuplicateCount] = useState<number | null>(null);
+    const [isLoadingCount, setIsLoadingCount] = useState(false);
+
+    const handleOpenDeduplicate = async () => {
+        setDeduplicateConfirmOpen(true);
+        setIsLoadingCount(true);
+        try {
+            const result = await getDuplicateCountAction() as { success: boolean, count?: number };
+            if (result.success && result.count !== undefined) {
+                setDuplicateCount(result.count);
+            }
+        } catch (error) {
+            console.error("Error fetching duplicate count:", error);
+        } finally {
+            setIsLoadingCount(false);
+        }
+    };
 
     const handleDeduplicate = async () => {
         setIsDeduplicating(true);
@@ -179,7 +197,7 @@ export function KanbanView() {
                         variant="ghost"
                         size="sm"
                         className="h-9 bg-black/20 border-white/10 hover:bg-orange-500/10 hover:text-orange-500 hover:border-orange-500/50 gap-2 transition-all"
-                        onClick={() => setDeduplicateConfirmOpen(true)}
+                        onClick={handleOpenDeduplicate}
                     >
                         <Eraser className="w-4 h-4" />
                         <span className="hidden sm:inline">Limpar Duplicatas</span>
@@ -302,6 +320,20 @@ export function KanbanView() {
                     </DialogHeader>
 
                     <div className="py-4 space-y-4">
+                        {isLoadingCount ? (
+                            <div className="flex items-center gap-2 text-sm text-white/50">
+                                <RefreshCcw className="w-4 h-4 animate-spin" />
+                                Analisando base de dados...
+                            </div>
+                        ) : duplicateCount !== null ? (
+                            <div className="p-3 bg-orange-500/10 border border-orange-500/20 rounded-lg flex items-center gap-3">
+                                <div className="text-2xl font-bold text-orange-500">{duplicateCount}</div>
+                                <div className="text-xs text-orange-300 font-medium leading-tight">
+                                    LEADS DUPLICADOS<br />IDENTIFICADOS
+                                </div>
+                            </div>
+                        ) : null}
+
                         <p className="text-white/70 text-sm leading-relaxed">
                             Esta ação irá identificar leads com o mesmo <span className="text-white font-bold">e-mail</span> e realizar um "Smart Merge":
                         </p>

@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { withApiErrorHandling } from '@/lib/api-handler';
 import { createClient } from '@/lib/supabase/server';
 import { UserService } from '@/lib/services/user-service';
+import { LeadSanitizer } from '@/lib/services/lead-sanitizer';
 
 interface ContactInput {
     name: string;
@@ -137,10 +138,18 @@ export const POST = withApiErrorHandling(async (req: NextRequest) => {
                 finalLead.company_name = finalLead.decision_maker || finalLead.trade_name || finalLead.email || 'Lead Importado';
             }
 
+            // Sanitize lead data using LeadSanitizer
+            const sanitizedLead = LeadSanitizer.sanitizeForCreate({
+                ...finalLead,
+                ...leadData, // Overlay parsed data
+                status: validatedStatus,
+                owner_id: targetOwnerId || undefined
+            });
+
             // Create Lead with nested Contacts
             const createdLead = await prisma.leads.create({
                 data: {
-                    ...finalLead,
+                    ...sanitizedLead,
                     id: crypto.randomUUID(),
                     contacts: leadData.contacts && leadData.contacts.length > 0 ? {
                         create: leadData.contacts.map((c: ContactInput, idx: number) => ({
