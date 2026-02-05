@@ -31,6 +31,7 @@ export interface KanbanContextType {
     selectedLeads: Set<string>;
     toggleSelectLead: (id: string) => void;
     selectAllLeads: () => void;
+    clearSelection: () => void;
 
     // Meta
     meta: any;

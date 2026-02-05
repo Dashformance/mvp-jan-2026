@@ -382,17 +382,24 @@ export const LeadsService = {
         if (!currentLead) return null;
 
         // --- OWNERSHIP PROTECTION GUARD ---
-        // If owner_id is missing in update but present in current, preserve it (prevent accidental clearing)
-        if (currentLead.owner_id && !sanitizedData.owner_id && sanitizedData.owner_id !== null) {
-            sanitizedData.owner_id = currentLead.owner_id;
+        // CRITICAL: Never allow owner_id to be cleared (set to null) if it already has a value.
+        // It can only be changed to a NEW valid UUID.
+        if (currentLead.owner_id) {
+            if (!sanitizedData.owner_id) {
+                // If missing or null in update, keep the existing one
+                sanitizedData.owner_id = currentLead.owner_id;
+            }
         }
 
-        // Sync owner name label if owner_id changed
+        // Sync owner name label based on the resolved owner_id
         if (sanitizedData.owner_id && sanitizedData.owner_id !== currentLead.owner_id) {
             const newOwner = await prisma.user.findUnique({ where: { id: sanitizedData.owner_id } });
             if (newOwner) {
                 sanitizedData.owner = newOwner.name.split(' ')[0].toLowerCase();
             }
+        } else if (sanitizedData.owner_id && !sanitizedData.owner) {
+            // Ensure legacy owner string is consistent even if ID didn't change
+            sanitizedData.owner = currentLead.owner;
         }
         // ----------------------------------
 

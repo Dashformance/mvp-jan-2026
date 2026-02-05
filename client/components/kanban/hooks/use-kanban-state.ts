@@ -491,6 +491,10 @@ export function useKanbanState() {
         }
     }, [selectedLeads.size, leads]);
 
+    const clearSelection = useCallback(() => {
+        setSelectedLeads(new Set());
+    }, []);
+
     const cleanupDuplicates = useCallback(async () => {
         try {
             const res = await fetch(`${API_URL}/leads/cleanup-duplicates`, { method: 'POST' });
@@ -555,6 +559,7 @@ export function useKanbanState() {
         selectedLeads,
         toggleSelectLead,
         selectAllLeads,
+        clearSelection,
         meta,
         page: size,
         setPage: setSize,

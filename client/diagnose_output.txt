@@ -1,0 +1,35 @@
+🔍 Diagnosticando leads do Bruno e Vitor...
+
+📋 LEADS LEGADOS (SEM ID) - INVISÍVEIS:
+- Bruno: 0
+- Vitor: 22
+
+✅ LEADS CORRETOS (VISÍVEIS):
+- Bruno: 50
+- Vitor: 106
+
+⚠️ LEADS ÓRFÃOS (Totalmente sem dono): 20 (Exibindo primeiros 20)
+┌─────────┬────────────────────────────────────────┬────────────────────────────────────────┬───────┬──────────────────────────┐
+│ (index) │ id                                     │ company                                │ trade │ created                  │
+├─────────┼────────────────────────────────────────┼────────────────────────────────────────┼───────┼──────────────────────────┤
+│ 0       │ '0061f342-96ef-482f-a533-64bd860cc6cb' │ 'Grupo Roncato'                        │ null  │ 2026-01-29T18:49:05.951Z │
+│ 1       │ '006cc29c-d938-4e12-91af-31ac781bf446' │ 'Duomo Empreendimentos'                │ null  │ 2026-02-04T14:38:49.495Z │
+│ 2       │ '03e14127-4672-4e07-aa16-501fcfb600b6' │ 'Grupo Lumis'                          │ null  │ 2026-01-25T13:37:12.375Z │
+│ 3       │ '0824771f-c70e-48ab-affb-b02c29ce64d7' │ 'G'                                    │ null  │ 2026-01-27T02:16:04.802Z │
+│ 4       │ '0872b7cd-efd9-472a-b97e-05215ab58724' │ 'CNA CONSTRUTORA'                      │ null  │ 2026-01-26T14:58:21.190Z │
+│ 5       │ '087520be-b283-4a55-a9e4-3555f00ab750' │ 'Dallano Construtora'                  │ null  │ 2026-02-04T14:38:52.242Z │
+│ 6       │ '0b318016-736d-475d-9aeb-e38d54c9256f' │ 'Zagonel Construtora'                  │ null  │ 2026-01-29T18:49:02.971Z │
+│ 7       │ '1325ef08-980a-4415-aac5-2b95cdd07412' │ 'HCR CONSTRUTORA'                      │ null  │ 2026-01-26T14:58:32.188Z │
+│ 8       │ '17821fb6-2ca3-43b4-b78d-395fd067813e' │ null                                   │ null  │ 2026-01-18T21:29:37.394Z │
+│ 9       │ '1cfb5780-ebe7-41c0-8ef3-9db9b2193f19' │ 'Santana Construtora'                  │ null  │ 2026-02-04T14:07:53.492Z │
+│ 10      │ '1def81c7-5201-4e15-9b2b-94fc047cd5c7' │ 'DUBRAN EMPREENDIMENTOS'               │ null  │ 2026-01-26T18:21:27.520Z │
+│ 11      │ '242e9318-3289-42ef-b0e3-bb87403e0a8c' │ 'Di Siena Construtora e Incorporadora' │ null  │ 2026-01-26T15:26:16.019Z │
+│ 12      │ '281f4e20-bc44-46c8-83c3-bad6fc0babcd' │ 'Matton Empreendimentos'               │ null  │ 2026-01-29T18:48:59.983Z │
+│ 13      │ '2a8fe042-36e1-4d19-adef-10f7ced74d11' │ 'ARTCON EMPREENDIMENTOS'               │ null  │ 2026-01-26T18:21:26.491Z │
+│ 14      │ '3131f547-392e-4d7a-a425-a85e9a33b5bd' │ 'BACH INCORPORADORA'                   │ null  │ 2026-01-26T18:21:23.288Z │
+│ 15      │ '3347d811-ff4a-4b6d-9292-3934241ff534' │ 'AF Incorporadora'                     │ null  │ 2026-01-26T15:26:07.913Z │
+│ 16      │ '336fa1f0-d126-4fb7-998c-bc4aabbecfec' │ 'CP8 Empreendimentos'                  │ null  │ 2026-02-04T14:38:54.987Z │
+│ 17      │ '34cf30a2-cefd-4f0b-8d2b-32413b468287' │ 'Torresani Empreendimentos'            │ null  │ 2026-01-26T15:26:17.617Z │
+│ 18      │ '398d4eea-6dc5-4139-94e3-5bc7b3043dbd' │ 'Eraldo Construções'                   │ null  │ 2026-02-04T14:07:50.739Z │
+│ 19      │ '3f789cf3-56e1-4b14-a896-308d2de2727d' │ 'TEX EMPREENDIMENTOS IMOBILIÁRIOS'     │ null  │ 2026-01-26T14:58:18.066Z │
+└─────────┴────────────────────────────────────────┴────────────────────────────────────────┴───────┴──────────────────────────┘

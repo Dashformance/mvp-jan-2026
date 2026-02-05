@@ -21,6 +21,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ImportWizard } from "../import/ImportWizard";
+import { BulkActionBar } from "./BulkActionBar";
 
 export function KanbanView() {
     const {
@@ -382,6 +383,8 @@ export function KanbanView() {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+
+            {viewMode === 'list' && <BulkActionBar />}
         </div>
     );
 }
