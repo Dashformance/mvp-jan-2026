@@ -182,18 +182,25 @@ export async function GET(request: Request) {
             };
         });
 
-        // Overview - Use globalStats for sales (current lead status), collaborators for contacts/meetings (event-based)
+        // Overview - Sum individual team members (event-based) to ensure consistency!
+        const sumSales = Number(Object.values(seasonalStats).reduce((acc: any, val: any) => acc + (val.won || 0), 0));
+        const sumMeetings = Number(Object.values(seasonalStats).reduce((acc: any, val: any) => acc + (val.meeting || 0), 0));
+        const sumContacts = Number(Object.values(seasonalStats).reduce((acc: any, val: any) => acc + (val.contacted || 0), 0));
+        const sumRevenue = Number(Object.values(seasonalStats).reduce((acc: any, val: any) => acc + (val.revenue || 0), 0));
+        // Team Leads target should be Leads Added in Period
+        const sumAdded = Number(Object.values(seasonalStats).reduce((acc: any, val: any) => acc + (val.addedToday || 0), 0));
+
         const overviewData = {
-            totalLeads: globalStats?.total || 0,
-            totalSales: globalStats?.totalSales ?? Object.values(seasonalStats).reduce((acc: any, val: any) => acc + (val.won || 0), 0),
-            totalMeetings: globalStats?.totalMeetings ?? Object.values(seasonalStats).reduce((acc: any, val: any) => acc + (val.meeting || 0), 0),
-            totalContacts: globalStats?.totalContacts ?? Object.values(seasonalStats).reduce((acc: any, val: any) => acc + (val.contacted || 0), 0),
-            conversionRate: globalStats?.total > 0 ? ((globalStats?.totalSales || 0) / globalStats.total * 100).toFixed(1) : 0,
-            activeLeads: globalStats?.total || 0,
+            totalLeads: sumAdded,
+            totalSales: sumSales,
+            totalMeetings: sumMeetings,
+            totalContacts: sumContacts,
+            conversionRate: sumAdded > 0 ? ((sumSales / sumAdded) * 100).toFixed(1) : 0,
+            activeLeads: globalStats?.total || 0, // Snapshot
             growth: 0,
-            revenue: globalStats?.revenue || 0,
-            moneyOnTable: globalStats?.moneyOnTable || 0,
-            pipelineValue: globalStats?.pipelineValue || 0
+            revenue: sumRevenue,
+            moneyOnTable: globalStats?.moneyOnTable || 0, // Snapshot
+            pipelineValue: globalStats?.pipelineValue || 0 // Snapshot
         };
 
         // Time Data (Mock)

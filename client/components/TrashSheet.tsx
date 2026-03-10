@@ -23,8 +23,8 @@ export function TrashSheet({ onRestore, onDeleteForever }: TrashSheetProps) {
                 const data = await res.json();
                 setTrashedLeads(data);
             }
-        } catch (error) {
-            toast.error("Erro ao carregar lixeira");
+        } catch (error: any) {
+            toast.error("Erro ao carregar lixeira", { description: error.message });
         } finally {
             setLoading(false);
         }
@@ -42,8 +42,8 @@ export function TrashSheet({ onRestore, onDeleteForever }: TrashSheetProps) {
             toast.success("Lead restaurado!");
             setTrashedLeads(prev => prev.filter(l => l.id !== id));
             onRestore(id);
-        } catch (err) {
-            toast.error("Erro ao restaurar lead");
+        } catch (err: any) {
+            toast.error("Erro ao restaurar lead", { description: err.message });
         }
     };
 

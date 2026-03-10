@@ -133,17 +133,6 @@ export function KanbanCard({ lead, onEdit, onUpdateTitle, onDisqualify, onApprov
 
     const score = lead.score || 0;
 
-    // RPG Tier Mapping (Sprint 12 Arena)
-    const getTierConfig = () => {
-        if (score >= 90) return { label: "LEGENDARY", class: "tier-legendary", badge: "bg-amber-500/20 text-amber-400 border-amber-500/50" };
-        if (score >= 75) return { label: "DIAMOND", class: "tier-diamond", badge: "bg-cyan-500/20 text-cyan-400 border-cyan-500/50" };
-        if (score >= 60) return { label: "GOLD", class: "border-l-4 border-l-amber-500", badge: "bg-amber-500/10 text-amber-500 border-amber-500/30" };
-        if (score >= 40) return { label: "SILVER", class: "border-l-4 border-l-slate-400", badge: "bg-slate-500/10 text-slate-400 border-slate-500/30" };
-        return { label: "BRONZE", class: "border-l-4 border-l-orange-800", badge: "bg-orange-900/10 text-orange-800 border-orange-800/30" };
-    };
-
-    const tier = getTierConfig();
-
     // Didactic Coach Logic
     const getCoachHint = () => {
         if (lead.status === 'NEW' && !lead.decision_maker) return "Identifique o decisor para acelerar a qualificação.";
@@ -186,7 +175,6 @@ export function KanbanCard({ lead, onEdit, onUpdateTitle, onDisqualify, onApprov
                     ${lead.is_starred
                         ? 'border-amber-500/50 shadow-[0_0_15px_rgba(245,158,11,0.15)] ring-1 ring-amber-500/20'
                         : 'border-white/5'}
-                    ${tier.class}
                 `}
                 onClick={() => !isEditingTitle && !isDragging && onEdit(lead)}
             >
@@ -262,147 +250,26 @@ export function KanbanCard({ lead, onEdit, onUpdateTitle, onDisqualify, onApprov
                             >
                                 <Star className={`w-3.5 h-3.5 ${lead.is_starred ? 'fill-amber-400 shadow-sm' : ''}`} />
                             </Button>
-
-                            {onApprove && (
-                                <Button
-                                    variant="ghost"
-                                    size="icon-sm"
-                                    className="h-6 w-6 text-text-muted hover:text-neon-green-soft hover:bg-neon-green-bg"
-                                    onClick={(e) => { e.stopPropagation(); onApprove(lead.id); }}
-                                    title="Aprovar para Pipeline"
-                                >
-                                    <Check className="w-3 h-3" />
-                                </Button>
-                            )}
-
-                            <Button
-                                variant="ghost"
-                                size="icon-sm"
-                                className="h-6 w-6 text-text-muted hover:text-accent"
-                                onClick={handleSearch}
-                                title="Pesquisar no Google"
-                            >
-                                <ExternalLink className="w-3 h-3" />
-                            </Button>
-
-                            {lead.status === 'DISQUALIFIED' && onDelete ? (
-                                <Button
-                                    variant="ghost"
-                                    size="icon-sm"
-                                    className="h-6 w-6 text-text-muted hover:text-neon-red-soft hover:bg-neon-red-bg"
-                                    onClick={(e) => { e.stopPropagation(); onDelete(lead.id); }}
-                                    title="Mover para Lixeira"
-                                >
-                                    <X className="w-3 h-3" />
-                                </Button>
-                            ) : onDisqualify && (
-                                <Button
-                                    variant="ghost"
-                                    size="icon-sm"
-                                    className="h-6 w-6 text-text-muted hover:text-neon-red-soft hover:bg-neon-red-bg"
-                                    onClick={(e) => { e.stopPropagation(); onDisqualify(lead.id); }}
-                                    title="Descartar Lead"
-                                >
-                                    <X className="w-3 h-3" />
-                                </Button>
-                            )}
                         </div>
                     </div>
                 </CardHeader>
 
                 {/* Content */}
                 <CardContent className="p-3 pt-0">
-                    <div className="flex justify-between items-center mb-2">
-                        <div className="flex gap-1.5 flex-wrap items-center">
-                            {/* Meeting Sub-status */}
-                            {lead.status === 'MEETING' && (
-                                <Badge
-                                    variant="outline"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        onUpdateMeetingType?.(lead.id, lead.meeting_type || '');
-                                    }}
-                                    className={cn(
-                                        "h-6 px-2 font-black uppercase text-[9px] tracking-wider transition-all duration-300 cursor-pointer hover:scale-105 active:scale-95 shadow-sm",
-                                        "bg-white border-white/20 text-[#1C1C1C]",
-                                        !lead.meeting_type && "opacity-60 grayscale-[0.5]"
-                                    )}
-                                >
-                                    {/* Status Dot */}
-                                    <div className={cn(
-                                        "w-2 h-2 rounded-full mr-2 shadow-[0_0_8px_rgba(0,0,0,0.1)]",
-                                        !lead.meeting_type ? "bg-slate-400" :
-                                            lead.meeting_type === 'FOLLOW_UP' ? "bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.4)]" :
-                                                lead.meeting_type === 'CONFIRMATION' ? "bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.4)]" :
-                                                    "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]"
-                                    )} />
+                    <div className="flex items-center justify-between mt-1" onPointerDown={e => e.stopPropagation()}>
+                        <a href={`https://wa.me/55${phoneDigits}`} target="_blank"
+                            onClick={(e) => { e.stopPropagation(); if (onQuickContact) onQuickContact(lead.id); }}
+                            className={`text-xs flex items-center gap-1 transition-colors ${displayPhone ? 'text-neon-green-soft hover:text-neon-green' : 'text-text-muted hover:text-white'}`}
+                        >
+                            <MessageCircle className="w-3.5 h-3.5" />
+                            {displayPhone || 'Sem telefone'}
+                        </a>
 
-                                    {!lead.meeting_type ? 'Agendamento' :
-                                        lead.meeting_type === 'FOLLOW_UP' ? 'Follow Up Especial' :
-                                            lead.meeting_type === 'CONFIRMATION' ? 'A Confirmar' :
-                                                'Confirmada'}
-                                </Badge>
-                            )}
-                        </div>
-
-                        {onQuickContact && (
-                            <div
-                                className="flex items-center gap-1.5 cursor-pointer bg-bg-surface hover:bg-bg-hover px-2 py-1 rounded-full transition-colors border border-border-subtle"
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    onQuickContact(lead.id);
-                                }}
-                                title="Marcar contato feito hoje"
-                            >
-                                <div className={`w-3 h-3 rounded-full border flex items-center justify-center ${lastContact?.text === 'Hoje' ? 'bg-neon-green-soft border-neon-green-soft' : 'border-text-muted'}`}>
-                                    {lastContact?.text === 'Hoje' && <Check className="w-2 h-2 text-bg-void" />}
-                                </div>
-                                <span className="text-[10px] text-text-muted">{lastContact?.text === 'Hoje' ? 'Feito' : 'Hoje?'}</span>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Footer: Owner + Last Contact + Quick Actions */}
-                    <div className="flex items-center justify-between pt-2 border-t border-border-subtle" onPointerDown={e => e.stopPropagation()}>
-                        <div className="flex items-center gap-2">
-                            {/* Owner Badge */}
-                            <div
-                                className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold border ${getOwnerColor()}`}
-                                title={lead.owner === 'joao' ? 'João' : lead.owner === 'vitor' ? 'Vitor' : 'Sem dono'}
-                            >
-                                {lead.owner ? lead.owner.charAt(0).toUpperCase() : '?'}
-                            </div>
-
-                            {/* Last Activity */}
-                            {lastContact ? (
-                                <span className={`text-[10px] ${lastContact.color}`}>
-                                    {lastContact.text}
-                                </span>
-                            ) : (
-                                <span className="text-[10px] text-text-disabled">Sem atividade</span>
-                            )}
-                        </div>
-
-                        {/* Quick Contact Buttons */}
-                        <div className="flex gap-1">
-                            <Button
-                                variant="ghost"
-                                size="icon-sm"
-                                className={`h-6 w-6 rounded-full ${!displayPhone ? 'opacity-30 pointer-events-none' : 'text-text-muted hover:text-neon-green-soft hover:bg-neon-green-bg'}`}
-                                onClick={handleWhatsApp}
-                                title="Abrir WhatsApp"
-                            >
-                                <MessageCircle className="w-3.5 h-3.5" />
-                            </Button>
-                            <Button
-                                variant="ghost"
-                                size="icon-sm"
-                                className={`h-6 w-6 rounded-full ${!displayEmail ? 'opacity-30 pointer-events-none' : 'text-text-muted hover:text-neon-cyan-soft hover:bg-neon-cyan-bg'}`}
-                                onClick={handleEmail}
-                                title="Enviar Email"
-                            >
-                                <Mail className="w-3.5 h-3.5" />
-                            </Button>
+                        <div
+                            className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold border ${getOwnerColor()}`}
+                            title={lead.owner ? lead.owner : 'Sem dono'}
+                        >
+                            {lead.owner ? lead.owner.substring(0, 2).toUpperCase() : '?'}
                         </div>
                     </div>
                 </CardContent>

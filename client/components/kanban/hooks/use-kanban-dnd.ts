@@ -33,24 +33,18 @@ export function useKanbanDnD({ leads, onLeadUpdate }: UseKanbanDnDProps) {
     const handleDragEnd = (event: DragEndEvent) => {
         const { active, over } = event;
         setActiveLead(null);
-
         if (!over) return;
 
         const leadId = active.id as string;
-        let newStatus = over.id as string;
 
-        // ERROR FIX: If over.id is a lead (dropped on top of another card), 
-        // use that lead's status as the target status.
-        const overLead = leads.find(l => l.id === over.id);
-        if (overLead) {
-            newStatus = overLead.status;
-        }
+        const targetColumnId =
+            (over.data.current?.sortable?.containerId as string) || // dropped em card
+            (over.id as string);                                    // dropped em coluna vazia
 
-        // Verify if status actually changed
         const lead = leads.find(l => l.id === leadId);
-        if (lead && lead.status !== newStatus) {
-            onLeadUpdate(leadId, newStatus);
-        }
+        if (!lead || lead.status === targetColumnId) return;
+
+        onLeadUpdate(leadId, targetColumnId);
     };
 
     return {

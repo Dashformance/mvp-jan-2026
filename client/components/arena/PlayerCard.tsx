@@ -5,7 +5,6 @@ import { GlassCard } from "@/components/ui/GlassCard";
 import { XPRing } from "./XPRing";
 import { Trophy, Zap, Target, Handshake } from "lucide-react";
 import { LevelInfo, UserStats, Badge } from "@/lib/gamification/types";
-import { getLevelTitle } from "@/lib/gamification/config";
 import { motion } from "framer-motion";
 
 interface PlayerCardProps {
@@ -25,7 +24,6 @@ export function PlayerCard({
     badges,
     isCurrentUser = false
 }: PlayerCardProps) {
-    const title = getLevelTitle(levelInfo.level);
 
     // Overall rating formula: (Level * 2) + (Conversion Rate * 0.5) + (Total Conversion / 10)
     const conversionRate = stats.totalLeadsCreated > 0
@@ -61,22 +59,11 @@ export function PlayerCard({
             {/* Avatar & XP Ring Area */}
             <div className="relative flex-1 flex flex-col items-center justify-center pt-8">
                 <div className="relative group/avatar">
-                    <XPRing
-                        progress={levelInfo.progress}
-                        size={140}
-                        strokeWidth={4}
-                        className="relative z-10"
-                    />
-                    <div className="absolute inset-[8px] rounded-full bg-zinc-800 overflow-hidden border-2 border-white/5 z-0 flex items-center justify-center">
-                        {/* Placeholder for now */}
-                        <div className="text-zinc-600">
-                            <Zap size={48} className="opacity-20" />
-                        </div>
-                    </div>
-
-                    {/* Level Badge Overlay */}
-                    <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-black border border-emerald-500/30 px-3 py-0.5 rounded-full z-20 shadow-lg">
-                        <span className="text-xs font-numbers font-bold text-emerald-400">LVL {levelInfo.level}</span>
+                    <div className="h-[140px] w-[140px] rounded-full bg-zinc-800 border-4 border-emerald-500/20 flex flex-col items-center justify-center shadow-[0_0_30px_rgba(16,185,129,0.1)] relative z-10">
+                        <span className="text-[10px] text-emerald-500 font-bold uppercase tracking-widest mb-1">Score</span>
+                        <span className="text-3xl font-numbers font-bold text-white tracking-tighter">
+                            {levelInfo.currentXP.toLocaleString('pt-BR')}
+                        </span>
                     </div>
                 </div>
 
@@ -86,7 +73,7 @@ export function PlayerCard({
                         {name}
                     </h3>
                     <p className="text-[10px] text-zinc-500 font-semibold uppercase tracking-widest mt-0.5">
-                        {role} • {title}
+                        {role}
                     </p>
                 </div>
             </div>
@@ -126,16 +113,6 @@ export function PlayerCard({
                 ) : (
                     <span className="text-[8px] text-zinc-600 uppercase">Sem conquistas</span>
                 )}
-            </div>
-
-            {/* Bottom Tier Bar */}
-            <div className="h-1 w-full bg-zinc-800">
-                <motion.div
-                    className="h-full bg-linear-to-r from-emerald-600 to-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.5)]"
-                    initial={{ width: 0 }}
-                    animate={{ width: `${levelInfo.progress}%` }}
-                    transition={{ duration: 1, delay: 0.5 }}
-                />
             </div>
 
             {isCurrentUser && (

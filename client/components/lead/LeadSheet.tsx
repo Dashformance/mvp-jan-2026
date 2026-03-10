@@ -186,19 +186,25 @@ export function LeadSheet({ lead, open, onOpenChange, onSave }: LeadSheetProps) 
                     </Select>
                 </div>
 
-                <Tabs defaultValue="details" className="w-full">
-                    <TabsList className="grid w-full grid-cols-3 bg-[#181818] p-1 h-11 rounded-lg border border-white/5">
+                <Tabs defaultValue="contact" className="w-full">
+                    <TabsList className="grid w-full grid-cols-4 bg-[#181818] p-1 h-11 rounded-lg border border-white/5 overflow-x-auto custom-scrollbar">
                         <TabsTrigger
-                            value="details"
+                            value="contact"
                             className="rounded-md data-[state=active]:bg-[#222222] data-[state=active]:text-[#DECCA8] data-[state=active]:shadow-sm text-[#888888] h-9 text-xs font-semibold uppercase tracking-wide"
                         >
-                            Dados
+                            Contato
                         </TabsTrigger>
                         <TabsTrigger
                             value="qualification"
                             className="rounded-md data-[state=active]:bg-[#222222] data-[state=active]:text-[#DECCA8] data-[state=active]:shadow-sm text-[#888888] h-9 text-xs font-semibold uppercase tracking-wide"
                         >
-                            Qualificação
+                            Status
+                        </TabsTrigger>
+                        <TabsTrigger
+                            value="details"
+                            className="rounded-md data-[state=active]:bg-[#222222] data-[state=active]:text-[#DECCA8] data-[state=active]:shadow-sm text-[#888888] h-9 text-xs font-semibold uppercase tracking-wide"
+                        >
+                            Detalhes
                         </TabsTrigger>
                         <TabsTrigger
                             value="history"
@@ -208,7 +214,7 @@ export function LeadSheet({ lead, open, onOpenChange, onSave }: LeadSheetProps) 
                         </TabsTrigger>
                     </TabsList>
 
-                    <TabsContent value="details" className="space-y-4 py-4">
+                    <TabsContent value="contact" className="space-y-4 py-4">
 
                         {/* Cadastro Rápido - Social & Marketing (Top Priority) */}
                         <div className="space-y-5 p-6 bg-[#222222] rounded-xl border border-white/5 shadow-sm">
@@ -312,7 +318,26 @@ export function LeadSheet({ lead, open, onOpenChange, onSave }: LeadSheetProps) 
                                 </div>
                             </div>
                         </div>
+                    </TabsContent>
 
+                    <TabsContent value="qualification" className="py-4">
+                        <QualificationForm
+                            data={(formData.extra_info as any)?.qualification || {}}
+                            onChange={(qData) => {
+                                const currentExtra = (formData.extra_info as any) || {};
+                                setFormData(prev => ({
+                                    ...prev,
+                                    extra_info: {
+                                        ...currentExtra,
+                                        qualification: qData
+                                    }
+                                }));
+                            }}
+                            leadData={formData}
+                        />
+                    </TabsContent>
+
+                    <TabsContent value="details" className="space-y-4 py-4">
                         {/* Dados da Empresa */}
                         <div className="space-y-5 p-6 bg-[#222222] rounded-xl border border-white/5 shadow-sm mt-4">
                             <h4 className="font-display font-semibold text-sm text-white/90">Identificação</h4>
@@ -361,68 +386,53 @@ export function LeadSheet({ lead, open, onOpenChange, onSave }: LeadSheetProps) 
                                         placeholder="00.000.000/0000-00"
                                     />
                                 </div>
-
-                                {/* Valor do Contrato */}
-                                <div className="space-y-1.5 pt-2 mt-2">
-                                    <Label className="text-[10px] font-medium uppercase tracking-[0.05em] text-[#DECCA8] flex items-center gap-1">
-                                        💰 Valor do Contrato
-                                    </Label>
-                                    <div className="relative">
-                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#888888] text-sm">R$</span>
-                                        <Input
-                                            type="text"
-                                            value={formData.contract_value ? formData.contract_value.toString() : ''}
-                                            onChange={(e) => {
-                                                // Allow only numbers and one dot/comma
-                                                let val = e.target.value;
-
-                                                // Basic masking logic: allow digits and one comma/dot
-                                                if (/^[\d.,]*$/.test(val)) {
-                                                    handleChange('contract_value', val);
-                                                }
-                                            }}
-                                            onBlur={(e) => {
-                                                // Format on blur
-                                                let val = e.target.value.replace(/\./g, '').replace(',', '.');
-                                                const hasComma = e.target.value.includes(',');
-
-                                                // If user typed "1000", treat as 1000.00
-                                                // If user typed "1000,50", treat as 1000.50
-                                                const num = parseFloat(val);
-                                                if (!isNaN(num)) {
-                                                    // Store formatted string or keep raw? 
-                                                    // Prisma expects Decimal (number/string).
-                                                    // Let's store raw formatting for UI consistency if needed, 
-                                                    // but LeadSanitizer will parse it to float.
-                                                    // Better: Format to beautiful string.
-                                                    handleChange('contract_value', num.toFixed(2));
-                                                }
-                                            }}
-                                            className="h-10 pl-10 font-display text-lg text-white bg-[#1C1C1C] border-white/10 focus:border-[#DECCA8] placeholder:text-[#444444]"
-                                            placeholder="0.00"
-                                        />
-                                    </div>
-                                </div>
                             </div>
                         </div>
 
-                    </TabsContent>
+                        <div className="space-y-5 p-6 bg-[#222222] rounded-xl border border-white/5 shadow-sm mt-4">
+                            <h4 className="font-display font-semibold text-sm text-white/90">Status de Fechamento</h4>
+                            {/* Valor do Contrato */}
+                            <div className="space-y-1.5 pt-2 mt-2">
+                                <Label className="text-[10px] font-medium uppercase tracking-[0.05em] text-[#DECCA8] flex items-center gap-1">
+                                    💰 Valor do Contrato
+                                </Label>
+                                <div className="relative">
+                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#888888] text-sm">R$</span>
+                                    <Input
+                                        type="text"
+                                        value={formData.contract_value ? formData.contract_value.toString() : ''}
+                                        onChange={(e) => {
+                                            // Allow only numbers and one dot/comma
+                                            let val = e.target.value;
 
-                    <TabsContent value="qualification" className="py-4">
-                        <QualificationForm
-                            data={(formData.extra_info as any)?.qualification || {}}
-                            onChange={(qData) => {
-                                const currentExtra = (formData.extra_info as any) || {};
-                                setFormData(prev => ({
-                                    ...prev,
-                                    extra_info: {
-                                        ...currentExtra,
-                                        qualification: qData
-                                    }
-                                }));
-                            }}
-                            leadData={formData}
-                        />
+                                            // Basic masking logic: allow digits and one comma/dot
+                                            if (/^[\d.,]*$/.test(val)) {
+                                                handleChange('contract_value', val);
+                                            }
+                                        }}
+                                        onBlur={(e) => {
+                                            // Format on blur
+                                            let val = e.target.value.replace(/\./g, '').replace(',', '.');
+                                            const hasComma = e.target.value.includes(',');
+
+                                            // If user typed "1000", treat as 1000.00
+                                            // If user typed "1000,50", treat as 1000.50
+                                            const num = parseFloat(val);
+                                            if (!isNaN(num)) {
+                                                // Store formatted string or keep raw? 
+                                                // Prisma expects Decimal (number/string).
+                                                // Let's store raw formatting for UI consistency if needed, 
+                                                // but LeadSanitizer will parse it to float.
+                                                // Better: Format to beautiful string.
+                                                handleChange('contract_value', num.toFixed(2));
+                                            }
+                                        }}
+                                        className="h-10 pl-10 font-display text-lg text-white bg-[#1C1C1C] border-white/10 focus:border-[#DECCA8] placeholder:text-[#444444]"
+                                        placeholder="0.00"
+                                    />
+                                </div>
+                            </div>
+                        </div>
                     </TabsContent>
 
                     <TabsContent value="history" className="h-[430px] flex flex-col">

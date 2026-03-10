@@ -26,6 +26,13 @@ export const PATCH = withApiErrorHandling(async (req: NextRequest, { params }: {
 
     console.log(`[PATCH /api/leads/${id}] Received body keys:`, Object.keys(body));
 
+    if (body.owner_id === null || body.owner_id === '') {
+        return NextResponse.json(
+            { error: 'owner_id cannot be cleared. Use a valid UUID to transfer ownership.' },
+            { status: 400 }
+        );
+    }
+
     // Validate payload with Zod schema
     const parseResult = LeadUpdateSchema.safeParse(body);
     if (!parseResult.success) {

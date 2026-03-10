@@ -16,7 +16,7 @@ export async function GET() {
 export async function POST(request: Request) {
     try {
         const data = await request.json();
-        const { name, phase } = data;
+        const { name } = data; // Display title
 
         // Find highest position
         const maxPos = await prisma.stages.aggregate({
@@ -27,15 +27,19 @@ export async function POST(request: Request) {
         // Use a default color
         const color = "bg-gray-500/10 text-gray-500 border-gray-500/20";
 
+        // Generate a human-readable level-based ID
+        const nextLevel = position;
+        const stageId = `nivel_${nextLevel}_custom`;
+
         const stage = await prisma.stages.create({
             data: {
-                id: crypto.randomUUID(),
-                name: name.toUpperCase().replace(/\s+/g, '_'), // Internal ID
-                phase, // Display title
+                id: stageId,
+                name, // Display title
+                phase: name, // WORKAROUND: Prisma client is outdated and thinks phase is required
                 color,
                 position,
                 updated_at: new Date()
-            }
+            } as any
         });
 
         return NextResponse.json(stage);
@@ -46,13 +50,10 @@ export async function POST(request: Request) {
 
 export async function PATCH(request: Request) {
     try {
-        const { name, phase } = await request.json();
-        // We use updateMany because 'name' might not be @unique in schema (checking now)
-        // If it is unique, update is better. But updateMany is safer if unsure.
-        // Let's assume name is unique enough conceptually. 
-        const stage = await prisma.stages.updateMany({
-            where: { name: name },
-            data: { phase }
+        const { id, name } = await request.json();
+        const stage = await prisma.stages.update({
+            where: { id: id },
+            data: { name: name }
         });
         return NextResponse.json(stage);
     } catch (error) {

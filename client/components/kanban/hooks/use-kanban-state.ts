@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { toast } from "sonner";
-import { PIPELINE_COLUMNS } from '../KanbanBoard';
 import { useGamification } from '@/hooks/useGamification';
 import useSWRInfinite from 'swr/infinite';
 import useSWR, { mutate } from 'swr';
@@ -10,17 +9,7 @@ import { fetchWithAuth } from '@/lib/fetch-with-auth';
 
 const API_URL = "/api";
 
-export const STATUS_MAP: Record<string, { label: string, color: string }> = {
-    INBOX: { label: 'Sem qualificação', color: 'bg-slate-500/20 text-slate-400 border border-slate-500/20' },
-    NEW: { label: '✅ Qualificado (Vendas)', color: 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/20' },
-    ATTEMPTED: { label: 'Tentando Contato', color: 'bg-amber-500/20 text-amber-400 border border-amber-500/20' },
-    CONTACTED: { label: 'Contatado', color: 'bg-[#DECCA8]/20 text-[#DECCA8] border border-[#DECCA8]/20' },
-    MEETING: { label: 'Reunião Agendada', color: 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/20' },
-    WON: { label: '💰 Em Fechamento', color: 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/20' },
-    SOLD: { label: '🥂 Negócio Fechado!', color: 'bg-emerald-600/20 text-emerald-300 border border-emerald-500/30' },
-    LOST: { label: 'Perdido', color: 'bg-rose-400/15 text-rose-300 border border-rose-400/15' },
-    DISQUALIFIED: { label: 'Desqualificado', color: 'bg-gray-500/20 text-gray-400 border border-zinc-500/20' },
-};
+
 
 const defaultFilters = {
     uf: [] as string[],
@@ -55,7 +44,7 @@ const defaultFilters = {
 };
 
 export function useKanbanState() {
-    const [columns, setColumns] = useState(PIPELINE_COLUMNS);
+    const [columns, setColumns] = useState<any[]>([]);
     const [filters, setFilters] = useState(defaultFilters);
     const [searchQuery, setSearchQuery] = useState('');
     const [viewMode, setViewMode] = useState<'list' | 'kanban'>('kanban');
@@ -139,34 +128,14 @@ export function useKanbanState() {
                 const data = await res.json();
                 if (Array.isArray(data) && data.length > 0) {
                     const mapped = data.map((s: any) => {
-                        // Force update title for WON if it's the old one
-                        if (s.name === 'WON') {
-                            return {
-                                id: s.name,
-                                title: '💰 Em Fechamento', // Force new title
-                                color: s.color || "bg-emerald-500/20 text-emerald-400 border border-emerald-500/20"
-                            };
-                        }
                         return {
-                            id: s.name,
-                            title: s.phase,
-                            color: s.color || "bg-gray-500/10 text-gray-500 border-gray-500/20"
+                            id: s.id, // Now uses ID instead of name as primary key
+                            title: s.name, // Display name is now stored in name instead of phase
+                            color: s.color || "bg-gray-500/10 text-gray-500 border-gray-500/20",
+                            is_win_stage: s.is_win_stage,
+                            is_lost_stage: s.is_lost_stage
                         };
                     });
-
-                    // Hotfix: Ensure SOLD column exists if not present in DB
-                    if (!mapped.find((c: any) => c.id === 'SOLD')) {
-                        const successCol = PIPELINE_COLUMNS.find(c => c.id === 'SOLD');
-                        if (successCol) {
-                            const wonIndex = mapped.findIndex((c: any) => c.id === 'WON');
-                            if (wonIndex !== -1) {
-                                mapped.splice(wonIndex + 1, 0, successCol);
-                            } else {
-                                mapped.push(successCol);
-                            }
-                        }
-                    }
-
                     setColumns(mapped);
                 }
             } catch (err) {
@@ -187,13 +156,12 @@ export function useKanbanState() {
         }
         init();
 
-        // Listen for Add Column Event
         const handleAddColumn = async (e: any) => {
             const name = e.detail?.name;
             if (!name) return;
 
-            const tempId = name.toUpperCase().replace(/\s+/g, '_');
-            const newCol = { id: tempId, title: name, color: "bg-gray-500/10 text-gray-500 border-gray-500/20" };
+            const tempId = crypto.randomUUID(); // optimistic random UUID
+            const newCol = { id: tempId, title: name, color: "bg-gray-500/10 text-gray-500 border-gray-500/20", is_win_stage: false, is_lost_stage: false };
 
             // Optimistic
             setColumns(prev => [...prev, newCol]);
@@ -202,9 +170,13 @@ export function useKanbanState() {
                 const res = await fetch('/api/stages', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name: tempId, phase: name })
+                    body: JSON.stringify({ name }) // Only name now
                 });
                 if (!res.ok) throw new Error("Failed");
+
+                // If we want to be fully correct, we should replace tempId with the real ID from DB here
+                const data = await res.json();
+                setColumns(prev => prev.map(c => c.id === tempId ? { ...c, id: data.id } : c));
                 toast.success("Coluna criada com sucesso!");
             } catch (err) {
                 toast.error("Erro ao criar coluna");
@@ -227,12 +199,20 @@ export function useKanbanState() {
     const filterBarStateKey = JSON.stringify(filterBarState);
     useEffect(() => {
         setSize(1);
+        mutateLeads(); // Force revalidation without wiping slate
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [filterBarStateKey, sortBy]);
 
+    const fetchLeads = useCallback(async (pageParam?: number) => {
+        if (pageParam !== undefined) {
+            setSize(pageParam);
+        }
+        await mutateLeads();
+    }, [mutateLeads, setSize]);
 
 
     const updateLeadStatus = useCallback(async (id: string, newStatus: string) => {
+        const previousData = pages;
         // Optimistic update via mutate
         mutateLeads(
             (prevPages: any[] | undefined) => {
@@ -253,6 +233,8 @@ export function useKanbanState() {
             });
             if (!res.ok) throw new Error("Failed to update");
 
+            mutateLeads(undefined, true); // Always revalidate real data from server
+
             // Gamification Triggers
             if (newStatus === 'SOLD') {
                 const result = addXP('LEAD_CONVERTED'); // Venda = 200 XP
@@ -265,11 +247,11 @@ export function useKanbanState() {
             }
 
             toast.success("Status atualizado");
-        } catch (e) {
-            toast.error("Erro ao atualizar status");
-            mutateLeads(); // Revert on error by refetching
+        } catch (e: any) {
+            toast.error("Erro ao atualizar status", { description: e.message || "Tente novamente." });
+            mutateLeads(previousData, false); // ROLLBACK on error
         }
-    }, [mutateLeads, addXP]);
+    }, [mutateLeads, addXP, pages]);
 
     const updateLead = useCallback(async (lead: any) => {
         try {
@@ -380,28 +362,37 @@ export function useKanbanState() {
 
     const deleteLead = useCallback(async (id: string) => {
         if (!confirm("Tem certeza que deseja excluir?")) return;
+        const previousData = pages;
         try {
-            await fetch(`${API_URL}/leads/${id}`, { method: 'DELETE' });
+            // Optimistic Update with total_count decrement
             mutateLeads(
                 (prevPages: any[] | undefined) => {
                     if (!prevPages) return prevPages;
                     return prevPages.map(page => ({
                         ...page,
-                        data: page.data.filter((l: any) => l.id !== id)
+                        data: page.data.filter((l: any) => l.id !== id),
+                        meta: {
+                            ...page.meta,
+                            total: Math.max(0, (page.meta?.total || 0) - 1)
+                        }
                     }));
                 },
                 false
             );
+
+            await fetch(`${API_URL}/leads/${id}`, { method: 'DELETE' });
             setSelectedLeads(prev => {
                 const next = new Set(prev);
                 next.delete(id);
                 return next;
             });
+            mutateLeads(); // force refetch
             toast.success("Lead excluído com sucesso");
-        } catch (err) {
-            toast.error("Erro ao excluir lead");
+        } catch (err: any) {
+            mutateLeads(previousData, false);
+            toast.error("Erro ao excluir lead", { description: err.message });
         }
-    }, [mutateLeads]);
+    }, [mutateLeads, pages]);
 
     const updateMeetingType = useCallback(async (id: string, currentType: string) => {
         // Cycle: null -> FOLLOW_UP -> CONFIRMATION -> SCHEDULED -> null
@@ -438,8 +429,8 @@ export function useKanbanState() {
             } else {
                 toast.info("Status de reunião resetado");
             }
-        } catch (e) {
-            toast.error("Erro ao atualizar status");
+        } catch (e: any) {
+            toast.error("Erro ao atualizar status da reunião", { description: e.message });
             mutateLeads();
         }
     }, [mutateLeads]);
@@ -454,23 +445,14 @@ export function useKanbanState() {
 
             if (res.ok) {
                 toast.success(`${ids.length} leads atualizados com sucesso`);
-                // Optimistic update
-                mutateLeads(
-                    (prevPages: any[] | undefined) => {
-                        if (!prevPages) return prevPages;
-                        return prevPages.map(page => ({
-                            ...page,
-                            data: page.data.map((l: any) => ids.includes(l.id) ? { ...l, ...data } : l)
-                        }));
-                    },
-                    false
-                );
                 setSelectedLeads(new Set());
+                mutateLeads(); // Forçar revalidação sem cache local wiped
             } else {
-                throw new Error("Failed");
+                const errorData = await res.json().catch(() => ({}));
+                throw new Error(errorData.error || errorData.details || "Falha na atualização em massa");
             }
-        } catch (err) {
-            toast.error("Erro ao atualizar leads em massa");
+        } catch (err: any) {
+            toast.error("Erro ao atualizar leads em massa", { description: err.message });
         }
     }, [mutateLeads]);
 
@@ -515,23 +497,39 @@ export function useKanbanState() {
         }
     }, [mutateLeads]);
 
-    const openLeadSheet = useCallback((lead?: any) => {
+    const deleteColumn = useCallback(async (columnId: string) => {
+        try {
+            const res = await fetch(`/api/stages/${columnId}`, { method: 'DELETE' });
+            if (!res.ok) {
+                const data = await res.json();
+                throw new Error(data.message || "Falha ao excluir coluna");
+            }
+            // Success
+            setColumns(prev => prev.filter(c => c.id !== columnId));
+            toast.success("Coluna excluída com sucesso");
+        } catch (error: any) {
+            toast.error(error.message);
+        }
+    }, []);
+
+    const openLeadSheet = useCallback((lead?: any, defaultColumnId?: string) => {
         if (lead) {
             setSelectedLeadForSheet(lead);
         } else {
+            const initialStatus = defaultColumnId || (columns.length > 0 ? columns[0].id : "NEW");
             // New Lead
             setSelectedLeadForSheet({
                 id: "new",
                 company_name: "",
                 trade_name: "",
                 cnpj: "",
-                status: "NEW", // Default
+                status: initialStatus, // Use actual column clicked instead of constant "NEW"
                 source: "Manual",
                 checklist: { hasInstagram: false, hasRender: false }
             });
         }
         setIsSheetOpen(true);
-    }, []);
+    }, [columns]);
 
     const closeLeadSheet = useCallback(() => {
         setIsSheetOpen(false);
@@ -573,6 +571,8 @@ export function useKanbanState() {
         closeLeadSheet,
         selectedLeadForSheet,
         cleanupDuplicates,
-        availableUsers
+        deleteColumn,
+        availableUsers,
+        fetchLeads
     };
 }

@@ -1,1 +1,0 @@
-import { PrismaClient } from '@prisma/client'; const prisma = new PrismaClient(); async function main() { const leads = await prisma.leads.groupBy({ by: ['owner', 'owner_id'], _count: true}); console.log(leads); } main().finally(() => prisma.$disconnect());

@@ -1,5 +1,12 @@
 @import "tailwindcss";
 
+@source "./**/*.{ts,tsx}";
+@source "../components/**/*.{ts,tsx}";
+@source "../lib/**/*.{ts,tsx}";
+@source "../hooks/**/*.{ts,tsx}";
+@source "../context/**/*.{ts,tsx}";
+@source "../middleware.ts";
+
 @theme {
   /* ============================================
      DASHFORMANCE DESIGN SYSTEM v2.1

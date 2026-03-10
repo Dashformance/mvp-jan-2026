@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search, X, Filter, Check, Database } from "lucide-react";
+import { useKanban } from "./kanban-context";
 import {
     Select,
     SelectContent,
@@ -41,21 +42,19 @@ const SOURCE_OPTIONS = [
     { id: 'Outros', label: 'Outros', color: 'text-neon-purple-soft' },
 ];
 
-const STATUS_OPTIONS = [
-    { id: 'NEW', label: 'Novo', color: 'bg-neon-cyan-bg text-neon-cyan' },
-    { id: 'ATTEMPTED', label: 'Tentativa', color: 'bg-neon-yellow-bg text-neon-yellow' },
-    { id: 'CONTACTED', label: 'Contatado', color: 'bg-neon-purple-bg text-neon-purple' },
-    { id: 'MEETING', label: 'Reunião', color: 'bg-neon-cyan-bg text-neon-cyan' },
-    { id: 'WON', label: 'Ganho', color: 'bg-neon-green-bg text-neon-green' },
-    { id: 'LOST', label: 'Perdido', color: 'bg-neon-red-bg text-neon-red' },
-    { id: 'DISQUALIFIED', label: 'Desqualificado', color: 'bg-bg-deep text-text-muted' },
-];
-
 export function FilterBar({ onFilterChange, currentFilters }: FilterBarProps) {
+    const { columns } = useKanban(); // Get dynamic stages
     const [search, setSearch] = useState(currentFilters?.search || "");
     const [selectedStatuses, setSelectedStatuses] = useState<string[]>(currentFilters?.status || []);
     const [selectedSources, setSelectedSources] = useState<string[]>(currentFilters?.source || []);
     const [view, setView] = useState<'mine' | 'all'>(currentFilters?.view || 'mine');
+
+    // Map columns to STATUS_OPTIONS format
+    const statusOptions = columns.map((col: any) => ({
+        id: col.id,
+        label: col.title,
+        color: col.color
+    }));
 
     // Sync with external changes (e.g. from Table Filters) - using JSON.stringify to prevent loops
     const currentFiltersKey = JSON.stringify(currentFilters);
@@ -173,7 +172,7 @@ export function FilterBar({ onFilterChange, currentFilters }: FilterBarProps) {
                     </PopoverTrigger>
                     <PopoverContent className="w-[220px] p-2 bg-bg-surface border-border-default shadow-2xl" align="start">
                         <div className="space-y-1">
-                            {STATUS_OPTIONS.map(status => {
+                            {statusOptions.map((status: any) => {
                                 const isSelected = selectedStatuses.includes(status.id);
                                 return (
                                     <div
@@ -208,55 +207,7 @@ export function FilterBar({ onFilterChange, currentFilters }: FilterBarProps) {
                     </PopoverContent>
                 </Popover>
 
-                {/* Source Filter */}
-                <Popover>
-                    <PopoverTrigger asChild>
-                        <Button variant="outline" className={`h-10 border-dashed ${selectedSources.length > 0 ? 'border-indigo-500/50 bg-indigo-500/5 text-indigo-500' : 'border-subtle bg-elevated'}`}>
-                            <Database className="w-4 h-4 mr-2" />
-                            Fonte
-                            {selectedSources.length > 0 && (
-                                <Badge variant="secondary" className="ml-2 h-5 text-[10px] px-1.5 bg-indigo-500/20 text-indigo-300 pointer-events-none">
-                                    {selectedSources.length}
-                                </Badge>
-                            )}
-                        </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-[220px] p-2 bg-[#1A1A1A] border-[#333] shadow-xl" align="start">
-                        <div className="space-y-1">
-                            {SOURCE_OPTIONS.map(source => {
-                                const isSelected = selectedSources.includes(source.id);
-                                return (
-                                    <div
-                                        key={source.id}
-                                        className={`flex items-center gap-3 p-2 rounded-md cursor-pointer transition-colors ${isSelected ? 'bg-white/10' : 'hover:bg-white/5'}`}
-                                        onClick={() => toggleSource(source.id)}
-                                    >
-                                        <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${isSelected ? 'bg-indigo-500 border-indigo-500' : 'border-white/20 bg-transparent'
-                                            }`}>
-                                            {isSelected && <Check className="w-3 h-3 text-black" />}
-                                        </div>
-
-                                        <span className={`text-sm ${source.color} font-medium`}>
-                                            {source.label}
-                                        </span>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                        {selectedSources.length > 0 && (
-                            <div className="pt-2 mt-2 border-t border-white/10">
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="w-full h-7 text-xs text-muted-foreground hover:text-white"
-                                    onClick={() => setSelectedSources([])}
-                                >
-                                    Limpar Filtros
-                                </Button>
-                            </div>
-                        )}
-                    </PopoverContent>
-                </Popover>
+                {/* Source Filter - REMOVED for simplification (Sprint 2 - D4) */}
 
                 {/* Clear Button */}
                 {(search || selectedStatuses.length > 0 || selectedSources.length > 0) && (

@@ -26,6 +26,7 @@ export interface KanbanContextType {
     deleteLead: (id: string) => Promise<void>;
     bulkUpdateLeads: (ids: string[], data: any) => Promise<void>;
     cleanupDuplicates: () => Promise<void>;
+    deleteColumn: (columnId: string) => void;
 
     // Selection
     selectedLeads: Set<string>;
@@ -47,7 +48,7 @@ export interface KanbanContextType {
 
     // UI
     isSheetOpen: boolean;
-    openLeadSheet: (lead?: any) => void;
+    openLeadSheet: (lead?: any, defaultColumnId?: string) => void;
     closeLeadSheet: () => void;
     selectedLeadForSheet: any;
     availableUsers: any[];

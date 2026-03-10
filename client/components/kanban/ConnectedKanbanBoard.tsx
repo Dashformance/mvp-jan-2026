@@ -15,7 +15,8 @@ export function ConnectedKanbanBoard() {
         updateLeadStatus: approveLead, // Alias 
         quickContact,
         toggleFavorite,
-        deleteLead
+        deleteLead,
+        deleteColumn
     } = useKanban();
 
     // DnD Hook manages Drag State specific to the board UI
@@ -44,9 +45,7 @@ export function ConnectedKanbanBoard() {
             onApprove={(id) => updateLeadStatus(id, 'NEW')}
             onQuickContact={quickContact}
             onAddLead={(status) => {
-                // We can't easily pre-select status in openLeadSheet unless we update the hook.
-                // For now, open generic sheet.
-                openLeadSheet();
+                openLeadSheet(undefined, status);
             }}
             onRenameColumn={(id, newTitle) => {
                 // Logic for renaming column was local in page.tsx via API?
@@ -56,6 +55,7 @@ export function ConnectedKanbanBoard() {
             }}
             onToggleFavorite={toggleFavorite}
             onDelete={deleteLead}
+            onDeleteColumn={deleteColumn}
             onUpdateMeetingType={updateMeetingType}
         />
     );

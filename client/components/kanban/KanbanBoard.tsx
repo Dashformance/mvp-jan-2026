@@ -1,34 +1,20 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, MouseSensor, TouchSensor, useSensor, useSensors, closestCorners } from "@dnd-kit/core";
+import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, MouseSensor, TouchSensor, useSensor, useSensors, closestCenter } from "@dnd-kit/core";
 import { KanbanColumn } from "./KanbanColumn";
 import { KanbanCard } from "./KanbanCard";
 import { createPortal } from "react-dom";
 import { useKanbanDnD } from "./hooks/use-kanban-dnd";
 
-// Column definitions for different views
-export const TRIAGEM_COLUMNS = [
-    { id: "INBOX", title: "Lista fria", color: "bg-slate-500/20 text-slate-400" },
-    { id: "DISQUALIFIED", title: "Desqualificados", color: "bg-red-500/20 text-red-400" },
-];
 
-export const PIPELINE_COLUMNS = [
-    { id: "INBOX", title: "❄️ Lista Fria", color: "bg-slate-500/10 text-slate-400 border-slate-500/20" },
-    { id: "NEW", title: "✅ Qualificado", color: "bg-blue-500/10 text-blue-400 border-blue-500/20" },
-    { id: "ATTEMPTED", title: "📞 Tentativa", color: "bg-amber-500/10 text-amber-400 border-amber-500/20" },
-    { id: "CONTACTED", title: "💬 Contatado", color: "bg-indigo-500/10 text-indigo-400 border-indigo-500/20" },
-    { id: "MEETING", title: "📅 Reunião", color: "bg-cyan-500/10 text-cyan-400 border-cyan-500/20" },
-    { id: "WON", title: "💰 Em Fechamento", color: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" }, // Rename existing WON
-    { id: "SOLD", title: "🥂 Negócio Fechado!", color: "bg-emerald-600/20 text-emerald-300 border-emerald-500/30" }, // New Success Column
-    { id: "LOST", title: "🔻 Perdido", color: "bg-rose-500/10 text-rose-400 border-rose-500/20" },
-    { id: "DISQUALIFIED", title: "🚫 Desqualificado", color: "bg-gray-500/10 text-gray-500 border-gray-500/20" },
-];
 
 interface ColumnDefinition {
     id: string;
     title: string;
     color: string;
+    is_win_stage?: boolean;
+    is_lost_stage?: boolean;
 }
 
 import { Input } from "@/components/ui/input";
@@ -48,12 +34,13 @@ interface KanbanBoardProps {
     onRenameColumn?: (id: string, newTitle: string) => void;
     onToggleFavorite?: (id: string, isStarred: boolean) => void;
     onDelete?: (id: string) => void;
+    onDeleteColumn?: (id: string) => void;
     onUpdateMeetingType?: (id: string, currentType: string) => void;
 }
 
 export function KanbanBoard({
     leads,
-    columns: columnDefs = PIPELINE_COLUMNS,
+    columns: columnDefs = [],
     onLeadUpdate,
     onEditLead,
     onUpdateTitle,
@@ -64,6 +51,7 @@ export function KanbanBoard({
     onRenameColumn,
     onToggleFavorite,
     onDelete,
+    onDeleteColumn,
     onUpdateMeetingType
 }: KanbanBoardProps) {
     const [isAddingColumn, setIsAddingColumn] = useState(false);
@@ -95,11 +83,11 @@ export function KanbanBoard({
     return (
         <DndContext
             sensors={sensors}
-            collisionDetection={closestCorners}
+            collisionDetection={closestCenter}
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
         >
-            <div className="flex h-full min-h-0 gap-4 overflow-x-auto pb-4 bg-[radial-gradient(circle_at_center,_var(--color-bg-elevated)_0%,_var(--color-bg-base)_100%)] custom-scrollbar">
+            <div className="flex h-full min-h-0 gap-4 overflow-x-auto pb-4 bg-[radial-gradient(circle_at_center,var(--color-bg-elevated)_0%,var(--color-bg-base)_100%)] custom-scrollbar">
                 {columns.map((col) => (
                     <KanbanColumn
                         key={col.id}
@@ -116,7 +104,10 @@ export function KanbanBoard({
                         onRenameColumn={onRenameColumn}
                         onToggleFavorite={onToggleFavorite}
                         onDelete={onDelete}
+                        onDeleteColumn={onDeleteColumn}
                         onUpdateMeetingType={onUpdateMeetingType}
+                        is_win_stage={col.is_win_stage}
+                        is_lost_stage={col.is_lost_stage}
                     />
                 ))}
 

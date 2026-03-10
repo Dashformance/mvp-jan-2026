@@ -17,6 +17,15 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  compiler: {
+    removeConsole: process.env.NODE_ENV === "production" ? { exclude: ["error", "warn"] } : false,
+  },
+  // To silence the multiple lockfiles warning. 
+  // Next.js 16 uses turbopack at the config root.
+  // @ts-ignore - Temporary ignore if type is not updated yet
+  turbopack: {
+    root: "..",
+  },
 };
 
 export default nextConfig;

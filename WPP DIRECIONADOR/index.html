@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatsApp Redirect</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <div class="container">
+        <div class="counter-container">
+            <div class="counter-box">
+                Contatados: <strong id="contactCounter">0</strong>
+            </div>
+        </div>
+        <img src="Generated Image March 09, 2026 - 7_57PM.png" alt="Foto da Profissional" class="profile-pic">
+        <h1>Iniciar Conversa</h1>
+        <p>Cole os dados do cliente para gerar a mensagem.</p>
+
+        <div>
+            <div class="input-group">
+                <label for="smartData">Dados do cliente e da construtora</label>
+                <textarea id="smartData" placeholder="Ex:&#10;Construtora Tenda&#10;(11) 98888-7777"
+                    oninput="previewMensagemInteligente()"></textarea>
+                <div class="error-msg" id="smartErrorMsg">Não foi possível encontrar um número válido no texto.</div>
+
+                <div id="mensagemPreview" class="preview-box">
+                    <strong>Mensagem que será enviada:</strong><br>
+                    <span id="previewText">...</span>
+                </div>
+            </div>
+            <button class="action-btn" onclick="redirectToWhatsAppSmart()">Enviar Mensagem Padrão</button>
+
+            <div class="contacts-section">
+                <div class="contacts-header">
+                    <h2>Contatos Salvos</h2>
+                    <span class="contacts-date" id="currentDate"></span>
+                </div>
+                <ul class="contacts-list" id="contactsList">
+                    <!-- Items vão aqui -->
+                </ul>
+                <button class="export-btn" onclick="exportToCSV()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    Exportar Planilha (CSV)
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+
+</html>

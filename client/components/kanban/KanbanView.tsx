@@ -145,6 +145,37 @@ export function KanbanView() {
         setFilterBarState({});
     }, [setFilterBarState]);
 
+    const handleExport = useCallback(() => {
+        let url = '/api/leads/export?';
+        const params = new URLSearchParams();
+        if (filterBarState.search) params.append('search', filterBarState.search);
+        if (filterBarState.status && filterBarState.status.length > 0) {
+            filterBarState.status.forEach((st: string) => params.append('status[]', st));
+        }
+        if (filterBarState.source && filterBarState.source.length > 0) {
+            filterBarState.source.forEach((src: string) => params.append('source[]', src));
+        }
+        if (filterBarState.city) params.append('city', filterBarState.city);
+        if (filterBarState.scoreMin !== undefined) params.append('scoreMin', filterBarState.scoreMin.toString());
+        if (filterBarState.scoreMax !== undefined) params.append('scoreMax', filterBarState.scoreMax.toString());
+        if (filterBarState.view) params.append('view', filterBarState.view);
+
+        // Sorting
+        let sortField = 'date_added';
+        let sortOrder = 'desc';
+        if (sortBy === 'alpha') { sortField = 'trade_name'; sortOrder = 'asc'; }
+        else if (sortBy === 'date_asc') { sortField = 'date_added'; sortOrder = 'asc'; }
+        else if (sortBy === 'date_desc') { sortField = 'date_added'; sortOrder = 'desc'; }
+        else if (sortBy === 'status') { sortField = 'status'; sortOrder = 'asc'; }
+        else if (sortBy === 'score') { sortField = 'score'; sortOrder = 'desc'; }
+        else if (sortBy === 'owner') { sortField = 'owner'; sortOrder = 'asc'; }
+        else if (sortBy === 'last_interaction') { sortField = 'last_contact_date'; sortOrder = 'desc'; }
+        params.append('sortBy', sortField);
+        params.append('sortOrder', sortOrder);
+
+        window.open(url + params.toString(), '_blank');
+    }, [filterBarState, sortBy]);
+
     const handleRemoveFilter = useCallback((key: string, val?: any) => {
         setFilterBarState((prev: any) => {
             const next = { ...prev };
@@ -188,9 +219,19 @@ export function KanbanView() {
                         variant="outline"
                         size="sm"
                         className="h-9 bg-black/20 border-white/10 hover:bg-white/5 gap-2"
-                        onClick={() => setImportDialogOpen(true)}
+                        onClick={handleExport}
                     >
                         <Download className="w-4 h-4" />
+                        <span className="hidden sm:inline">Exportar</span>
+                    </Button>
+
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-9 bg-black/20 border-white/10 hover:bg-white/5 gap-2"
+                        onClick={() => setImportDialogOpen(true)}
+                    >
+                        <RefreshCcw className="w-4 h-4" />
                         <span className="hidden sm:inline">Importar</span>
                     </Button>
 

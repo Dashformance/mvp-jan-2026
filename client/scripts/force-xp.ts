@@ -1,1 +1,0 @@
-import { PrismaClient } from '@prisma/client'; const prisma = new PrismaClient(); async function main() { await prisma.user.updateMany({ where: { name: { contains: 'vitor', mode: 'insensitive' } }, data: { xp: 550, level: 1 } }); console.log('Updated vitor XP'); } main().finally(() => prisma.$disconnect());

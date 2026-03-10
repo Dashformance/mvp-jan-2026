@@ -14,6 +14,10 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ColumnFilter } from "./ColumnFilter";
 import { useKanban } from "../kanban/kanban-context";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Phone } from "lucide-react";
+import { useState } from "react";
 
 
 interface Lead {
@@ -30,6 +34,7 @@ interface Lead {
     city?: string;
     uf?: string;
     is_starred?: boolean;
+    phone?: string;
 }
 
 interface LeadsTableProps {
@@ -76,11 +81,19 @@ export function LeadsTable({
     onFilterChange,
     onBulkUpdate
 }: LeadsTableProps) {
-    const { columns, bulkUpdateLeads, availableUsers } = useKanban();
+    const { columns, bulkUpdateLeads, availableUsers, updateLead } = useKanban();
+    const [editingCell, setEditingCell] = useState<{ id: string, field: string } | null>(null);
+    const [editValue, setEditValue] = useState("");
 
     const STATUS_OPTIONS = columns.length > 0
         ? columns.map(c => ({ value: c.id, label: c.title, color: c.color }))
         : DEFAULT_STATUS_OPTIONS;
+
+    const handleSaveInLine = async (id: string, data: any) => {
+        if (!updateLead) return;
+        await updateLead({ id, ...data });
+        setEditingCell(null);
+    };
 
     const getSortIcon = (column: string) => {
         if (sortBy !== column) return <ArrowUpDown className="ml-2 h-4 w-4 opacity-50" />;
@@ -213,6 +226,7 @@ export function LeadsTable({
                         {leads.map((lead) => {
                             const primaryContact = lead.contacts?.find(c => c.is_primary) || lead.contacts?.[0];
                             const isSelected = selectedLeads?.has(lead.id);
+                            const phoneStr = primaryContact?.phone || lead.phone || '';
 
                             return (
                                 <TableRow
@@ -239,49 +253,114 @@ export function LeadsTable({
                                         </Button>
                                     </TableCell>
 
-                                    <TableCell className="font-medium">
-                                        <div className="flex flex-col">
-                                            <span className="text-sm text-white/90 group-hover:text-accent transition-colors">
-                                                {lead.trade_name || lead.company_name}
-                                            </span>
-                                            <span className="text-[10px] text-muted-foreground font-mono">{lead.cnpj}</span>
-                                        </div>
+                                    <TableCell className="font-medium" onClick={(e) => {
+                                        e.stopPropagation();
+                                        setEditingCell({ id: lead.id, field: 'company_name' });
+                                        setEditValue(lead.trade_name || lead.company_name || "");
+                                    }}>
+                                        {editingCell?.id === lead.id && editingCell.field === 'company_name' ? (
+                                            <Input
+                                                autoFocus
+                                                value={editValue}
+                                                onChange={e => setEditValue(e.target.value)}
+                                                onBlur={() => handleSaveInLine(lead.id, { company_name: editValue })}
+                                                onKeyDown={e => {
+                                                    if (e.key === 'Enter') handleSaveInLine(lead.id, { company_name: editValue });
+                                                    if (e.key === 'Escape') setEditingCell(null);
+                                                }}
+                                                className="h-8 text-sm"
+                                                onClick={e => e.stopPropagation()}
+                                            />
+                                        ) : (
+                                            <div className="flex flex-col cursor-text hover:bg-white/5 rounded px-1 -mx-1 transition-colors">
+                                                <span className="text-sm text-white/90 group-hover:text-accent transition-colors">
+                                                    {lead.trade_name || lead.company_name || 'Sem nome'}
+                                                </span>
+                                                <span className="text-[10px] text-muted-foreground font-mono">{lead.cnpj}</span>
+                                            </div>
+                                        )}
                                     </TableCell>
 
-                                    <TableCell>
-                                        <div className="flex flex-col">
-                                            <span className="text-xs text-white/80">
-                                                {primaryContact?.name || lead.decision_maker || '-'}
-                                            </span>
-                                            <span className="text-[10px] text-muted-foreground">
-                                                {primaryContact?.role || 'Decision Maker'}
-                                            </span>
-                                        </div>
+                                    <TableCell onClick={(e) => {
+                                        e.stopPropagation();
+                                        setEditingCell({ id: lead.id, field: 'phone' });
+                                        setEditValue(phoneStr);
+                                    }}>
+                                        {editingCell?.id === lead.id && editingCell.field === 'phone' ? (
+                                            <Input
+                                                autoFocus
+                                                value={editValue}
+                                                onChange={e => setEditValue(e.target.value)}
+                                                onBlur={() => handleSaveInLine(lead.id, { phone: editValue })}
+                                                onKeyDown={e => {
+                                                    if (e.key === 'Enter') handleSaveInLine(lead.id, { phone: editValue });
+                                                    if (e.key === 'Escape') setEditingCell(null);
+                                                }}
+                                                className="h-8 text-sm"
+                                                onClick={e => e.stopPropagation()}
+                                            />
+                                        ) : (
+                                            <div className="flex flex-col cursor-text hover:bg-white/5 rounded px-1 -mx-1 transition-colors">
+                                                <span className="text-sm text-white/90 group-hover:text-accent transition-colors flex items-center gap-2">
+                                                    {phoneStr || <span className="text-muted-foreground/50">Sem telefone</span>}
+                                                </span>
+                                                <span className="text-[10px] text-muted-foreground">
+                                                    {primaryContact?.name || lead.decision_maker || 'Contato principal'}
+                                                </span>
+                                            </div>
+                                        )}
                                     </TableCell>
 
-                                    <TableCell>
+                                    <TableCell onClick={e => e.stopPropagation()}>
                                         {(() => {
                                             const statusInfo = getStatusInfo(lead.status);
                                             return (
-                                                <Badge variant="outline" className={`text-[10px] border px-2 py-0.5 h-6 whitespace-nowrap ${statusInfo.className}`}>
-                                                    {statusInfo.label}
-                                                </Badge>
+                                                <Select
+                                                    value={lead.status}
+                                                    onValueChange={(val) => onStatusChange?.(lead.id, val)}
+                                                >
+                                                    <SelectTrigger className={`h-6 text-[10px] border px-2 py-0.5 whitespace-nowrap w-auto ${statusInfo.className}`}>
+                                                        <SelectValue />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {STATUS_OPTIONS.map(s => (
+                                                            <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
                                             );
                                         })()}
                                     </TableCell>
 
-                                    <TableCell>
+                                    <TableCell onClick={e => e.stopPropagation()}>
                                         <div className="flex items-center gap-2">
-                                            {lead.owner ? (
-                                                <>
-                                                    <div className="h-6 w-6 rounded-full border border-white/10 bg-zinc-800 flex items-center justify-center text-[9px] text-zinc-400 font-bold">
-                                                        {lead.owner.substring(0, 2).toUpperCase()}
-                                                    </div>
-                                                    <span className="text-xs capitalize text-muted-foreground">{lead.owner}</span>
-                                                </>
-                                            ) : (
-                                                <span className="text-xs text-muted-foreground/30 italic">Sem dono</span>
-                                            )}
+                                            <Select
+                                                value={lead.owner || 'unassigned'}
+                                                onValueChange={(val) => handleSaveInLine(lead.id, { owner: val === 'unassigned' ? null : val })}
+                                            >
+                                                <SelectTrigger className="h-8 border-transparent bg-transparent hover:bg-white/5 px-2 py-1 w-full max-w-[120px] focus:ring-0">
+                                                    <SelectValue>
+                                                        {lead.owner ? (
+                                                            <div className="flex items-center gap-2">
+                                                                <div className="h-5 w-5 rounded-full border border-white/10 bg-zinc-800 flex items-center justify-center text-[8px] text-zinc-400 font-bold shrink-0">
+                                                                    {lead.owner.substring(0, 2).toUpperCase()}
+                                                                </div>
+                                                                <span className="text-xs capitalize text-muted-foreground truncate">{lead.owner}</span>
+                                                            </div>
+                                                        ) : (
+                                                            <span className="text-xs text-muted-foreground/30 italic">Sem dono</span>
+                                                        )}
+                                                    </SelectValue>
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {availableUsers?.map((u: any) => (
+                                                        <SelectItem key={u.id} value={u.name}>
+                                                            {u.name}
+                                                        </SelectItem>
+                                                    ))}
+                                                    <SelectItem value="unassigned" className="text-muted-foreground italic">Remover dono</SelectItem>
+                                                </SelectContent>
+                                            </Select>
                                         </div>
                                     </TableCell>
 
@@ -299,16 +378,31 @@ export function LeadsTable({
                                         </div>
                                     </TableCell>
 
-                                    <TableCell>
-                                        {/* Action Menu could go here */}
-                                        <Button
-                                            variant="ghost"
-                                            size="icon-sm"
-                                            onClick={(e) => { e.stopPropagation(); onDelete?.(lead.id); }}
-                                            className="opacity-0 group-hover:opacity-100 text-rose-400 hover:text-rose-300 transition-all"
-                                        >
-                                            <Trash2 className="w-4 h-4" />
-                                        </Button>
+                                    <TableCell className="text-right w-[140px]" onClick={e => e.stopPropagation()}>
+                                        <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <Button size="icon-sm" variant="ghost" className="h-7 w-7 text-emerald-400 hover:text-emerald-300 hover:bg-emerald-400/10 transition-colors" title="Abrir WhatsApp" onClick={(e) => {
+                                                e.stopPropagation();
+                                                const phone = primaryContact?.phone?.replace(/\D/g, '') || lead.phone?.replace(/\D/g, '');
+                                                if (phone) window.open(`https://wa.me/55${phone}`, '_blank');
+                                            }}>
+                                                <MessageCircle className="w-4 h-4" />
+                                            </Button>
+                                            <Button size="icon-sm" variant="ghost" className="h-7 w-7 text-yellow-400 hover:text-yellow-300 hover:bg-yellow-400/10 transition-colors" title="Marcar contato como hoje" onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleSaveInLine(lead.id, { last_contact_date: new Date().toISOString() });
+                                            }}>
+                                                <Phone className="w-4 h-4" />
+                                            </Button>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon-sm"
+                                                title="Excluir"
+                                                onClick={(e) => { e.stopPropagation(); onDelete?.(lead.id); }}
+                                                className="text-rose-400 hover:text-rose-300 hover:bg-rose-400/10 transition-colors h-7 w-7"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </Button>
+                                        </div>
                                     </TableCell>
                                 </TableRow>
                             );

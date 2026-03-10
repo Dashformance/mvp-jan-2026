@@ -84,7 +84,10 @@ export const LeadsService = {
             return prisma.leads.upsert({
                 where: { cnpj: lead.cnpj },
                 create: data as any,
-                update: data as any,
+                update: {
+                    ...data,
+                    owner_id: undefined // NUNCA sobrescrever owner_id no update
+                } as any,
             });
         });
 
@@ -314,6 +317,18 @@ export const LeadsService = {
             where: { id: sourceId },
             data: { deletedAt: new Date() }
         });
+
+        // Log interactions for the merge
+        await prisma.interactions.create({
+            data: {
+                id: crypto.randomUUID(),
+                lead_id: targetId,
+                type: 'MERGE',
+                content: `Lead fundido com ${sourceId}`,
+                user_id: updateData.owner_id || target.owner_id || 'system',
+                updated_at: new Date()
+            }
+        });
     },
 
     async restore(id: string) {
@@ -388,6 +403,18 @@ export const LeadsService = {
             if (!sanitizedData.owner_id) {
                 // If missing or null in update, keep the existing one
                 sanitizedData.owner_id = currentLead.owner_id;
+            } else if (sanitizedData.owner_id !== currentLead.owner_id) {
+                // Owner was explicitly changed
+                await prisma.interactions.create({
+                    data: {
+                        id: crypto.randomUUID(),
+                        lead_id: id,
+                        type: 'OWNERSHIP_TRANSFER',
+                        content: `De: ${currentLead.owner_id} → Para: ${sanitizedData.owner_id}`,
+                        user_id: performingUserId || sanitizedData.owner_id,
+                        updated_at: new Date()
+                    }
+                });
             }
         }
 
@@ -640,6 +667,11 @@ export const LeadsService = {
                         updateData[field] = dup[field];
                     }
                 });
+
+                if (!master.owner_id && dup.owner_id) {
+                    updateData.owner_id = dup.owner_id;
+                    updateData.owner = dup.owner;
+                }
 
                 if (Object.keys(updateData).length > 0) {
                     await prisma.leads.update({
